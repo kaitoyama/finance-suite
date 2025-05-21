@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { AttachmentsModule } from './attachments/attachments.module';
 import { MinioModule } from './storage/minio.module';
 import { PrismaModule } from './prisma.module';
+import { JournalModule } from './journal/journal.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma.module';
     AttachmentsModule,
     MinioModule,
     PrismaModule,
+    JournalModule,
   ],
   providers: [AppResolver],
 })
