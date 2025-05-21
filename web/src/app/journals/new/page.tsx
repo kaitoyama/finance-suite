@@ -65,7 +65,7 @@ const NewJournalPage = () => {
   const router = useRouter(); // Instantiate useRouter
 
   // Instantiate the mutation hook
-  const [mutationResult, executeMutation] = useCreateJournalEntryMutation ? useCreateJournalEntryMutation() : [ {fetching: false, error: null, data: null}, async () => { console.error("useCreateJournalEntryMutation is not defined"); return { error: { message: "Mutation hook not found." }, data: null }; } ];
+  const [mutationResult, executeMutation] = useCreateJournalEntryMutation();
 
   const handleHeaderChange = (field: keyof Pick<UIJournalEntry, 'date' | 'description'>, value: string) => {
     updateJournalEntry((draft) => {
