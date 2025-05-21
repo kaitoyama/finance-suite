@@ -1,43 +1,49 @@
-import { Resolver, Query, Mutation, Args, Int, ID, Context } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Context } from '@nestjs/graphql';
 import { JournalService } from './journal.service';
 import { JournalEntry } from './entities/journal-entry.entity';
 import { CreateJournalEntryInput } from './dto/create-journal-entry.input';
 import { UpdateJournalEntryInput } from './dto/update-journal-entry.input';
 import { RangeInput } from './dto/range.input';
 import { User } from '../users/entities/user.entity'; // Import User entity
-import { UseGuards, UsePipes } from '@nestjs/common'; // Added UsePipes
+import { UserService } from '../users/user.service'; // Import UserService
+import { UsePipes, NotFoundException } from '@nestjs/common'; // Added UsePipes and NotFoundException
 import { BalanceCheckPipe } from './pipes/balance-check.pipe'; // Import the pipe
 import { Request } from 'express'; // Import typed Express Request
 
 @Resolver(() => JournalEntry)
 export class JournalResolver {
-  constructor(private readonly journalService: JournalService) {}
+  constructor(
+    private readonly journalService: JournalService,
+    private readonly userService: UserService, // Inject UserService
+  ) {}
 
   @Mutation(() => JournalEntry)
   @UsePipes(BalanceCheckPipe) // Apply the pipe here
   async createJournalEntry(
-    @Args('createJournalEntryInput') createJournalEntryInput: CreateJournalEntryInput,
+    @Args('createJournalEntryInput')
+    createJournalEntryInput: CreateJournalEntryInput,
     @Context('req') req: Request, // Typed Express request with username/isAdmin
   ) {
-    // Access typed properties from middleware
     const username = req.username!;
-    const isAdmin = req.isAdmin!;
-    
-    // Construct or lookup a User entity based on the header
-    const effectiveUser = { username, isAdmin } as User;
-    
-    return this.journalService.create(createJournalEntryInput, effectiveUser);
+    const isAdmin = req.isAdmin || false; // Default to false if undefined
+
+    // Find or create the user based on username from the header
+    const user = await this.userService.findOrCreateByUsername(username, isAdmin);
+    // No need to check if user is null/undefined as findOrCreateByUsername will always return a user or throw
+
+    return this.journalService.create(createJournalEntryInput, user);
   }
 
   @Query(() => [JournalEntry], { name: 'journalEntries' })
   // @UseGuards(GqlAuthGuard) // Example: Protect this query
   async journalEntries(
-     @Args('range', { type: () => RangeInput, nullable: true }) range?: RangeInput,
-     // @CurrentUser() user?: User, // If filtering by user or for user-specific data
+    @Args('range', { type: () => RangeInput, nullable: true })
+    range?: RangeInput,
+    // @CurrentUser() user?: User, // If filtering by user or for user-specific data
   ) {
     // Pass user to service if needed for filtering, e.g., based on user permissions or ownership
-    // const user = context.req?.user as User; 
-    // return this.journalService.findAll(range, user); 
+    // const user = context.req?.user as User;
+    // return this.journalService.findAll(range, user);
     return this.journalService.findAll(range);
   }
 
@@ -50,9 +56,13 @@ export class JournalResolver {
   @Mutation(() => JournalEntry)
   @UsePipes(BalanceCheckPipe) // Apply the pipe here
   async updateJournalEntry(
-    @Args('updateJournalEntryInput') updateJournalEntryInput: UpdateJournalEntryInput,
+    @Args('updateJournalEntryInput')
+    updateJournalEntryInput: UpdateJournalEntryInput,
   ) {
-    return this.journalService.update(updateJournalEntryInput.id, updateJournalEntryInput);
+    return this.journalService.update(
+      updateJournalEntryInput.id,
+      updateJournalEntryInput,
+    );
   }
 
   @Mutation(() => JournalEntry, { nullable: true }) // Or return a boolean/ID

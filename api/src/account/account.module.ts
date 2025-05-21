@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../prisma.module'; // Correct path to PrismaModule
+import { AccountService } from './account.service';
+import { AccountResolver } from './account.resolver';
+import { PrismaModule } from '../prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  // If you create AccountService/Resolver, add them here and export
-  exports: [], // Export AccountService if it's to be used by JournalService directly
+  providers: [AccountResolver, AccountService],
 })
 export class AccountModule {}

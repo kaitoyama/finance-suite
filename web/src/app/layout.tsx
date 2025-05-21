@@ -22,8 +22,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html>
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={geistSans.className} suppressHydrationWarning>
         <GraphQLProvider>
           {children}
           <Toaster /> {/* Added Toaster component here */}

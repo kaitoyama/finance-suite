@@ -6,8 +6,12 @@ export class UserHeaderMiddleware implements NestMiddleware {
   use(req: Request, _res: Response, next: NextFunction) {
     const username = req.header('x-forwarded-user') ?? '';
     if (username === ''){
-      // ないなら、アクセス拒否
-      return next(new UnauthorizedException());
+      // 開発中はaliceとしてアクセス
+      req.username = 'alice';
+      req.isAdmin = true;
+      return next();
+      // // ないなら、アクセス拒否
+      // return next(new UnauthorizedException());
     }
 
     // ② .env の ADMIN_USERS=alice,bob を配列化

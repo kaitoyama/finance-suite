@@ -36,6 +36,44 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type User {
+  id: ID!
+  username: String!
+  isAdmin: Boolean!
+}
+
+type Account {
+  id: ID!
+  code: String!
+  name: String!
+  category: AccountCategory!
+}
+
+enum AccountCategory {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+type JournalLine {
+  id: ID!
+  accountId: Int!
+  account: Account
+  debit: Float
+  credit: Float
+}
+
+type JournalEntry {
+  id: ID!
+  datetime: DateTime!
+  description: String
+  createdById: Int!
+  createdBy: User
+  lines: [JournalLine]
+}
+
 type Query {
   """Health-check"""
   hello: String!
@@ -44,6 +82,16 @@ type Query {
 
   """現在のユーザーを返す"""
   me: MeDto!
+  journalEntries(range: RangeInput): [JournalEntry!]!
+  journalEntry(id: ID!): JournalEntry
+  accounts: [Account!]!
+  account(id: Int!): Account
+}
+
+input RangeInput {
+  startDate: DateTime
+  endDate: DateTime
+  searchTerm: String
 }
 
 type Mutation {
@@ -52,6 +100,10 @@ type Mutation {
   removeVoucher(id: Int!): Voucher!
   createPresignedPost(filename: String!): PresignedPayload!
   createAttachment(input: CreateAttachmentInput!): Attachment!
+  createJournalEntry(createJournalEntryInput: CreateJournalEntryInput!): JournalEntry!
+  updateJournalEntry(updateJournalEntryInput: UpdateJournalEntryInput!): JournalEntry!
+  removeJournalEntry(id: ID!): JournalEntry
+  createAccount(createAccountInput: CreateAccountInput!): Account!
 }
 
 input CreateVoucherInput {
@@ -69,4 +121,29 @@ input CreateAttachmentInput {
   s3Key: String!
   title: String!
   amount: Float!
+}
+
+input CreateJournalEntryInput {
+  datetime: DateTime
+  description: String
+  lines: [JournalLineInput!]!
+}
+
+input JournalLineInput {
+  accountId: Int!
+  debit: Float
+  credit: Float
+}
+
+input UpdateJournalEntryInput {
+  datetime: DateTime
+  description: String
+  lines: [JournalLineInput!]
+  id: ID!
+}
+
+input CreateAccountInput {
+  code: String!
+  name: String!
+  category: AccountCategory!
 }

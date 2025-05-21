@@ -8,9 +8,7 @@ const config: CodegenConfig = {
     './src/gql/': {
       // https://the-guild.dev/graphql/codegen/plugins/presets/preset-client
       preset: 'client',
-      plugins: ['typescript',
-        'typescript-operations',
-        'typescript-urql',],
+      plugins: [],
       config: {
         strictScalars: true,
         enumsAsTypes: true,
