@@ -79,6 +79,41 @@ type GenerateInvoicePdfPayload {
   presignedUrl: String!
 }
 
+type Invoice {
+  id: Int!
+  invoiceNo: String!
+  partnerName: String!
+  amount: Float!
+  status: InvoiceStatus!
+  pdfKey: String!
+  createdAt: DateTime!
+  dueDate: DateTime!
+  description: String
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PARTIAL
+  PAID
+  OVERPAY
+}
+
+type Payment {
+  id: Int!
+  paidAt: DateTime!
+  amount: Float!
+  label: PaymentLabel!
+  invoice: Invoice
+  invoiceId: Int
+}
+
+enum PaymentLabel {
+  NORMAL
+  PARTIAL
+  OVERPAY
+}
+
 type Query {
   """Health-check"""
   hello: String!
@@ -91,6 +126,8 @@ type Query {
   journalEntry(id: ID!): JournalEntry
   accounts: [Account!]!
   account(id: Int!): Account
+  payments: [Payment!]!
+  payment(id: Int!): Payment
 }
 
 input RangeInput {
@@ -110,6 +147,10 @@ type Mutation {
   removeJournalEntry(id: ID!): JournalEntry
   createAccount(createAccountInput: CreateAccountInput!): Account!
   generateInvoicePdf(input: GenerateInvoicePdfInput!): GenerateInvoicePdfPayload!
+  createInvoice(input: InvoiceInput!): Invoice!
+  createPayment(createPaymentInput: CreatePaymentInput!): Payment!
+  updatePayment(id: Int!, updatePaymentInput: UpdatePaymentInput!): Payment!
+  removePayment(id: Int!): Payment!
 }
 
 input CreateVoucherInput {
@@ -162,4 +203,33 @@ input GenerateInvoicePdfInput {
   subjectText: String
   dueDateText: String
   itemDescriptionText: String
+}
+
+input InvoiceInput {
+  partnerName: String!
+  amount: Float!
+  dueDate: String!
+  description: String
+}
+
+input CreatePaymentInput {
+  """ID of the invoice to associate this payment with"""
+  invoiceId: Int
+
+  """Date when the payment was made"""
+  paidAt: DateTime!
+
+  """Amount of the payment"""
+  amount: Float!
+}
+
+input UpdatePaymentInput {
+  """ID of the invoice to associate this payment with"""
+  invoiceId: Int
+
+  """Date when the payment was made"""
+  paidAt: DateTime
+
+  """Amount of the payment"""
+  amount: Float
 }

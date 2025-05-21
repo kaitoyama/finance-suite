@@ -1,25 +1,22 @@
-import { Field, InputType, Int, PartialType } from '@nestjs/graphql';
-import { Payment } from '../entities/payment.entity';
+import { Field, InputType, Int } from '@nestjs/graphql';
 import { Decimal } from '@prisma/client/runtime/library';
 import { IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 @InputType()
-export class CreatePaymentInput extends PartialType(
-  Payment,
-  InputType,
-) {
-  @Field(() => Int, { nullable: true })
+export class CreatePaymentInput {
+  @Field(() => Int, { nullable: true, description: 'ID of the invoice to associate this payment with' })
   @IsOptional()
   @IsInt()
   invoiceId?: number;
 
-  @Field()
+  @Field({ description: 'Date when the payment was made' })
   @IsNotEmpty()
   @IsDate()
   paidAt: Date;
 
-  @Field(() => Number)
+  @Field(() => Number, { description: 'Amount of the payment' })
   @IsNotEmpty()
   @IsNumber()
-  amount: Decimal;
+  //Resolved in service to Decimal
+  amount: number; // Keep as number for GraphQL input, convert to Decimal in service
 } 
