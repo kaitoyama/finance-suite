@@ -10,6 +10,7 @@ import { AttachmentsModule } from './attachments/attachments.module';
 import { MinioModule } from './storage/minio.module';
 import { PrismaModule } from './prisma.module';
 import { JournalModule } from './journal/journal.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { JournalModule } from './journal/journal.module';
     MinioModule,
     PrismaModule,
     JournalModule,
+    AccountModule,
   ],
   providers: [AppResolver],
 })
