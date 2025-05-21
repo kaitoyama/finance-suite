@@ -96,3 +96,17 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Running Migrations
+
+To run database migrations, use the following command:
+
+```bash
+$ pnpm prisma migrate dev
+```
+
+To create a new migration, use the following command, replacing `migration_name` with a descriptive name for your migration:
+
+```bash
+$ pnpm prisma migrate dev --name migration_name
+```

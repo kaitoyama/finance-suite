@@ -72,6 +72,8 @@ model JournalEntry {
   createdById Int
   // 明細行
   lines       JournalLine[]
+  // 請求書
+  Invoice     Invoice?
 }
 
 /// 仕訳明細行（借方 or 貸方のいずれかに金額を入れる）
@@ -108,4 +110,23 @@ enum RequestState {
   APPROVED
   PAID
   REJECTED
+}
+
+model Invoice {
+  id          Int      @id @default(autoincrement())
+  invoiceNo   String   @unique          // e.g. INV-2025-0001
+  partnerName String
+  amount      Decimal  @db.Decimal(12,2)
+  status      InvoiceStatus @default(DRAFT)
+  pdfKey      String?  // MinIO/S3 key – set in later ticket
+  createdAt   DateTime @default(now())
+  journalEntry   JournalEntry?  @relation(fields:[journalEntryId], references:[id])
+  journalEntryId Int? @unique
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  PAID
 }
