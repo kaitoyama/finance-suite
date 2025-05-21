@@ -12,7 +12,7 @@ export class MeResolver {
   @Query(() => MeDto, { description: '現在のユーザーを返す' })
   me(@Context('req') req: Request): MeDto {
     return {
-      username: req.username ?? 'anonymous',
+      username: req.username ?? '',
       isAdmin: !!req.isAdmin,
     };
   }
