@@ -135,4 +135,26 @@ model Invoice {
   // Relation to JournalEntry (optional, if an invoice can be linked to a journal entry)
   journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
   journalEntryId Int?          @unique
+
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+}
+
+enum PaymentLabel {
+  NORMAL
+  PARTIAL
+  OVERPAY
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  paidAt    DateTime @default(now())
+  amount    Decimal  @db.Decimal(12, 2)
+  label     PaymentLabel
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
+  invoiceId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
