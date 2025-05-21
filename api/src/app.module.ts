@@ -11,6 +11,8 @@ import { MinioModule } from './storage/minio.module';
 import { PrismaModule } from './prisma.module';
 import { JournalModule } from './journal/journal.module';
 import { AccountModule } from './account/account.module';
+import { PdfModule } from './common/services/pdf.module';
+import { InvoicePdfModule } from './invoice-pdf/invoice-pdf.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { AccountModule } from './account/account.module';
     PrismaModule,
     JournalModule,
     AccountModule,
+    PdfModule,
+    InvoicePdfModule,
   ],
   providers: [AppResolver],
 })

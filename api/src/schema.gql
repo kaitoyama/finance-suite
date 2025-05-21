@@ -74,6 +74,11 @@ type JournalEntry {
   lines: [JournalLine]
 }
 
+type GenerateInvoicePdfPayload {
+  pdfKey: String!
+  presignedUrl: String!
+}
+
 type Query {
   """Health-check"""
   hello: String!
@@ -104,6 +109,7 @@ type Mutation {
   updateJournalEntry(updateJournalEntryInput: UpdateJournalEntryInput!): JournalEntry!
   removeJournalEntry(id: ID!): JournalEntry
   createAccount(createAccountInput: CreateAccountInput!): Account!
+  generateInvoicePdf(input: GenerateInvoicePdfInput!): GenerateInvoicePdfPayload!
 }
 
 input CreateVoucherInput {
@@ -146,4 +152,14 @@ input CreateAccountInput {
   code: String!
   name: String!
   category: AccountCategory!
+}
+
+input GenerateInvoicePdfInput {
+  invoiceNo: String!
+  partnerName: String!
+  amount: Float!
+  date: String!
+  subjectText: String
+  dueDateText: String
+  itemDescriptionText: String
 }

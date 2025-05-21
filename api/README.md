@@ -110,3 +110,9 @@ To create a new migration, use the following command, replacing `migration_name`
 ```bash
 $ pnpm prisma migrate dev --name migration_name
 ```
+
+## Invoice PDF Template
+
+- The HTML template for invoices is located at `/api/templates/invoice.html`.
+- To modify the layout or static text (including issuer and bank details), edit this HTML file directly.
+- Dynamic data is inserted via Handlebars placeholders (e.g., `{{PARTNER_NAME}}`); see `InvoicePdfResolver` and `PdfService` for details. (Seal image has been removed).
