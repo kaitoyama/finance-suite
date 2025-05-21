@@ -1,5 +1,5 @@
 import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library'; // Potential issue: This path might need adjustment.
+import { Decimal } from '@prisma/client/runtime/library';
 import { CreateJournalEntryInput } from '../dto/create-journal-entry.input';
 import { UpdateJournalEntryInput } from '../dto/update-journal-entry.input';
 import { BusinessRuleException } from '../../common/exceptions/business-rule.exception';

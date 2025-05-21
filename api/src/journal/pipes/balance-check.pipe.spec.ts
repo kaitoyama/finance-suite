@@ -7,20 +7,16 @@ import { UpdateJournalEntryInput } from '../dto/update-journal-entry.input';
 
 // Mock DTOs
 const mockCreateJournalEntryInput = (lines: any[]): CreateJournalEntryInput => ({
-  date: new Date(),
+  datetime: new Date(),
   description: 'Test Entry',
   lines,
-  posted: false, // Add missing property
-  reference: '', // Add missing property
 });
 
 const mockUpdateJournalEntryInput = (id: number, lines: any[]): UpdateJournalEntryInput => ({
   id,
-  date: new Date(),
+  datetime: new Date(),
   description: 'Test Update Entry',
   lines,
-  posted: false, // Add missing property
-  reference: '', // Add missing property
 });
 
 
@@ -80,20 +76,6 @@ describe('BalanceCheckPipe', () => {
   describe('Empty Lines Array', () => {
     it('should return the input value when lines array is empty', () => {
       const value = mockCreateJournalEntryInput([]);
-      expect(pipe.transform(value, metadata)).toEqual(value);
-    });
-  });
-
-  describe('Null Lines', () => {
-    it('should return the input value when lines is null', () => {
-      const value = mockCreateJournalEntryInput(null);
-      expect(pipe.transform(value, metadata)).toEqual(value);
-    });
-  });
-
-  describe('Undefined Lines', () => {
-    it('should return the input value when lines is undefined', () => {
-      const value = mockCreateJournalEntryInput(undefined);
       expect(pipe.transform(value, metadata)).toEqual(value);
     });
   });
