@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  db:
+    image: mariadb:11   # 公式推奨の最新 LTS
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: finance
+      MARIADB_USER: app
+      MARIADB_PASSWORD: appsecret
+      MARIADB_ROOT_PASSWORD: rootsecret
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  db-data:

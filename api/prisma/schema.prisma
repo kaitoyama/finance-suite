@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// 会計5分類を ENUM 化してバリデーションを簡潔に
+enum AccountCategory {
+  ASSET // 資産
+  LIABILITY // 負債
+  EQUITY // 純資産
+  REVENUE // 収益
+  EXPENSE // 費用
+}
+
+/// システム利用者
+model User {
+  id                Int              @id @default(autoincrement())
+  username          String           @unique
+  isAdmin           Boolean          @default(false)
+  // relations
+  attachments       Attachment[]
+  journalEntries    JournalEntry[]   @relation("createdBy")
+  requestedExpenses ExpenseRequest[] @relation("requester")
+  approvedExpenses  ExpenseRequest[] @relation("approver")
+}
+
+/// 勘定科目（科目コード＋名称＋分類）
+model Account {
+  id           Int             @id @default(autoincrement())
+  code         String          @unique
+  name         String
+  category     AccountCategory
+  // relations
+  journalLines JournalLine[]
+}
+
+/// 添付ファイル（証憑）メタ情報
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  s3Key     String
+  title     String
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  /// アップロード者
+  uploader   User @relation(fields: [uploaderId], references: [id])
+  uploaderId Int
+
+  /// （後続実装予定）申請レコードに 1:1 紐づく
+  expenseRequest   ExpenseRequest?
+  expenseRequestId Int?            @unique
+}
+
+/// 仕訳伝票ヘッダ
+model JournalEntry {
+  id          Int           @id @default(autoincrement())
+  datetime    DateTime      @default(now())
+  description String?
+  // 起票者
+  createdBy   User          @relation("createdBy", fields: [createdById], references: [id])
+  createdById Int
+  // 明細行
+  lines       JournalLine[]
+}
+
+/// 仕訳明細行（借方 or 貸方のいずれかに金額を入れる）
+model JournalLine {
+  id        Int          @id @default(autoincrement())
+  entry     JournalEntry @relation(fields: [entryId], references: [id])
+  entryId   Int
+  account   Account      @relation(fields: [accountId], references: [id])
+  accountId Int
+  debit     Decimal?     @db.Decimal(12, 2)
+  credit    Decimal?     @db.Decimal(12, 2)
+}
+
+/// 申請→承認→支払ステート用モデル（予定）
+model ExpenseRequest {
+  id        Int          @id @default(autoincrement())
+  state     RequestState @default(DRAFT)
+  amount    Decimal      @db.Decimal(12, 2)
+  createdAt DateTime     @default(now())
+
+  attachment   Attachment @relation(fields: [attachmentId], references: [id])
+  attachmentId Int        @unique
+
+  requester   User      @relation("requester", fields: [requesterId], references: [id])
+  requesterId Int
+  approver    User?     @relation("approver", fields: [approverId], references: [id])
+  approverId  Int?
+  approvedAt  DateTime?
+}
+
+enum RequestState {
+  DRAFT
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}

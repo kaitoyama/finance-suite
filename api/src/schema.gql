@@ -1,0 +1,72 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Voucher {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+type MeDto {
+  username: String!
+  isAdmin: Boolean!
+}
+
+type PresignedPayloadField {
+  key: String!
+  value: String!
+}
+
+type PresignedPayload {
+  url: String!
+  fields: [PresignedPayloadField!]!
+  objectKey: String!
+}
+
+type Attachment {
+  id: Int!
+  s3Key: String!
+  title: String!
+  amount: Float!
+  createdAt: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  """Health-check"""
+  hello: String!
+  vouchers: [Voucher!]!
+  voucher(id: Int!): Voucher!
+
+  """現在のユーザーを返す"""
+  me: MeDto!
+}
+
+type Mutation {
+  createVoucher(createVoucherInput: CreateVoucherInput!): Voucher!
+  updateVoucher(updateVoucherInput: UpdateVoucherInput!): Voucher!
+  removeVoucher(id: Int!): Voucher!
+  createPresignedPost(filename: String!): PresignedPayload!
+  createAttachment(input: CreateAttachmentInput!): Attachment!
+}
+
+input CreateVoucherInput {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+input UpdateVoucherInput {
+  """Example field (placeholder)"""
+  exampleField: Int
+  id: Int!
+}
+
+input CreateAttachmentInput {
+  s3Key: String!
+  title: String!
+  amount: Float!
+}

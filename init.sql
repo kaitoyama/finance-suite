@@ -1,0 +1,2 @@
+GRANT CREATE, DROP ON *.* TO 'app'@'%';
+FLUSH PRIVILEGES;
