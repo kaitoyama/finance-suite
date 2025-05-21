@@ -33,6 +33,7 @@ model User {
   journalEntries    JournalEntry[]   @relation("createdBy")
   requestedExpenses ExpenseRequest[] @relation("requester")
   approvedExpenses  ExpenseRequest[] @relation("approver")
+  invoices          Invoice[]        @relation("UserInvoices")
 }
 
 /// 勘定科目（科目コード＋名称＋分類）
@@ -112,21 +113,26 @@ enum RequestState {
   REJECTED
 }
 
-model Invoice {
-  id          Int      @id @default(autoincrement())
-  invoiceNo   String   @unique          // e.g. INV-2025-0001
-  partnerName String
-  amount      Decimal  @db.Decimal(12,2)
-  status      InvoiceStatus @default(DRAFT)
-  pdfKey      String?  // MinIO/S3 key – set in later ticket
-  createdAt   DateTime @default(now())
-  journalEntry   JournalEntry?  @relation(fields:[journalEntryId], references:[id])
-  journalEntryId Int? @unique
-}
-
 enum InvoiceStatus {
   DRAFT
-  SENT
+  UNPAID
   PARTIAL
   PAID
+}
+
+model Invoice {
+  id          Int           @id @default(autoincrement())
+  invoiceNo   String        @unique
+  partnerName String
+  amount      Float
+  status      InvoiceStatus @default(UNPAID)
+  pdfKey      String
+  createdAt   DateTime      @default(now())
+  createdById Int
+  createdBy   User          @relation("UserInvoices", fields: [createdById], references: [id])
+  dueDate     DateTime
+  description String?
+  // Relation to JournalEntry (optional, if an invoice can be linked to a journal entry)
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId Int?          @unique
 }

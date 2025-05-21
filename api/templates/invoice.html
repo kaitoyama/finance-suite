@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>請求書 - {{INVOICE_NO}}</title>
+    <title>請求書 - {{invoiceNo}}</title>
     <style>
         @font-face {
             font-family: 'Noto Sans JP';
@@ -146,13 +146,13 @@
 
         <section class="details-section">
             <div class="left-details">
-                <p class="partner-name">{{PARTNER_NAME}} 御中</p>
+                <p class="partner-name">{{partnerName}} 御中</p>
                 <p class="greeting">下記の通り、御請求申し上げます。</p>
             </div>
             <div class="right-details">
-                <p>請求日: {{ISSUE_DATE}}</p>
-                <p>請求番号: {{INVOICE_NO}}</p>
-                <p>東京科学大学デジタル創作同好会traP</p> 
+                <p>請求日: {{createdAt}}</p>
+                <p>請求番号: {{invoiceNo}}</p>
+                <p>東京科学大学デジタル創作同好会traP</p>
                 <p class="issuer-fixed-address">〒152-8550</p>
                 <p class="issuer-fixed-address">東京都目黒区大岡山 2-12-1</p>
                 <p class="issuer-fixed-address">新サークル棟1 203</p>
@@ -162,11 +162,11 @@
         <table class="info-table">
             <tr>
                 <th>件&emsp;&emsp;名</th> <!-- Japanese full-width space for alignment -->
-                <td>{{SUBJECT_TEXT}}</td>
+                <td>{{description}}</td>
             </tr>
             <tr>
                 <th>支払期限</th>
-                <td>{{DUE_DATE_TEXT}}</td>
+                <td>{{dueDate}}</td>
             </tr>
             <tr>
                 <th>振込先</th>
@@ -178,7 +178,7 @@
         </table>
 
         <div class="total-box">
-            <span>合&emsp;&emsp;計 {{AMOUNT_YEN}}</span> <!-- Japanese full-width space -->
+            <span>合&emsp;&emsp;計 {{amount}}</span> <!-- Japanese full-width space -->
         </div>
 
         <section class="items-table-container">
@@ -191,8 +191,8 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="description">{{ITEM_DESCRIPTION_TEXT}}</td>
-                        <td class="amount">{{ITEM_AMOUNT_FORMATTED}}</td>
+                        <td class="description">{{description}}</td>
+                        <td class="amount">{{amount}}</td>
                     </tr>
                     <!-- Empty rows for visual spacing if needed, or to ensure table height -->
                     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
@@ -202,7 +202,7 @@
                 <tfoot>
                     <tr>
                         <td style="text-align:center;">合&emsp;&emsp;計</td> <!-- Japanese full-width space -->
-                        <td class="amount">{{AMOUNT_YEN_IN_TABLE}}</td>
+                        <td class="amount">{{amount}}</td>
                     </tr>
                 </tfoot>
             </table>

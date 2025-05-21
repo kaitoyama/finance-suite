@@ -13,6 +13,7 @@ import { JournalModule } from './journal/journal.module';
 import { AccountModule } from './account/account.module';
 import { PdfModule } from './common/services/pdf.module';
 import { InvoicePdfModule } from './invoice-pdf/invoice-pdf.module';
+import { InvoiceModule } from './invoice/invoice.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { InvoicePdfModule } from './invoice-pdf/invoice-pdf.module';
     AccountModule,
     PdfModule,
     InvoicePdfModule,
+    InvoiceModule,
   ],
   providers: [AppResolver],
 })
