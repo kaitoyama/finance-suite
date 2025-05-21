@@ -7,8 +7,7 @@ import { RangeInput } from './dto/range.input';
 import { User } from '../users/entities/user.entity'; // Import User entity
 import { UseGuards, UsePipes } from '@nestjs/common'; // Added UsePipes
 import { BalanceValidationPipe } from './pipes/balance-validation.pipe'; // Import the pipe
-// import { GqlAuthGuard } from '../auth/guards/gql-auth.guard'; // Example guard
-// import { CurrentUser } from '../auth/decorators/current-user.decorator'; // Example for user
+import { Request } from 'express'; // Import typed Express Request
 
 @Resolver(() => JournalEntry)
 export class JournalResolver {
@@ -18,18 +17,14 @@ export class JournalResolver {
   @UsePipes(BalanceValidationPipe) // Apply the pipe here
   async createJournalEntry(
     @Args('createJournalEntryInput') createJournalEntryInput: CreateJournalEntryInput,
-    @Context() context: any, // Access GraphQL context
-    // @CurrentUser() user: User, // Assuming CurrentUser decorator provides the user
+    @Context('req') req: Request, // Typed Express request with username/isAdmin
   ) {
-    // The subtask mentions X-Forwarded-User middleware populating req.user.
-    // In NestJS GraphQL, this would typically be mapped to context.req.user.
-    const user = context.req?.user as User; 
-
-    // Fallback to mock user if not found in context (for environments where middleware isn't set up)
-    const effectiveUser = user || { id: 1, username: 'testuser', isAdmin: false, name: 'Test User' } as User;
-    if (!user) {
-      console.warn("User not found in GraphQL context, using mock user for createJournalEntry.");
-    }
+    // Access typed properties from middleware
+    const username = req.username!;
+    const isAdmin = req.isAdmin!;
+    
+    // Construct or lookup a User entity based on the header
+    const effectiveUser = { username, isAdmin } as User;
     
     return this.journalService.create(createJournalEntryInput, effectiveUser);
   }
