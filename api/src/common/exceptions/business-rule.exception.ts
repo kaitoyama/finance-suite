@@ -4,6 +4,7 @@ export class BusinessRuleException extends Error {
 
   constructor(message: string, code: string) {
     super(message);
+    this.name = 'BusinessRuleException';
     this.code = code;
     // It's good practice to set the prototype explicitly when extending built-in classes like Error.
     Object.setPrototypeOf(this, BusinessRuleException.prototype);
