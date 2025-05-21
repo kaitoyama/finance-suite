@@ -112,7 +112,7 @@ const NewJournalPage = () => {
   }, [journalEntry.lines]);
 
   const totalsMatch = debitTotal === creditTotal && debitTotal > 0;
-  const currencyFormatter = new Intl.NumberFormat('ja-JP');
+  const currencyFormatter = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' });
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
