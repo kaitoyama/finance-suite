@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GraphQLProvider } from '@/providers/UrqlProvider';
+import { Toaster } from 'react-hot-toast'; // Added Toaster import
 
 import "./globals.css";
 
@@ -23,7 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html>
       <body>
-        <GraphQLProvider>{children}</GraphQLProvider>
+        <GraphQLProvider>
+          {children}
+          <Toaster /> {/* Added Toaster component here */}
+        </GraphQLProvider>
       </body>
     </html>
   );
