@@ -6,7 +6,7 @@ import { UpdateJournalEntryInput } from './dto/update-journal-entry.input';
 import { RangeInput } from './dto/range.input';
 import { User } from '../users/entities/user.entity'; // Import User entity
 import { UseGuards, UsePipes } from '@nestjs/common'; // Added UsePipes
-import { BalanceValidationPipe } from './pipes/balance-validation.pipe'; // Import the pipe
+import { BalanceCheckPipe } from './pipes/balance-check.pipe'; // Import the pipe
 import { Request } from 'express'; // Import typed Express Request
 
 @Resolver(() => JournalEntry)
@@ -14,7 +14,7 @@ export class JournalResolver {
   constructor(private readonly journalService: JournalService) {}
 
   @Mutation(() => JournalEntry)
-  @UsePipes(BalanceValidationPipe) // Apply the pipe here
+  @UsePipes(BalanceCheckPipe) // Apply the pipe here
   async createJournalEntry(
     @Args('createJournalEntryInput') createJournalEntryInput: CreateJournalEntryInput,
     @Context('req') req: Request, // Typed Express request with username/isAdmin
@@ -48,7 +48,7 @@ export class JournalResolver {
   }
 
   @Mutation(() => JournalEntry)
-  @UsePipes(BalanceValidationPipe) // Apply the pipe here
+  @UsePipes(BalanceCheckPipe) // Apply the pipe here
   async updateJournalEntry(
     @Args('updateJournalEntryInput') updateJournalEntryInput: UpdateJournalEntryInput,
   ) {
