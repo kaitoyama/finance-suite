@@ -6,7 +6,7 @@ import { BusinessRuleException } from '../../common/exceptions/business-rule.exc
 
 @Injectable()
 export class BalanceCheckPipe implements PipeTransform {
-  transform(value: CreateJournalEntryInput | UpdateJournalEntryInput, metadata: ArgumentMetadata) {
+  transform(value: CreateJournalEntryInput | UpdateJournalEntryInput, _metadata: ArgumentMetadata) {
     if (!value.lines || value.lines.length === 0) {
       return value;
     }
