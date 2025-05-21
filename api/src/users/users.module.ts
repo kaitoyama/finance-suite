@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MeResolver } from './me/me.resolver';
-import { PrismaModule } from '../../prisma.module'; // Correct path
+import { PrismaModule } from '../prisma.module'; // Correct path
 
 @Module({
   imports: [PrismaModule], // Add PrismaModule

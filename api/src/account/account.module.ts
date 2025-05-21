@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../prisma.module'; // Correct path to PrismaModule
+import { PrismaModule } from '../prisma.module'; // Correct path to PrismaModule
 
 @Module({
   imports: [PrismaModule],
