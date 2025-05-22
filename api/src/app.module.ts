@@ -16,6 +16,7 @@ import { InvoicePdfModule } from './invoice-pdf/invoice-pdf.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BudgetsModule } from './budgets/budgets.module';
+import { ExpenseModule } from './expense/expense.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { BudgetsModule } from './budgets/budgets.module';
     InvoiceModule,
     PaymentsModule,
     BudgetsModule,
+    ExpenseModule,
   ],
   providers: [AppResolver],
 })

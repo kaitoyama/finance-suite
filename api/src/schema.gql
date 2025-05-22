@@ -134,6 +134,28 @@ type BudgetDto {
   createdAt: DateTime!
 }
 
+type ExpenseRequest {
+  id: Int!
+  amount: Float!
+  state: RequestState!
+  createdAt: DateTime!
+  approvedAt: DateTime
+  attachmentId: Int!
+  requester: User!
+  approver: User
+  payment: Payment
+}
+
+"""The state of an expense request"""
+enum RequestState {
+  DRAFT
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CLOSED
+}
+
 type Query {
   """Health-check"""
   hello: String!
@@ -153,6 +175,7 @@ type Query {
   payment(id: Int!): Payment
   listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
   budgets(year: Int!): [BudgetBalance!]!
+  expenseRequest(id: Int!): ExpenseRequest
 }
 
 input RangeInput {
@@ -177,6 +200,11 @@ type Mutation {
   updatePayment(id: Int!, updatePaymentInput: UpdatePaymentInput!): Payment!
   removePayment(id: Int!): Payment!
   setBudget(input: BudgetInput!): BudgetDto!
+  submitExpenseRequest(input: CreateExpenseRequestInput!): ExpenseRequest!
+  approveExpenseRequest(id: Int!): ExpenseRequest!
+  rejectExpenseRequest(id: Int!): ExpenseRequest!
+  markExpensePaid(input: MarkExpensePaidInput!): ExpenseRequest!
+  closeExpenseRequest(id: Int!): ExpenseRequest!
 }
 
 input CreateVoucherInput {
@@ -301,4 +329,18 @@ input BudgetInput {
   accountId: Int!
   fiscalYear: Int!
   amountPlanned: Float!
+}
+
+input CreateExpenseRequestInput {
+  amount: Float!
+  attachmentId: Int!
+}
+
+input MarkExpensePaidInput {
+  expenseRequestId: Int!
+  paymentId: Int!
+}
+
+type Subscription {
+  expenseRequestStateChanged: ExpenseRequest!
 }

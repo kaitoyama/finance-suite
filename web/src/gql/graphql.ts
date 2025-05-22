@@ -81,6 +81,11 @@ export type CreateAttachmentInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateExpenseRequestInput = {
+  amount: Scalars['Float']['input'];
+  attachmentId: Scalars['Int']['input'];
+};
+
 export type CreateJournalEntryInput = {
   datetime?: InputMaybe<Scalars['DateTime']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -107,6 +112,19 @@ export type CreatePaymentInput = {
 export type CreateVoucherInput = {
   /** Example field (placeholder) */
   exampleField: Scalars['Int']['input'];
+};
+
+export type ExpenseRequest = {
+  __typename?: 'ExpenseRequest';
+  amount: Scalars['Float']['output'];
+  approvedAt?: Maybe<Scalars['DateTime']['output']>;
+  approver?: Maybe<User>;
+  attachmentId: Scalars['Int']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['Int']['output'];
+  payment?: Maybe<Payment>;
+  requester: User;
+  state: RequestState;
 };
 
 export type GenerateInvoicePdfInput = {
@@ -177,6 +195,11 @@ export type JournalLineInput = {
   debit?: InputMaybe<Scalars['Float']['input']>;
 };
 
+export type MarkExpensePaidInput = {
+  expenseRequestId: Scalars['Int']['input'];
+  paymentId: Scalars['Int']['input'];
+};
+
 export type MeDto = {
   __typename?: 'MeDto';
   isAdmin: Scalars['Boolean']['output'];
@@ -185,6 +208,8 @@ export type MeDto = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  approveExpenseRequest: ExpenseRequest;
+  closeExpenseRequest: ExpenseRequest;
   createAccount: Account;
   createAttachment: Attachment;
   createInvoice: Invoice;
@@ -193,13 +218,26 @@ export type Mutation = {
   createPresignedPost: PresignedPayload;
   createVoucher: Voucher;
   generateInvoicePdf: GenerateInvoicePdfPayload;
+  markExpensePaid: ExpenseRequest;
+  rejectExpenseRequest: ExpenseRequest;
   removeJournalEntry?: Maybe<JournalEntry>;
   removePayment: Payment;
   removeVoucher: Voucher;
   setBudget: BudgetDto;
+  submitExpenseRequest: ExpenseRequest;
   updateJournalEntry: JournalEntry;
   updatePayment: Payment;
   updateVoucher: Voucher;
+};
+
+
+export type MutationApproveExpenseRequestArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationCloseExpenseRequestArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -243,6 +281,16 @@ export type MutationGenerateInvoicePdfArgs = {
 };
 
 
+export type MutationMarkExpensePaidArgs = {
+  input: MarkExpensePaidInput;
+};
+
+
+export type MutationRejectExpenseRequestArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationRemoveJournalEntryArgs = {
   id: Scalars['ID']['input'];
 };
@@ -260,6 +308,11 @@ export type MutationRemoveVoucherArgs = {
 
 export type MutationSetBudgetArgs = {
   input: BudgetInput;
+};
+
+
+export type MutationSubmitExpenseRequestArgs = {
+  input: CreateExpenseRequestInput;
 };
 
 
@@ -322,6 +375,7 @@ export type Query = {
   account?: Maybe<Account>;
   accounts: Array<Account>;
   budgets: Array<BudgetBalance>;
+  expenseRequest?: Maybe<ExpenseRequest>;
   getPresignedS3Url?: Maybe<Scalars['String']['output']>;
   /** Health-check */
   hello: Scalars['String']['output'];
@@ -346,6 +400,11 @@ export type QueryAccountArgs = {
 
 export type QueryBudgetsArgs = {
   year: Scalars['Int']['input'];
+};
+
+
+export type QueryExpenseRequestArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -387,6 +446,20 @@ export type RangeInput = {
   endDate?: InputMaybe<Scalars['DateTime']['input']>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
   startDate?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+/** The state of an expense request */
+export type RequestState =
+  | 'APPROVED'
+  | 'CLOSED'
+  | 'DRAFT'
+  | 'PAID'
+  | 'PENDING'
+  | 'REJECTED';
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  expenseRequestStateChanged: ExpenseRequest;
 };
 
 export type UpdateJournalEntryInput = {
@@ -474,6 +547,20 @@ export type GetBudgetsQueryVariables = Exact<{
 
 export type GetBudgetsQuery = { __typename?: 'Query', budgets: Array<{ __typename?: 'BudgetBalance', accountId: number, accountCode: string, accountName: string, planned: number, actual: number, remaining: number, ratio: number }> };
 
+export type CreatePaymentMutationVariables = Exact<{
+  input: CreatePaymentInput;
+}>;
+
+
+export type CreatePaymentMutation = { __typename?: 'Mutation', createPayment: { __typename?: 'Payment', id: number, paidAt: string, amount: number, label: PaymentLabel } };
+
+export type ExpenseRequestByIdQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type ExpenseRequestByIdQuery = { __typename?: 'Query', expenseRequest?: { __typename?: 'ExpenseRequest', id: number, amount: number, state: RequestState, createdAt: string, attachmentId: number, approver?: { __typename?: 'User', id: string, username: string } | null, requester: { __typename?: 'User', id: string, username: string }, payment?: { __typename?: 'Payment', id: number, amount: number, label: PaymentLabel, paidAt: string } | null } | null };
+
 export type CreateInvoiceMutationVariables = Exact<{
   input: InvoiceInput;
 }>;
@@ -519,6 +606,8 @@ export const GetAccountByIdDocument = {"kind":"Document","definitions":[{"kind":
 export const CreatePresignedPostDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createPresignedPost"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPresignedPost"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"fields"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"objectKey"}}]}}]}}]} as unknown as DocumentNode<CreatePresignedPostMutation, CreatePresignedPostMutationVariables>;
 export const CreateAttachmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createAttachment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateAttachmentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAttachment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"s3Key"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}}]}}]}}]} as unknown as DocumentNode<CreateAttachmentMutation, CreateAttachmentMutationVariables>;
 export const GetBudgetsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetBudgets"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"budgets"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accountId"}},{"kind":"Field","name":{"kind":"Name","value":"accountCode"}},{"kind":"Field","name":{"kind":"Name","value":"accountName"}},{"kind":"Field","name":{"kind":"Name","value":"planned"}},{"kind":"Field","name":{"kind":"Name","value":"actual"}},{"kind":"Field","name":{"kind":"Name","value":"remaining"}},{"kind":"Field","name":{"kind":"Name","value":"ratio"}}]}}]}}]} as unknown as DocumentNode<GetBudgetsQuery, GetBudgetsQueryVariables>;
+export const CreatePaymentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreatePayment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreatePaymentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPayment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"createPaymentInput"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"paidAt"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"label"}}]}}]}}]} as unknown as DocumentNode<CreatePaymentMutation, CreatePaymentMutationVariables>;
+export const ExpenseRequestByIdDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExpenseRequestById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"expenseRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"attachmentId"}},{"kind":"Field","name":{"kind":"Name","value":"approver"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"payment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"paidAt"}}]}}]}}]}}]} as unknown as DocumentNode<ExpenseRequestByIdQuery, ExpenseRequestByIdQueryVariables>;
 export const CreateInvoiceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createInvoice"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"InvoiceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createInvoice"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"pdfKey"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<CreateInvoiceMutation, CreateInvoiceMutationVariables>;
 export const GetInvoiceByIdDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetInvoiceById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invoice"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"pdfKey"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"partnerName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"invoiceNo"}}]}}]}}]} as unknown as DocumentNode<GetInvoiceByIdQuery, GetInvoiceByIdQueryVariables>;
 export const GetInvoicesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetInvoices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invoices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"invoiceNo"}},{"kind":"Field","name":{"kind":"Name","value":"partnerName"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetInvoicesQuery, GetInvoicesQueryVariables>;
