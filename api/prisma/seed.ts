@@ -38,6 +38,26 @@ async function main() {
   ];
 
   await prisma.account.createMany({ data: accounts, skipDuplicates: true });
+
+  // --- 3. Initial Budgets (for current fiscal year) ---------------------
+  const currentFiscalYear = parseInt(process.env.FISCAL_YEAR || new Date().getFullYear().toString());
+  const allAccounts = await prisma.account.findMany({ select: { id: true } });
+
+  const budgetsToCreate: Prisma.BudgetCreateManyInput[] = allAccounts.map(acc => ({
+    accountId: acc.id,
+    fiscalYear: currentFiscalYear,
+    amountPlanned: 0, // Default to 0 as per AC5
+  }));
+
+  if (budgetsToCreate.length > 0) {
+    await prisma.budget.createMany({
+      data: budgetsToCreate,
+      skipDuplicates: true, // Avoid errors if already seeded
+    });
+    console.log(`Seeded ${budgetsToCreate.length} empty budgets for fiscal year ${currentFiscalYear}.`);
+  } else {
+    console.log('No accounts found to seed budgets for.');
+  }
 }
 
 main()

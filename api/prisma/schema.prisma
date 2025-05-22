@@ -44,6 +44,19 @@ model Account {
   category     AccountCategory
   // relations
   journalLines JournalLine[]
+  budgets      Budget[]
+}
+
+/// 予算（年度別・科目別）
+model Budget {
+  id        Int      @id @default(autoincrement())
+  account   Account  @relation(fields: [accountId], references: [id])
+  accountId Int
+  fiscalYear Int // e.g. 2025
+  amountPlanned Decimal @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  @@unique([accountId, fiscalYear])
 }
 
 /// 添付ファイル（証憑）メタ情報
