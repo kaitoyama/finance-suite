@@ -2,7 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreatePaymentInput } from './dto/create-payment.input';
 import { UpdatePaymentInput } from './dto/update-payment.input';
-import { InvoiceStatus, Payment, PaymentLabel, Prisma, Invoice } from '@prisma/client';
+import {
+  InvoiceStatus,
+  Payment,
+  PaymentLabel,
+  Prisma,
+  Invoice,
+  PaymentDirection,
+  PaymentMethod,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 async function sendWebhook(payload: {
@@ -91,18 +99,35 @@ export class PaymentsService {
   }
 
   async createPayment(createPaymentInput: CreatePaymentInput): Promise<Payment> {
-    const { invoiceId, paidAt, amount } = createPaymentInput;
+    const { invoiceId, paidAt, amount, direction, method, expenseRequestId, attachmentIds } =
+      createPaymentInput;
     const paymentData: Prisma.PaymentUncheckedCreateInput = {
-        paidAt: paidAt,
-        amount: new Decimal(amount),
-        label: PaymentLabel.NORMAL,
+      paidAt: paidAt,
+      amount: new Decimal(amount),
+      label: PaymentLabel.NORMAL,
+      direction: direction,
+      method: method,
     };
     if (invoiceId !== undefined) {
-        paymentData.invoiceId = invoiceId;
+      paymentData.invoiceId = invoiceId;
+    }
+    if (expenseRequestId !== undefined) {
+      paymentData.expenseRequestId = expenseRequestId;
     }
 
     const payment = await this.prisma.payment.create({
-      data: paymentData,
+      data: {
+        ...paymentData,
+        ...(attachmentIds && attachmentIds.length > 0
+          ? {
+              attachments: {
+                create: attachmentIds.map((attId) => ({
+                  attachmentId: attId,
+                })),
+              },
+            }
+          : {}),
+      },
     });
 
     if (payment.invoiceId) {

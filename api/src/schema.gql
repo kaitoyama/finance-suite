@@ -224,6 +224,31 @@ input CreatePaymentInput {
 
   """Amount of the payment"""
   amount: Float!
+
+  """Direction of the payment (IN/OUT)"""
+  direction: PaymentDirection!
+
+  """Method of the payment (BANK/CASH/OTHER)"""
+  method: PaymentMethod!
+
+  """ID of the expense request to associate this payment with"""
+  expenseRequestId: Int
+
+  """IDs of attachments to link to this payment"""
+  attachmentIds: [Int]
+}
+
+"""Direction of the payment (IN/OUT)"""
+enum PaymentDirection {
+  IN
+  OUT
+}
+
+"""Method of the payment (BANK/CASH/OTHER)"""
+enum PaymentMethod {
+  BANK
+  CASH
+  OTHER
 }
 
 input UpdatePaymentInput {
@@ -235,4 +260,16 @@ input UpdatePaymentInput {
 
   """Amount of the payment"""
   amount: Float
+
+  """Direction of the payment (IN/OUT)"""
+  direction: PaymentDirection
+
+  """Method of the payment (BANK/CASH/OTHER)"""
+  method: PaymentMethod
+
+  """ID of the expense request to associate this payment with"""
+  expenseRequestId: Int
+
+  """IDs of attachments to link to this payment"""
+  attachmentIds: [Int!]
 }

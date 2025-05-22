@@ -61,6 +61,8 @@ model Attachment {
   /// （後続実装予定）申請レコードに 1:1 紐づく
   expenseRequest   ExpenseRequest?
   expenseRequestId Int?            @unique
+
+  payments PaymentAttachment[]
 }
 
 /// 仕訳伝票ヘッダ
@@ -103,6 +105,8 @@ model ExpenseRequest {
   approver    User?     @relation("approver", fields: [approverId], references: [id])
   approverId  Int?
   approvedAt  DateTime?
+
+  Payment     Payment[]
 }
 
 enum RequestState {
@@ -148,6 +152,17 @@ enum PaymentLabel {
   OVERPAY
 }
 
+enum PaymentDirection {
+  IN
+  OUT
+}
+
+enum PaymentMethod {
+  BANK
+  CASH
+  OTHER
+}
+
 model Payment {
   id        Int      @id @default(autoincrement())
   paidAt    DateTime @default(now())
@@ -157,6 +172,22 @@ model Payment {
   invoice   Invoice? @relation(fields: [invoiceId], references: [id])
   invoiceId Int?
 
+  // New fields for Payment model
+  direction PaymentDirection
+  method    PaymentMethod
+  expenseRequest   ExpenseRequest? @relation(fields: [expenseRequestId], references: [id])
+  expenseRequestId Int?
+  attachments      PaymentAttachment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PaymentAttachment {
+  paymentId    Int
+  attachmentId Int
+  payment      Payment    @relation(fields: [paymentId], references: [id])
+  attachment   Attachment @relation(fields: [attachmentId], references: [id])
+
+  @@id([paymentId, attachmentId])
 }
