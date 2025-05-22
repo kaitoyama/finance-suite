@@ -114,6 +114,18 @@ enum PaymentLabel {
   OVERPAY
 }
 
+type BudgetBalance {
+  accountId: Int!
+  accountCode: String!
+  accountName: String!
+  planned: Float!
+  actual: Float!
+  remaining: Float!
+
+  """Consumption ratio 0.00–1.00"""
+  ratio: Float!
+}
+
 type BudgetDto {
   id: Int!
   accountId: Int!
@@ -139,7 +151,8 @@ type Query {
   invoices: [Invoice!]!
   payments: [Payment!]!
   payment(id: Int!): Payment
-  budgets(fiscalYear: Int!): [BudgetDto!]!
+  listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
+  budgets(year: Int!): [BudgetBalance!]!
 }
 
 input RangeInput {

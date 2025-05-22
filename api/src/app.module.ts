@@ -15,7 +15,7 @@ import { PdfModule } from './common/services/pdf.module';
 import { InvoicePdfModule } from './invoice-pdf/invoice-pdf.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { PaymentsModule } from './payments/payments.module';
-import { BudgetModule } from './budget/budget.module';
+import { BudgetsModule } from './budgets/budgets.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { BudgetModule } from './budget/budget.module';
     InvoicePdfModule,
     InvoiceModule,
     PaymentsModule,
-    BudgetModule,
+    BudgetsModule,
   ],
   providers: [AppResolver],
 })

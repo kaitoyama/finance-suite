@@ -20,6 +20,7 @@ type Documents = {
     "\n  query getAccountById($id: Int!) {\n    account(id: $id) {\n      ...AccountParts\n    }\n  }\n": typeof types.GetAccountByIdDocument,
     "\n    mutation createPresignedPost($filename: String!) {\n      createPresignedPost(filename: $filename) {\n        url\n        fields {\n          key\n          value\n        }\n        objectKey\n      }\n    }\n  ": typeof types.CreatePresignedPostDocument,
     "\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  ": typeof types.CreateAttachmentDocument,
+    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": typeof types.GetBudgetsDocument,
     "\n    mutation createInvoice($input: InvoiceInput!) {\n      createInvoice(input: $input) {\n        id\n        pdfKey\n        status\n      }\n    }\n  ": typeof types.CreateInvoiceDocument,
     "\n  query GetInvoiceById($id: Int!) {\n    invoice(id: $id) {\n      id\n      pdfKey\n      status\n      amount\n      partnerName\n      description\n      dueDate\n      invoiceNo\n    }\n  }\n": typeof types.GetInvoiceByIdDocument,
     "\n  query GetInvoices {\n    invoices {\n      id\n      invoiceNo\n      partnerName\n      amount\n      status\n      dueDate\n      createdAt\n    }\n  }\n": typeof types.GetInvoicesDocument,
@@ -34,6 +35,7 @@ const documents: Documents = {
     "\n  query getAccountById($id: Int!) {\n    account(id: $id) {\n      ...AccountParts\n    }\n  }\n": types.GetAccountByIdDocument,
     "\n    mutation createPresignedPost($filename: String!) {\n      createPresignedPost(filename: $filename) {\n        url\n        fields {\n          key\n          value\n        }\n        objectKey\n      }\n    }\n  ": types.CreatePresignedPostDocument,
     "\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  ": types.CreateAttachmentDocument,
+    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": types.GetBudgetsDocument,
     "\n    mutation createInvoice($input: InvoiceInput!) {\n      createInvoice(input: $input) {\n        id\n        pdfKey\n        status\n      }\n    }\n  ": types.CreateInvoiceDocument,
     "\n  query GetInvoiceById($id: Int!) {\n    invoice(id: $id) {\n      id\n      pdfKey\n      status\n      amount\n      partnerName\n      description\n      dueDate\n      invoiceNo\n    }\n  }\n": types.GetInvoiceByIdDocument,
     "\n  query GetInvoices {\n    invoices {\n      id\n      invoiceNo\n      partnerName\n      amount\n      status\n      dueDate\n      createdAt\n    }\n  }\n": types.GetInvoicesDocument,
@@ -80,6 +82,10 @@ export function graphql(source: "\n    mutation createPresignedPost($filename: S
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  "): (typeof documents)["\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"): (typeof documents)["\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

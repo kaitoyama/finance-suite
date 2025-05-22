@@ -42,6 +42,33 @@ export type Attachment = {
   title: Scalars['String']['output'];
 };
 
+export type BudgetBalance = {
+  __typename?: 'BudgetBalance';
+  accountCode: Scalars['String']['output'];
+  accountId: Scalars['Int']['output'];
+  accountName: Scalars['String']['output'];
+  actual: Scalars['Float']['output'];
+  planned: Scalars['Float']['output'];
+  /** Consumption ratio 0.00–1.00 */
+  ratio: Scalars['Float']['output'];
+  remaining: Scalars['Float']['output'];
+};
+
+export type BudgetDto = {
+  __typename?: 'BudgetDto';
+  accountId: Scalars['Int']['output'];
+  amountPlanned: Scalars['Float']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  fiscalYear: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+};
+
+export type BudgetInput = {
+  accountId: Scalars['Int']['input'];
+  amountPlanned: Scalars['Float']['input'];
+  fiscalYear: Scalars['Int']['input'];
+};
+
 export type CreateAccountInput = {
   category: AccountCategory;
   code: Scalars['String']['input'];
@@ -63,8 +90,16 @@ export type CreateJournalEntryInput = {
 export type CreatePaymentInput = {
   /** Amount of the payment */
   amount: Scalars['Float']['input'];
+  /** IDs of attachments to link to this payment */
+  attachmentIds?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** Direction of the payment (IN/OUT) */
+  direction: PaymentDirection;
+  /** ID of the expense request to associate this payment with */
+  expenseRequestId?: InputMaybe<Scalars['Int']['input']>;
   /** ID of the invoice to associate this payment with */
   invoiceId?: InputMaybe<Scalars['Int']['input']>;
+  /** Method of the payment (BANK/CASH/OTHER) */
+  method: PaymentMethod;
   /** Date when the payment was made */
   paidAt: Scalars['DateTime']['input'];
 };
@@ -161,6 +196,7 @@ export type Mutation = {
   removeJournalEntry?: Maybe<JournalEntry>;
   removePayment: Payment;
   removeVoucher: Voucher;
+  setBudget: BudgetDto;
   updateJournalEntry: JournalEntry;
   updatePayment: Payment;
   updateVoucher: Voucher;
@@ -222,6 +258,11 @@ export type MutationRemoveVoucherArgs = {
 };
 
 
+export type MutationSetBudgetArgs = {
+  input: BudgetInput;
+};
+
+
 export type MutationUpdateJournalEntryArgs = {
   updateJournalEntryInput: UpdateJournalEntryInput;
 };
@@ -247,10 +288,21 @@ export type Payment = {
   paidAt: Scalars['DateTime']['output'];
 };
 
+/** Direction of the payment (IN/OUT) */
+export type PaymentDirection =
+  | 'IN'
+  | 'OUT';
+
 export type PaymentLabel =
   | 'NORMAL'
   | 'OVERPAY'
   | 'PARTIAL';
+
+/** Method of the payment (BANK/CASH/OTHER) */
+export type PaymentMethod =
+  | 'BANK'
+  | 'CASH'
+  | 'OTHER';
 
 export type PresignedPayload = {
   __typename?: 'PresignedPayload';
@@ -269,6 +321,7 @@ export type Query = {
   __typename?: 'Query';
   account?: Maybe<Account>;
   accounts: Array<Account>;
+  budgets: Array<BudgetBalance>;
   getPresignedS3Url?: Maybe<Scalars['String']['output']>;
   /** Health-check */
   hello: Scalars['String']['output'];
@@ -276,6 +329,7 @@ export type Query = {
   invoices: Array<Invoice>;
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
+  listBudgetsByYear: Array<BudgetDto>;
   /** 現在のユーザーを返す */
   me: MeDto;
   payment?: Maybe<Payment>;
@@ -287,6 +341,11 @@ export type Query = {
 
 export type QueryAccountArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryBudgetsArgs = {
+  year: Scalars['Int']['input'];
 };
 
 
@@ -307,6 +366,11 @@ export type QueryJournalEntriesArgs = {
 
 export type QueryJournalEntryArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryListBudgetsByYearArgs = {
+  fiscalYear: Scalars['Int']['input'];
 };
 
 
@@ -335,8 +399,16 @@ export type UpdateJournalEntryInput = {
 export type UpdatePaymentInput = {
   /** Amount of the payment */
   amount?: InputMaybe<Scalars['Float']['input']>;
+  /** IDs of attachments to link to this payment */
+  attachmentIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** Direction of the payment (IN/OUT) */
+  direction?: InputMaybe<PaymentDirection>;
+  /** ID of the expense request to associate this payment with */
+  expenseRequestId?: InputMaybe<Scalars['Int']['input']>;
   /** ID of the invoice to associate this payment with */
   invoiceId?: InputMaybe<Scalars['Int']['input']>;
+  /** Method of the payment (BANK/CASH/OTHER) */
+  method?: InputMaybe<PaymentMethod>;
   /** Date when the payment was made */
   paidAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
@@ -395,6 +467,13 @@ export type CreateAttachmentMutationVariables = Exact<{
 
 export type CreateAttachmentMutation = { __typename?: 'Mutation', createAttachment: { __typename?: 'Attachment', id: number, s3Key: string, title: string, amount: number } };
 
+export type GetBudgetsQueryVariables = Exact<{
+  year: Scalars['Int']['input'];
+}>;
+
+
+export type GetBudgetsQuery = { __typename?: 'Query', budgets: Array<{ __typename?: 'BudgetBalance', accountId: number, accountCode: string, accountName: string, planned: number, actual: number, remaining: number, ratio: number }> };
+
 export type CreateInvoiceMutationVariables = Exact<{
   input: InvoiceInput;
 }>;
@@ -439,6 +518,7 @@ export const GetAccountsDocument = {"kind":"Document","definitions":[{"kind":"Op
 export const GetAccountByIdDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getAccountById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"account"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AccountParts"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AccountParts"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Account"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"category"}}]}}]} as unknown as DocumentNode<GetAccountByIdQuery, GetAccountByIdQueryVariables>;
 export const CreatePresignedPostDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createPresignedPost"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filename"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPresignedPost"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filename"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filename"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"fields"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}},{"kind":"Field","name":{"kind":"Name","value":"objectKey"}}]}}]}}]} as unknown as DocumentNode<CreatePresignedPostMutation, CreatePresignedPostMutationVariables>;
 export const CreateAttachmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createAttachment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateAttachmentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createAttachment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"s3Key"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}}]}}]}}]} as unknown as DocumentNode<CreateAttachmentMutation, CreateAttachmentMutationVariables>;
+export const GetBudgetsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetBudgets"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"year"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"budgets"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"year"},"value":{"kind":"Variable","name":{"kind":"Name","value":"year"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accountId"}},{"kind":"Field","name":{"kind":"Name","value":"accountCode"}},{"kind":"Field","name":{"kind":"Name","value":"accountName"}},{"kind":"Field","name":{"kind":"Name","value":"planned"}},{"kind":"Field","name":{"kind":"Name","value":"actual"}},{"kind":"Field","name":{"kind":"Name","value":"remaining"}},{"kind":"Field","name":{"kind":"Name","value":"ratio"}}]}}]}}]} as unknown as DocumentNode<GetBudgetsQuery, GetBudgetsQueryVariables>;
 export const CreateInvoiceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createInvoice"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"InvoiceInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createInvoice"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"pdfKey"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]} as unknown as DocumentNode<CreateInvoiceMutation, CreateInvoiceMutationVariables>;
 export const GetInvoiceByIdDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetInvoiceById"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invoice"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"pdfKey"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"partnerName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"invoiceNo"}}]}}]}}]} as unknown as DocumentNode<GetInvoiceByIdQuery, GetInvoiceByIdQueryVariables>;
 export const GetInvoicesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetInvoices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invoices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"invoiceNo"}},{"kind":"Field","name":{"kind":"Name","value":"partnerName"}},{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"dueDate"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetInvoicesQuery, GetInvoicesQueryVariables>;
