@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreatePaymentInput } from './dto/create-payment.input';
 import { UpdatePaymentInput } from './dto/update-payment.input';
@@ -12,6 +12,7 @@ import {
   PaymentMethod,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ExpenseService } from '../expense/expense.service';
 
 async function sendWebhook(payload: {
   type: string;
@@ -39,7 +40,10 @@ async function sendWebhook(payload: {
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly expenseService: ExpenseService,
+  ) {}
 
   async reconcileInvoice(invoiceId: number): Promise<void> {
     const invoice = await this.prisma.invoice.findUnique({
@@ -144,7 +148,17 @@ export class PaymentsService {
             status: updatedInvoice.status,
         });
       }
-      return reconciledPayment;
+    }
+
+    if (expenseRequestId && payment) {
+      try {
+        await this.expenseService.transitionState(expenseRequestId, { 
+          type: 'PAY', 
+          paymentId: payment.id 
+        });
+      } catch (error) {
+        console.error(`Failed to transition expense request ${expenseRequestId} to PAID:`, error);
+      }
     }    
     return payment;
   }

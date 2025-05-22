@@ -12,6 +12,27 @@ type MeDto {
   isAdmin: Boolean!
 }
 
+type User {
+  id: ID!
+  username: String!
+  isAdmin: Boolean!
+}
+
+type Attachment {
+  id: Int!
+  s3Key: String!
+  title: String!
+  amount: Float!
+  createdAt: DateTime!
+  uploader: User!
+  uploaderId: Int!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type PresignedPayloadField {
   key: String!
   value: String!
@@ -21,25 +42,6 @@ type PresignedPayload {
   url: String!
   fields: [PresignedPayloadField!]!
   objectKey: String!
-}
-
-type Attachment {
-  id: Int!
-  s3Key: String!
-  title: String!
-  amount: Float!
-  createdAt: DateTime!
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
-type User {
-  id: ID!
-  username: String!
-  isAdmin: Boolean!
 }
 
 type Account {
@@ -104,14 +106,53 @@ type Payment {
   paidAt: DateTime!
   amount: Float!
   label: PaymentLabel!
+  direction: PaymentDirection!
+  method: PaymentMethod!
   invoice: Invoice
   invoiceId: Int
+  attachments: [Attachment]
+  createdAt: DateTime
 }
 
 enum PaymentLabel {
   NORMAL
   PARTIAL
   OVERPAY
+}
+
+"""Direction of the payment (IN/OUT)"""
+enum PaymentDirection {
+  IN
+  OUT
+}
+
+"""Method of the payment (BANK/CASH/OTHER)"""
+enum PaymentMethod {
+  BANK
+  CASH
+  OTHER
+}
+
+type ExpenseRequest {
+  id: Int!
+  amount: Float!
+  state: RequestState!
+  createdAt: DateTime!
+  approvedAt: DateTime
+  attachment: Attachment!
+  requester: User!
+  approver: User
+  payment: Payment
+}
+
+"""The state of an expense request"""
+enum RequestState {
+  DRAFT
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CLOSED
 }
 
 type BudgetBalance {
@@ -134,32 +175,10 @@ type BudgetDto {
   createdAt: DateTime!
 }
 
-type ExpenseRequest {
-  id: Int!
-  amount: Float!
-  state: RequestState!
-  createdAt: DateTime!
-  approvedAt: DateTime
-  attachmentId: Int!
-  requester: User!
-  approver: User
-  payment: Payment
-}
-
-"""The state of an expense request"""
-enum RequestState {
-  DRAFT
-  PENDING
-  APPROVED
-  PAID
-  REJECTED
-  CLOSED
-}
-
 type Query {
   """Health-check"""
   hello: String!
-  getPresignedS3Url(key: String!): String
+  getPresignedS3Url(title: String!): PresignedPayload!
   vouchers: [Voucher!]!
   voucher(id: Int!): Voucher!
 
@@ -173,10 +192,10 @@ type Query {
   invoices: [Invoice!]!
   payments: [Payment!]!
   payment(id: Int!): Payment
-  listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
-  budgets(year: Int!): [BudgetBalance!]!
   expenseRequest(id: Int!): ExpenseRequest
   expenseRequests: [ExpenseRequest!]
+  listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
+  budgets(year: Int!): [BudgetBalance!]!
 }
 
 input RangeInput {
@@ -200,12 +219,12 @@ type Mutation {
   createPayment(createPaymentInput: CreatePaymentInput!): Payment!
   updatePayment(id: Int!, updatePaymentInput: UpdatePaymentInput!): Payment!
   removePayment(id: Int!): Payment!
-  setBudget(input: BudgetInput!): BudgetDto!
   submitExpenseRequest(input: CreateExpenseRequestInput!): ExpenseRequest!
   approveExpenseRequest(id: Int!): ExpenseRequest!
   rejectExpenseRequest(id: Int!): ExpenseRequest!
   markExpensePaid(input: MarkExpensePaidInput!): ExpenseRequest!
   closeExpenseRequest(id: Int!): ExpenseRequest!
+  setBudget(input: BudgetInput!): BudgetDto!
 }
 
 input CreateVoucherInput {
@@ -290,19 +309,6 @@ input CreatePaymentInput {
   attachmentIds: [Int]
 }
 
-"""Direction of the payment (IN/OUT)"""
-enum PaymentDirection {
-  IN
-  OUT
-}
-
-"""Method of the payment (BANK/CASH/OTHER)"""
-enum PaymentMethod {
-  BANK
-  CASH
-  OTHER
-}
-
 input UpdatePaymentInput {
   """ID of the invoice to associate this payment with"""
   invoiceId: Int
@@ -326,12 +332,6 @@ input UpdatePaymentInput {
   attachmentIds: [Int!]
 }
 
-input BudgetInput {
-  accountId: Int!
-  fiscalYear: Int!
-  amountPlanned: Float!
-}
-
 input CreateExpenseRequestInput {
   amount: Float!
   attachmentId: Int!
@@ -340,6 +340,12 @@ input CreateExpenseRequestInput {
 input MarkExpensePaidInput {
   expenseRequestId: Int!
   paymentId: Int!
+}
+
+input BudgetInput {
+  accountId: Int!
+  fiscalYear: Int!
+  amountPlanned: Float!
 }
 
 type Subscription {

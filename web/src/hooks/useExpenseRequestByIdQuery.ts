@@ -2,13 +2,12 @@ import { gql } from '@urql/core';
 import { useQuery } from 'urql';
 
 export const expenseRequestByIdQueryDocument = gql`
-  query ExpenseRequestById($id: Int!) {
+  query SimpleExpenseRequestById($id: Int!) {
     expenseRequest(id: $id) {
       id,
       amount,
       state,
       createdAt,
-      attachmentId,
       approver {
         id,
         username,

@@ -1,6 +1,6 @@
 import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity'; // Assuming User entity path
-// import { Attachment } from '../../attachments/entities/attachment.entity'; // Temporarily commented out
+import { Attachment } from '../../attachments/entities/attachment.entity'; // Path to the new Attachment entity
 import { Payment } from '../../payments/entities/payment.entity'; // Assuming Payment entity path
 import { RequestState } from '@prisma/client'; // Import the enum from Prisma client
 
@@ -28,10 +28,8 @@ export class ExpenseRequest {
   approvedAt?: Date;
 
   // Relations
-  // @Field(() => Attachment)
-  // attachment: Attachment; // Temporarily commented out
-  @Field(() => Int) // Expose attachmentId directly for now
-  attachmentId: number;
+  @Field(() => Attachment)
+  attachment: Attachment; // Temporarily commented out
 
   @Field(() => User)
   requester: User;

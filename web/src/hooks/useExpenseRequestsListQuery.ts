@@ -8,7 +8,10 @@ export const expenseRequestsListQueryDocument = gql`
       amount
       state
       createdAt
-      attachmentId # Assuming we want to show if there's an attachment or count
+      attachment {
+        id
+        title
+      }
       # We might need more fields depending on AC-2 like requester name
       requester {
         id

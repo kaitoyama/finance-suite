@@ -80,7 +80,7 @@ describe('ExpenseService', () => {
       mockPrismaService.expenseRequest.findUnique.mockResolvedValueOnce(draftExpense);
       mockPrismaService.expenseRequest.update.mockResolvedValue(pendingExpense);
 
-      const created = await service.createDraftExpenseRequest(createInput, mockUser);
+      const created = await service.createDraftExpenseRequest(createInput, mockUser.username);
       expect(created.state).toBe('DRAFT');
       expenseId = created.id;
 
@@ -164,7 +164,7 @@ describe('ExpenseService', () => {
 
       mockPrismaService.expenseRequest.create.mockResolvedValue(expectedResult);
 
-      const result = await service.createDraftExpenseRequest(input, mockUser);
+      const result = await service.createDraftExpenseRequest(input, mockUser.username);
       expect(result).toEqual(expectedResult);
       expect(mockPrismaService.expenseRequest.create).toHaveBeenCalledWith({
         data: {

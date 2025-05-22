@@ -35,7 +35,7 @@ import { useCreateAttachment, useCreatePresignedPost } from '@/hooks/useAttachme
 import { CreateAttachmentInput, CreateExpenseRequestInput } from '@/gql/graphql'; // Import generated type
 
 const expenseFormSchema = z.object({
-  amount: z.coerce.number().positive({ message: 'Amount must be positive' }),
+  amount: z.coerce.number().int().positive({ message: 'Amount must be an integer and positive' }),
   accountId: z.string().min(1, { message: 'Expense account is required' }), // Will be string from Select, convert to Int for mutation
   description: z.string().optional(),
   attachment: z.instanceof(File).optional(),
@@ -188,9 +188,15 @@ export default function NewExpenseRequestPage() {
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount *</FormLabel>
+                <FormLabel>Amount * (JPY)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="0.00" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="0"
+                    step="1"
+                    {...field} 
+                    onChange={event => field.onChange(parseInt(event.target.value, 10) || 0)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,5 +1,5 @@
 import { graphql } from "@/gql";
-import { InvoiceInput } from "@/gql/graphql";
+import { InvoiceInput, GetPresignedS3UrlQuery } from "@/gql/graphql";
 import { useMutation, useQuery } from "urql";
 import React from "react";
 
@@ -43,8 +43,11 @@ const GetInvoicesQueryDocument = graphql(`
 `);
 
 const GetPresignedS3UrlQueryDocument = graphql(`
-  query GetPresignedS3Url($key: String!) {
-    getPresignedS3Url(key: $key)
+  query GetPresignedS3Url($title: String!) {
+    getPresignedS3Url(title: $title) {
+      url
+      objectKey
+    }
   }
 `);
 
@@ -89,25 +92,24 @@ export const useGetInvoices = () => {
   };
 };
 
-export const useGetPresignedS3Url = (key: string | null | undefined) => {
+export const useGetPresignedS3Url = (title: string | null | undefined) => {
   const [{ data, fetching, error }, executeQuery] = useQuery({
-    query: GetPresignedS3UrlQueryDocument,
-    variables: { key: key || '' }, // Ensure key is not null/undefined for variables
-    pause: !key, // Pause query if key is not available
-    requestPolicy: 'network-only', // Presigned URLs are often short-lived, so fetch fresh
+    query: GetPresignedS3UrlQueryDocument as any,
+    variables: { title: title || '' },
+    pause: !title,
+    requestPolicy: 'network-only',
   });
 
-  // Function to manually trigger the query if needed, though pause handles initial load
   const fetchUrl = React.useCallback(() => {
-    if (key) {
-      executeQuery({ requestPolicy: 'network-only' }); // Re-fetch with network-only
+    if (title) {
+      executeQuery({ requestPolicy: 'network-only' });
     }
-  }, [key, executeQuery]);
+  }, [title, executeQuery]);
 
   return {
-    presignedUrl: data?.getPresignedS3Url,
+    presignedUrlData: data?.getPresignedS3Url,
     fetchingUrl: fetching,
     fetchUrlError: error,
-    retryFetchUrl: fetchUrl, // Expose a retry mechanism
+    retryFetchUrl: fetchUrl,
   };
 };

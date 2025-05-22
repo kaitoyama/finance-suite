@@ -10,6 +10,14 @@ export class AttachmentsService {
     private readonly minio: MinioService,
   ) {}
 
+  async getPresignedS3Url(objectKey: string, username: string) {
+    // Basic implementation, adapt as needed for actual S3 GET URL generation
+    // This might involve calling a method on this.minio like generatePresignedGetUrl(objectKey)
+    // Also, you might want to log access or check permissions based on the username.
+    const url = await this.minio.generatePresignedGetUrl(objectKey);
+    return { url, objectKey };
+  }
+
   async createPresignedPost(filename: string) {
     const { postURL, formData } =
       await this.minio.generatePresignedPost(filename);

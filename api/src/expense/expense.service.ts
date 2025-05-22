@@ -7,7 +7,6 @@ import { transition, MachineSnapshot, AnyEventObject, StateValue, AnyActorRef, M
 import { isDeepStrictEqual } from 'util';
 import { PubSub } from 'graphql-subscriptions';
 
-// Placeholder for DTOs to be created later
 export interface CreateExpenseRequestInput {
   amount: number;
   attachmentId: number;
@@ -18,13 +17,19 @@ export interface CreateExpenseRequestInput {
 const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
   requester: true,
   approver: true,
-  payment: true,
-  // attachment: true, // Add if/when Attachment entity is used and relation is direct
+  payment: {
+    include: {
+      attachments: {
+        include: {
+          attachment: true,
+        },
+      },
+    },
+  },
+  attachment: true,
 };
 
-// This type should correctly reflect that requester, approver, payment are objects
-// and attachmentId is a scalar. attachment object itself is not included.
-type FullExpenseRequest = Prisma.ExpenseRequestGetPayload<{
+export type FullExpenseRequest = Prisma.ExpenseRequestGetPayload<{
   include: typeof expenseRequestIncludeRelations
 }>;
 
@@ -56,8 +61,14 @@ export class ExpenseService {
 
   async createDraftExpenseRequest(
     input: CreateExpenseRequestInput,
-    requester: PrismaUser,
+    requesterUsername: string,
   ): Promise<FullExpenseRequest> {
+    const requester = await this.prisma.user.findUnique({
+      where: { username: requesterUsername },
+    });
+    if (!requester) {
+      throw new NotFoundException(`User with username ${requesterUsername} not found`);
+    }
     this.logger.log(`User ${requester.id} creating draft expense request for amount ${input.amount}`);
     return this.prisma.expenseRequest.create({
       data: {

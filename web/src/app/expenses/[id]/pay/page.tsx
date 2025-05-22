@@ -1,191 +1,191 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { PaymentForm, PaymentMethod as FormPaymentMethod } from '@/components/PaymentForm';
-import { 
-  PaymentDirection, 
   CreatePaymentInput,
   PaymentMethod as GqlPaymentMethod,
+  PaymentDirection as GqlPaymentDirection,
+  User,
+  CreateAttachmentInput,
 } from '@/gql/graphql';
-import { calcPaymentLabel, PaymentLabel as LocalPaymentLabel } from '@/lib/payment';
-import { useState, useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useExpenseRequestByIdQuery } from '@/hooks/useExpenseRequestByIdQuery';
 import { useCreatePaymentMutation } from '@/hooks/useCreatePaymentMutation';
+import { useExpenseRequestByIdQuery } from '@/hooks/useExpenseRequestByIdQuery';
+import { useCreateAttachment, useCreatePresignedPost } from '@/hooks/useAttachment';
+import { PaymentForm, PaymentMethod as FormPaymentMethod } from '@/components/PaymentForm'; // Assuming PaymentForm handles its own state/validation for method
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input'; // For file input
 
-// Helper to map form's PaymentMethod to GraphQL's PaymentMethod enum
-const mapFormMethodToGql = (method: FormPaymentMethod): GqlPaymentMethod => {
-  return method as GqlPaymentMethod; 
-};
+// Temporarily removing Zod schema for simplicity
+// const paymentFormSchema = z.object({ ... });
 
-// Define the type for values coming from PaymentForm more accurately
-interface PaymentFormValues {
+// type PaymentFormValues = z.infer<typeof paymentFormSchema> & { amount: number; };
+// Assuming PaymentFormValues will be a simpler type provided by PaymentForm or defined manually
+interface PaymentFormSubmitValues {
   paidAt: Date;
-  amount: number;
-  method: FormPaymentMethod;
-  attachments: File[]; // Assuming PaymentForm provides files this way
+  method: GqlPaymentMethod;
+  attachments?: File[]; // Assuming PaymentForm will provide this
 }
 
 export default function PayExpensePage() {
   const router = useRouter();
   const params = useParams();
-  const expenseId = params.id as string;
+  const expenseId = params?.id as string;
+  const numericId = expenseId ? parseInt(expenseId, 10) : undefined;
 
-  const [showWarningDialog, setShowWarningDialog] = useState(false);
-  const [warningDialogContent, setWarningDialogContent] = useState({ title: '', description: '' });
-  // Store the full CreatePaymentInput that would be sent after dialog confirmation
-  const [paymentInputForDialog, setPaymentInputForDialog] = useState<CreatePaymentInput | null>(null);
+  // The hook expects a number. We rely on rendering logic to handle cases where numericId is undefined.
+  // The `!` tells TypeScript that we are sure `numericId` will be a number when the hook actually executes
+  // in a way that matters (e.g. fetches data), or that the hook itself can handle being called with an ID that might
+  // temporarily be undefined if it has internal pausing based on a falsy ID (less common for simple hooks).
+  // Given the strict 'number' requirement, the component's later checks for `!numericId` are key.
+  const { data: expenseData, fetching: expenseLoading, error: expenseError } =
+    useExpenseRequestByIdQuery(numericId!);
 
-  const { data: expenseData, fetching: fetchingExpense, error: expenseError } = useExpenseRequestByIdQuery(parseInt(expenseId, 10));
-  const { loading: creatingPayment, error: paymentError, createPayment } = useCreatePaymentMutation();
+  const { 
+    loading: paymentFetching,         // Correct: object has 'loading', alias to 'paymentFetching'
+    error: paymentErrorState,           // Correct: object has 'error', alias to 'paymentErrorState'
+    createPayment: executeCreatePayment // Correct: object has 'createPayment', alias to 'executeCreatePayment'
+  } = useCreatePaymentMutation();
+  const { createAttachment, loading: attachmentLoading, error: attachmentError } = useCreateAttachment();
+  const { presignedPost, loading: presignedPostLoading, error: presignedPostError } = useCreatePresignedPost();
 
-  const handleFormSubmit = async (values: PaymentFormValues) => { 
-    if (!expenseData?.expenseRequest) {
-      toast.error('経費情報が見つかりません。');
+  const handleFormSubmit = async (values: PaymentFormSubmitValues) => { 
+    if (!expenseData?.expenseRequest || !numericId) {
+      toast.error('Expense data not loaded or ID missing.');
       return;
     }
 
-    const effectiveLabel = calcPaymentLabel(values.amount, expenseData.expenseRequest.amount);
-    
-    // TODO: Implement actual attachment upload logic here
-    // For now, we'll prepare an empty array for attachmentIds
-    // const uploadedAttachmentIds = await uploadFilesAndGetIds(values.attachments);
-    const uploadedAttachmentIds: number[] = []; 
+    // Use files from `values.attachments` provided by PaymentForm
+    const filesToUpload = values.attachments || [];
 
-    const currentPaymentInput: CreatePaymentInput = {
-        amount: values.amount,
-        paidAt: values.paidAt.toISOString().split('T')[0], 
-        direction: "OUT" as PaymentDirection, // Using string literal and casting
-        method: mapFormMethodToGql(values.method),
-        expenseRequestId: parseInt(expenseId, 10),
-        // label is NOT part of CreatePaymentInput according to schema
-        attachmentIds: uploadedAttachmentIds, 
-    };
-    setPaymentInputForDialog(currentPaymentInput);
-
-    if (effectiveLabel === 'PARTIAL') {
-      setWarningDialogContent({
-        title: '支払額確認',
-        description: `支払額 (${values.amount.toLocaleString()}円) が経費申請額 (${expenseData.expenseRequest.amount.toLocaleString()}円) より少ないですが、この内容で登録しますか？`,
-      });
-      setShowWarningDialog(true);
-      return; 
-    } else if (effectiveLabel === 'OVERPAY') {
-      setWarningDialogContent({
-        title: '支払額確認',
-        description: `支払額 (${values.amount.toLocaleString()}円) が経費申請額 (${expenseData.expenseRequest.amount.toLocaleString()}円) を超過しています。この内容で登録しますか？`,
-      });
-      setShowWarningDialog(true);
-      return; 
+    if (filesToUpload.length === 0) { 
+      toast.error('証憑ファイルを添付してください。');
+      return;
     }
 
-    await processPaymentSubmission(currentPaymentInput);
-  };
+    let uploadedAttachmentIds: number[] = [];
+    for (const file of filesToUpload) { // Iterate over filesFromForm
+        try {
+          const s3Key = `${self.crypto.randomUUID()}-${file.name}`;
+          const presignedPostResult = await presignedPost(s3Key);
+          if (!presignedPostResult) throw new Error('Failed to get S3 presigned post.');
+          const formData = new FormData();
+          presignedPostResult.fields.forEach(({ key, value }) => formData.append(key, value));
+          formData.append('file', file, file.name);
+          const s3Response = await fetch(presignedPostResult.url, { method: 'POST', body: formData });
+          if (!s3Response.ok) {
+            const errorText = await s3Response.text();
+            throw new Error(`S3 Upload Failed: ${s3Response.status} ${errorText}`);
+          }
+          const attachmentInput: CreateAttachmentInput = {
+            s3Key,
+            title: file.name,
+            amount: expenseData.expenseRequest.amount,
+          };
+          const dbAttachment = await createAttachment(attachmentInput);
+          if (!dbAttachment || !dbAttachment.id) throw new Error('Failed to save attachment to DB.');
+          uploadedAttachmentIds.push(dbAttachment.id);
+        } catch (error: any) {
+          toast.error(`Attachment upload failed for ${file.name}: ${error.message}`);
+          return; 
+        }
+      }
+    if (uploadedAttachmentIds.length > 0) { // Only toast if attachments were processed
+        toast.success(`${uploadedAttachmentIds.length} attachment(s) processed.`);
+    }
 
-  const processPaymentSubmission = async (paymentInput: CreatePaymentInput) => {
-    if (!expenseData?.expenseRequest) return;
+    const paymentInput: CreatePaymentInput = {
+      paidAt: values.paidAt.toISOString(),
+      amount: expenseData.expenseRequest.amount,
+      direction: 'OUT', 
+      method: values.method, 
+      expenseRequestId: numericId,
+      invoiceId: undefined,
+      attachmentIds: uploadedAttachmentIds, 
+    };
 
     try {
-      const result = await createPayment(paymentInput); 
-      if (result) { 
-        toast.success('支払いが正常に登録されました。');
-        router.push(`/expenses/${expenseData.expenseRequest.id}`); 
-      } else {
-         toast.error('支払登録に失敗しました。レスポンスデータがありません。');
-      }
-    } catch (e: any) {
-      console.error('Payment submission error:', e);
-      toast.error(e.message || '支払登録中にエラーが発生しました。');
+      const result = await executeCreatePayment(paymentInput);
+      if (result.error) throw result.error;
+      if (!result?.id) throw new Error('Failed to register payment.');
+      toast.success('支払いが正常に登録されました。');
+      router.push(`/expenses/${expenseData.expenseRequest.id}`);
+    } catch (error: any) {      
+      toast.error(`支払登録エラー: ${error.message || 'Unknown error'}`);
     }
-    setShowWarningDialog(false); 
   };
-
-  const handleDialogConfirm = () => {
-    if (paymentInputForDialog) {
-      processPaymentSubmission(paymentInputForDialog);
-    }
-    setShowWarningDialog(false);
-  };
-
-  const handleDialogCancel = () => {
-    setShowWarningDialog(false);
-  };
-
+  
   useEffect(() => {
-    if (paymentError) {
-      toast.error(paymentError.message || '支払処理でエラーが発生しました。');
+    if (paymentErrorState) {
+      toast.error(paymentErrorState.message || '支払処理でエラーが発生しました。');
     }
-  }, [paymentError]);
+  }, [paymentErrorState]);
 
-  if (fetchingExpense) {
+  if (expenseLoading || !numericId) return <div className="container mx-auto p-4">Loading...</div>;
+  if (expenseError) return <div className="container mx-auto p-4">Error loading expense: {expenseError.message}</div>;
+  if (!expenseData?.expenseRequest) return <div className="container mx-auto p-4">Expense not found.</div>;
+
+  // Prevent payment if not APPROVED, with specific messages for other states
+  if (expenseData.expenseRequest.state !== 'APPROVED') {
+    let message = 'この経費申請は現在支払処理を行えません。'; // Default message
+    const currentState = expenseData.expenseRequest.state;
+
+    switch (currentState) {
+      case 'PAID':
+        message = 'この経費申請は既に支払済みです。';
+        break;
+      case 'REJECTED':
+        message = 'この経費申請は差戻しされています。内容を確認し、必要であれば再申請してください。';
+        break;
+      case 'PENDING':
+        message = 'この経費申請は現在承認待ちです。承認後に支払処理が可能になります。';
+        break;
+      case 'DRAFT':
+        message = 'この経費申請は下書き状態です。申請を提出してください。';
+        break;
+      case 'CLOSED':
+        message = 'この経費申請はクローズされています。';
+        break;
+      default:
+        // Keep the default message or handle unknown states
+        message = `現在のステータス「${currentState}」では支払処理を行えません。`;
+        break;
+    }
+
     return (
       <div className="container mx-auto p-4 max-w-2xl">
-        <Skeleton className="h-8 w-1/4 mb-4" />
-        <Skeleton className="h-12 w-1/2 mb-6" />
-        <div className="space-y-8">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-          <div className="flex justify-end space-x-2">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </div>
+        <Alert variant="default"> {/* Consider using variant="destructive" for REJECTED or other terminal states */}
+          <AlertTitle>支払不可</AlertTitle>
+          <AlertDescription>
+            {message}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => router.back()} className="mt-4">戻る</Button>
       </div>
     );
   }
 
-  if (expenseError) {
-    toast.error(`経費情報の読み込みエラー: ${expenseError.message}`);
-    return <p className="text-red-500 p-4">エラー: {expenseError.message}</p>;
-  }
-
-  if (!expenseData?.expenseRequest) {
-    return <p className="p-4">経費申請が見つかりません。</p>;
-  }
-
   return (
     <div className="container mx-auto p-4 max-w-2xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">
-          経費支払登録 (ID: {expenseData.expenseRequest.id})
-        </h1>
-        <p className="text-sm text-gray-600 mb-1">申請者: {expenseData.expenseRequest.requester?.name || 'N/A'}</p>
-        <p className="text-sm text-gray-600">現在の状態: {expenseData.expenseRequest.status || 'N/A'}</p>
-      </header>
+      <Toaster position="top-center" />
+      <h1 className="text-2xl font-bold mb-4">経費支払</h1>
+      <div className="mb-6 p-4 border rounded-md">
+        <h2 className="text-lg font-semibold mb-2">経費情報</h2>
+        <p>ID: {expenseData.expenseRequest.id}</p>
+        <p>申請者: {expenseData.expenseRequest.requester.username}</p>
+        <p>金額: {expenseData.expenseRequest.amount.toLocaleString()} 円</p>
+        <p>ステータス: {expenseData.expenseRequest.state}</p>
+      </div>
 
-      <PaymentForm
-        expenseAmount={expenseData.expenseRequest.amount} 
-        expenseId={expenseId}
-        onSubmit={handleFormSubmit as any} // Still using 'as any' due to PaymentForm's generic values.
-                                        // Ideally, PaymentForm's onSubmit should expect PaymentFormValues.
+      <PaymentForm 
+        onSubmit={handleFormSubmit} 
         onCancel={() => router.back()}
-        isLoading={creatingPayment}
+        isLoading={paymentFetching}
+        expenseAmount={expenseData.expenseRequest.amount}
+        expenseId={expenseData.expenseRequest.id.toString()}
       />
-
-      <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{warningDialogContent.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {warningDialogContent.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDialogCancel}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDialogConfirm}>登録する</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 } 

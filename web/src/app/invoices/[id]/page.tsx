@@ -12,7 +12,7 @@ export default function InvoicePreviewPage() {
   const { invoice, fetching: fetchingInvoice, error: invoiceError } = useGetInvoiceById(id);
 
   const {
-    presignedUrl,
+    presignedUrlData,
     fetchingUrl,
     fetchUrlError,
     retryFetchUrl
@@ -22,17 +22,17 @@ export default function InvoicePreviewPage() {
   const [downloadUrl, setDownloadUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (presignedUrl) {
-      setIframeSrc(presignedUrl);
-      setDownloadUrl(presignedUrl);
+    if (presignedUrlData?.url) {
+      setIframeSrc(presignedUrlData.url);
+      setDownloadUrl(presignedUrlData.url);
     }
-  }, [presignedUrl]);
+  }, [presignedUrlData]);
   
   React.useEffect(() => {
-    if (invoice?.pdfKey && !presignedUrl && !fetchingUrl && !fetchUrlError) {
+    if (invoice?.pdfKey && !presignedUrlData?.url && !fetchingUrl && !fetchUrlError) {
         retryFetchUrl();
     }
-  }, [invoice?.pdfKey, presignedUrl, fetchingUrl, fetchUrlError, retryFetchUrl]);
+  }, [invoice?.pdfKey, presignedUrlData?.url, fetchingUrl, fetchUrlError]);
 
   if (fetchingInvoice) {
     return <div className="container mx-auto p-4 text-center">請求書情報を読み込み中...</div>;

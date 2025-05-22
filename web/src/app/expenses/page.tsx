@@ -134,7 +134,8 @@ const AdminExpensesPage = () => {
     );
   }
 
-  const tableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
+  // Data for PENDING expenses table (existing logic)
+  const pendingTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
     .filter((req: any): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
         if (!req) return false;
         const isPending = req.state === 'PENDING';
@@ -145,7 +146,7 @@ const AdminExpensesPage = () => {
             (typeof req.requester === 'object' && 
              req.requester !== null && 
              typeof req.requester.username === 'string' && 
-            (typeof (req.requester as any).id === 'string' || typeof (req.requester as any).id === 'number') // Allow id to be string or number for requester
+            (typeof (req.requester as any).id === 'string' || typeof (req.requester as any).id === 'number') 
             );
         return isPending && hasValidId && hasValidAmount && hasValidCreatedAt && hasValidRequester;
     })
@@ -156,22 +157,67 @@ const AdminExpensesPage = () => {
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachmentId
+      attachmentId: req.attachmentId // Assuming attachmentId is what you had for attachment count logic
+    }));
+
+  // Data for ALL expenses table (new logic)
+  const allTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
+    .filter((req: any): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
+        if (!req) return false;
+        // Basic type guards, adjust as necessary for your full data structure
+        const hasValidId = typeof req.id === 'number';
+        const hasValidAmount = typeof req.amount === 'number';
+        const hasValidCreatedAt = typeof req.createdAt === 'string';
+        const hasValidState = typeof req.state === 'string';
+        const hasValidRequester = req.requester === null || 
+            (typeof req.requester === 'object' && 
+             req.requester !== null && 
+             typeof req.requester.username === 'string' && 
+             (typeof (req.requester as any).id === 'string' || typeof (req.requester as any).id === 'number')
+            );
+        return hasValidId && hasValidAmount && hasValidCreatedAt && hasValidState && hasValidRequester;
+    })
+    .map((req: any) => ({
+      __typename: req.__typename,
+      id: req.id,
+      requester: req.requester ? { __typename: req.requester.__typename, id: String(req.requester.id), username: req.requester.username } : null,
+      amount: req.amount,
+      createdAt: req.createdAt,
+      state: req.state as string,
+      attachmentId: req.attachmentId // Assuming attachmentId is what you had for attachment count logic
     }));
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 space-y-8"> {/* Added space-y-8 for spacing between tables */}
       <Toaster position="top-center" />
-      <h1 className="text-2xl font-bold mb-4">未承認経費一覧</h1>
-      <DataTable<ExpenseRequestForTable, any> // Added 'any' for TValue for simplicity
-        columns={columns}
-        data={tableData}
-        onRowClick={(row: any) => { // Using any for row here
-          if (row.original.id) { 
-             router.push(`/admin/expenses/${row.original.id}`);
-          }
-        }}
-      />
+      
+      {/* Pending Expenses Table (existing) */}
+      <div>
+        <h1 className="text-2xl font-bold mb-4">未承認経費一覧</h1>
+        <DataTable<ExpenseRequestForTable, any>
+          columns={columns} // Reusing columns for now
+          data={pendingTableData}
+          onRowClick={(row: any) => { 
+            if (row.original.id) { 
+               router.push(`/expenses/${row.original.id}`);
+            }
+          }}
+        />
+      </div>
+
+      {/* All Expenses Table (new) */}
+      <div>
+        <h1 className="text-2xl font-bold mb-4 mt-8">全経費一覧</h1> {/* Added mt-8 for spacing */}
+        <DataTable<ExpenseRequestForTable, any>
+          columns={columns} // Reusing columns for now, can be customized
+          data={allTableData}
+          onRowClick={(row: any) => { 
+            if (row.original.id) { 
+               router.push(`/expenses/${row.original.id}`);
+            }
+          }}
+        />
+      </div>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <AlertDialogContent>

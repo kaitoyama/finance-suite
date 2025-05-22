@@ -1,7 +1,6 @@
 // src/attachments/dto/attachment.dto.ts
-import { ObjectType, Field, Float, Int } from '@nestjs/graphql';
+import { Field, Float, Int } from '@nestjs/graphql';
 
-@ObjectType()
 export class Attachment {
   @Field(() => Int)
   id!: number;
