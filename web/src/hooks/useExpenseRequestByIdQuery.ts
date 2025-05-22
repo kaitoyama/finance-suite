@@ -1,7 +1,7 @@
 import { gql } from '@urql/core';
 import { useQuery } from 'urql';
 
-export const EXPENSE_REQUEST_BY_ID_QUERY = gql`
+export const expenseRequestByIdQueryDocument = gql`
   query ExpenseRequestById($id: Int!) {
     expenseRequest(id: $id) {
       id,
@@ -29,7 +29,7 @@ export const EXPENSE_REQUEST_BY_ID_QUERY = gql`
 
 export const useExpenseRequestByIdQuery = (id: number) => {
   const [{ data, fetching, error }, refetch] = useQuery({
-    query: EXPENSE_REQUEST_BY_ID_QUERY,
+    query: expenseRequestByIdQueryDocument,
     variables: { id },
   });
 
