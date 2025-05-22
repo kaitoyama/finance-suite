@@ -24,6 +24,16 @@ export class InvoiceService {
     return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
   }
 
+  async getInvoiceById(id: number): Promise<Invoice | null> {
+    return this.prisma.invoice.findUnique({
+      where: { id },
+    });
+  }
+
+  async getAllInvoices(): Promise<Invoice[]> {
+    return this.prisma.invoice.findMany();
+  }
+
   async createInvoice(input: InvoiceInput, user: User): Promise<Invoice> {
     const { partnerName, amount, dueDate, description } = input;
 
@@ -76,7 +86,7 @@ export class InvoiceService {
     };
 
     // 3. Generate PDF
-    const pdfTemplatePath = 'api/templates/invoice.html'; // Ensure this path is correct
+    const pdfTemplatePath = 'templates/invoice.html'; // Ensure this path is correct
     let pdfBuffer: Buffer;
     try {
       // The existing PdfService.generatePdfFromTemplate seems to have its own data transformation logic

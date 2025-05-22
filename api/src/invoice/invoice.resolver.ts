@@ -1,16 +1,11 @@
-import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Context, Query, Int } from '@nestjs/graphql';
 import { InvoiceService } from './invoice.service';
-import { Invoice as GqlInvoice } from './entities/invoice.entity'; // Renamed for clarity
+import { Invoice as GqlInvoice, Invoice } from './entities/invoice.entity'; // Renamed for clarity
 import { InvoiceInput } from './dto/invoice.input';
 import { User as PrismaUser, Invoice as PrismaInvoiceInterface } from '@prisma/client'; // Use interface for type hint
 import { UserService } from '../users/user.service'; // To fetch PrismaUser
-import { Logger, UnauthorizedException, InternalServerErrorException } from '@nestjs/common'; // Added Logger, UnauthorizedException, and InternalServerErrorException
-
-// Define a type for the user object expected in the context
-interface RequestUser {
-  username: string;
-  // Add other properties like isAdmin if they are set by your auth middleware
-}
+import { Logger, UnauthorizedException, InternalServerErrorException, NotFoundException } from '@nestjs/common'; // Added Logger, UnauthorizedException, and InternalServerErrorException
+import { Request } from 'express';
 
 // This is what the linter seems to think PrismaInvoice is. For robustnes, we defensively access properties.
 interface PerceivedPrismaInvoice {
@@ -36,25 +31,57 @@ export class InvoiceResolver {
     private readonly userService: UserService,
   ) {}
 
+  @Query(() => Invoice)
+  async invoice(@Args('id', { type: () => Int }) id: number): Promise<Invoice | null> {
+    const invoiceFromService = await this.invoiceService.getInvoiceById(id);
+    if (!invoiceFromService) {
+      throw new NotFoundException('Invoice not found');
+    }
+    // Transform the description field to match GraphQL type (string | undefined)
+    return {
+      ...invoiceFromService,
+      description: invoiceFromService.description ?? undefined,
+    };
+  }
+
+  @Query(() => [Invoice])
+  async invoices(): Promise<Invoice[]> {
+    const invoicesFromService = await this.invoiceService.getAllInvoices();
+    // Transform the description field for each invoice
+    return invoicesFromService.map(invoice => ({
+      ...invoice,
+      description: invoice.description ?? undefined,
+    }));
+  }
+
   @Mutation(() => GqlInvoice)
   async createInvoice(
     @Args('input') input: InvoiceInput,
-    @Context() context: { req: { user?: RequestUser } }, // Make user optional and check existence
+    @Context('req') req: Request, 
   ): Promise<GqlInvoice> {
-    if (!context.req.user || !context.req.user.username) {
-      this.logger.error('User information not found in request context.');
-      throw new UnauthorizedException('User information not found. Cannot create invoice.');
+    const username = req.username;
+    const isAdmin = req.isAdmin;
+
+    if (!username) {
+      this.logger.error('Username not found in request context.');
+      throw new UnauthorizedException('User information (username) not found. Cannot create invoice.');
     }
 
-    const { username } = context.req.user;
-    const prismaUser: PrismaUser | null = await this.userService.findByUsername(username);
+    // Explicitly check for isAdmin, assuming it's a boolean
+    if (typeof isAdmin !== 'boolean') {
+      this.logger.error('User admin status (isAdmin) not found or invalid in request context.');
+      throw new UnauthorizedException('User information (admin status) not found or invalid. Cannot create invoice.');
+    }
+
+    // Use findOrCreateByUsername as in journal.resolver.ts
+    const prismaUser: PrismaUser | null = await this.userService.findOrCreateByUsername(username, isAdmin);
 
     if (!prismaUser) {
-      this.logger.error(`Authenticated user ${username} not found in database.`);
-      throw new UnauthorizedException(`User ${username} not found. Cannot create invoice.`);
+      // This case might be less likely if findOrCreateByUsername always returns a user or throws
+      this.logger.error(`User ${username} could not be found or created.`);
+      throw new UnauthorizedException(`User ${username} could not be processed. Cannot create invoice.`);
     }
     
-    // Cast to the perceived type for defensive access, actual type is PrismaInvoiceInterface
     const createdInvoiceUntyped: any = await this.invoiceService.createInvoice(input, prismaUser);
     const createdPrismaInvoice = createdInvoiceUntyped as PerceivedPrismaInvoice;
 

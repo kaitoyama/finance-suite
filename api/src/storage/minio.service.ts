@@ -44,10 +44,10 @@ export class MinioService {
     }
   }
 
-  async generatePresignedGetUrl(key: string, expirySeconds: number = 5 * 60): Promise<string> {
+  async generatePresignedGetUrl(key: string, bucketName: string = this.pdfBucket, expirySeconds: number = 5 * 60): Promise<string> {
     try {
       return await this.client.presignedGetObject(
-        this.pdfBucket,
+        bucketName,
         key,
         expirySeconds,
       );

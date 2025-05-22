@@ -3,6 +3,7 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
+import * as path from 'path';
 
 @Injectable()
 export class PdfService implements OnModuleInit, OnModuleDestroy {
@@ -66,7 +67,11 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
 
     let page: Page | null = null;
     try {
-      const templateHtml = await fs.readFile(templatePath, 'utf-8');
+      // __dirname is .../api/dist/common/services
+      // templatePath is e.g., "invoice.html"
+      // We want .../api/dist/templates/invoice.html
+      const resolvedTemplatePath = path.join(__dirname, '..', '..', '..', templatePath);
+      const templateHtml = await fs.readFile(resolvedTemplatePath, 'utf-8');
       const template = handlebars.compile(templateHtml);
 
       const templateData = {

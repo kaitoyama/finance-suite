@@ -2,7 +2,6 @@ import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { PdfService } from '../common/services/pdf.service';
 import { MinioService } from '../storage/minio.service';
 import { GenerateInvoicePdfInput, GenerateInvoicePdfPayload } from './dto/generate-invoice-pdf.dto';
-import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -10,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class InvoicePdfResolver {
   private readonly logger = new Logger(InvoicePdfResolver.name);
   // Assuming cwd is finance-suite (monorepo root)
-  private readonly templatePath = path.join(process.cwd(), 'api', 'templates', 'invoice.html');
+  private readonly templatePath = 'templates/invoice.html';
 
   constructor(
     private readonly pdfService: PdfService,
@@ -63,7 +62,7 @@ export class InvoicePdfResolver {
       await this.minioService.uploadPdf(pdfBuffer, pdfKey);
       this.logger.log(`PDF ${pdfKey} uploaded to MinIO successfully.`);
 
-      const presignedUrl = await this.minioService.generatePresignedGetUrl(pdfKey, 5 * 60);
+      const presignedUrl = await this.minioService.generatePresignedGetUrl(pdfKey);
       this.logger.log(`Presigned URL generated for ${pdfKey}: ${presignedUrl}`);
 
       return {

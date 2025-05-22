@@ -117,6 +117,7 @@ enum PaymentLabel {
 type Query {
   """Health-check"""
   hello: String!
+  getPresignedS3Url(key: String!): String
   vouchers: [Voucher!]!
   voucher(id: Int!): Voucher!
 
@@ -126,6 +127,8 @@ type Query {
   journalEntry(id: ID!): JournalEntry
   accounts: [Account!]!
   account(id: Int!): Account
+  invoice(id: Int!): Invoice!
+  invoices: [Invoice!]!
   payments: [Payment!]!
   payment(id: Int!): Payment
 }

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>請求書 - {{invoiceNo}}</title>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            width: 210mm;
+            height: 297mm; /* A4 height, content should fit */
+            margin: 0;
+            padding: 15mm;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+        .invoice-container {
+            width: 100%;
+            height: calc(297mm - 30mm); /* Printable area */
+            display: flex;
+            flex-direction: column;
+        }
+        .header h1 {
+            font-size: 22pt;
+            text-align: center;
+            margin-bottom: 15mm; /* Reduced margin */
+            font-weight: bold;
+            letter-spacing: 0.2em;
+        }
+        .partner-name {
+            font-size: 14pt;
+            margin-bottom: 8mm; /* Reduced margin */
+            padding-bottom: 2mm;
+            border-bottom: 1px solid #000;
+            display: inline-block; /* Fit content */
+        }
+        .details-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6mm; /* Reduced margin */
+        }
+        .left-details {
+            max-width: 60%;
+        }
+        .right-details {
+            text-align: right;
+            font-size: 10pt;
+        }
+        .right-details p {
+            margin: 1mm 0;
+        }
+        .greeting {
+            margin-bottom: 6mm; /* Reduced margin */
+        }
+        .info-table {
+            width: 70%; /* Adjusted width */
+            border-collapse: collapse;
+            margin-bottom: 6mm; /* Reduced margin */
+            border: 1px solid #333;
+        }
+        .info-table th, .info-table td {
+            border: 1px solid #333;
+            padding: 2mm 3mm; /* Adjusted padding */
+            text-align: left;
+            vertical-align: top;
+        }
+        .info-table th {
+            background-color: #e9e9e9; /* Lighter gray */
+            width: 80px; /* Fixed width for labels */
+            font-weight: normal;
+        }
+        .bank-info-line {
+            margin: 0;
+            padding: 0;
+            line-height: 1.3; /* Adjust for closer lines if needed */
+        }
+        .total-box {
+            width: 70%; /* Adjusted width */
+            border: 1px solid #333;
+            padding: 3mm; /* Adjusted padding */
+            margin-bottom: 6mm; /* Reduced margin */
+            text-align: center;
+            background-color: #e9e9e9; /* Lighter gray */
+        }
+        .total-box span {
+            font-size: 14pt; /* Slightly smaller total */
+            font-weight: bold;
+        }
+        .items-table-container {
+            flex-grow: 1;
+            min-height: 50mm; /* Ensure some space for the table */
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #333;
+            padding: 2mm 3mm; /* Adjusted padding */
+            text-align: left;
+        }
+        .items-table th {
+            background-color: #e9e9e9; /* Lighter gray */
+            font-weight: bold;
+            text-align: center;
+        }
+        .items-table .amount {
+            text-align: right;
+            min-width: 80px; /* Ensure amount column has enough width */
+        }
+        .items-table .description {
+            width: auto;
+        }
+        .items-table tfoot td {
+            font-weight: bold;
+            background-color: #e9e9e9; /* Lighter gray */
+        }
+        .payment-note {
+            font-size: 9pt; /* Smaller note */
+            margin-top: 4mm; /* Space before note */
+            margin-bottom: 6mm; /* Reduced margin */
+        }
+        .issuer-fixed-address {
+            margin: 0.5mm 0; /* Adjusted from 1mm to 0.5mm for tighter spacing */
+        }
+         /* Ensure content fits on one page */
+        @page {
+            size: A4;
+            margin: 0; /* Body padding handles margins */
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <header class="header">
+            <h1>請 求 書</h1>
+        </header>
+
+        <section class="details-section">
+            <div class="left-details">
+                <p class="partner-name">{{partnerName}} 御中</p>
+                <p class="greeting">下記の通り、御請求申し上げます。</p>
+            </div>
+            <div class="right-details">
+                <p>請求日: {{createdAt}}</p>
+                <p>請求番号: {{invoiceNo}}</p>
+                <p>東京科学大学デジタル創作同好会traP</p>
+                <p class="issuer-fixed-address">〒152-8550</p>
+                <p class="issuer-fixed-address">東京都目黒区大岡山 2-12-1</p>
+                <p class="issuer-fixed-address">新サークル棟1 203</p>
+            </div>
+        </section>
+
+        <table class="info-table">
+            <tr>
+                <th>件&emsp;&emsp;名</th> <!-- Japanese full-width space for alignment -->
+                <td>{{description}}</td>
+            </tr>
+            <tr>
+                <th>支払期限</th>
+                <td>{{dueDate}}</td>
+            </tr>
+            <tr>
+                <th>振込先</th>
+                <td>
+                    <p class="bank-info-line">みずほ銀行 大岡山支店 普通預金 普通 2313843</p>
+                    <p class="bank-info-line">トウキョウカガクダイガクデジタルソウサクドウコウカイTRAP</p>
+                </td>
+            </tr>
+        </table>
+
+        <div class="total-box">
+            <span>合&emsp;&emsp;計 {{amount}}</span> <!-- Japanese full-width space -->
+        </div>
+
+        <section class="items-table-container">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th class="description">摘&emsp;&emsp;要</th> <!-- Japanese full-width space -->
+                        <th class="amount">金&emsp;&emsp;額 (円)</th> <!-- Japanese full-width space -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="description">{{description}}</td>
+                        <td class="amount">{{amount}}</td>
+                    </tr>
+                    <!-- Empty rows for visual spacing if needed, or to ensure table height -->
+                    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td style="text-align:center;">合&emsp;&emsp;計</td> <!-- Japanese full-width space -->
+                        <td class="amount">{{amount}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </section>
+        <p class="payment-note">恐れ入りますが、振込手数料は貴社にてご負担願います。</p>
+    </div>
+</body>
+</html> 
