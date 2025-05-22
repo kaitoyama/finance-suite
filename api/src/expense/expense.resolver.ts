@@ -57,6 +57,13 @@ export class ExpenseResolver {
     return mapPrismaExpenseToGql(prismaExpense);
   }
 
+  @Query(() => [GQLExpenseRequest], { name: 'expenseRequests', nullable: true })
+  // @UseGuards(GqlAuthGuard) // Temporarily commented out
+  async getExpenseRequests(): Promise<GQLExpenseRequest[]> {
+    const prismaExpenses = await this.expenseService.findAll();
+    return prismaExpenses.map(mapPrismaExpenseToGql).filter(Boolean) as GQLExpenseRequest[];
+  }
+
   @Mutation(() => GQLExpenseRequest)
   // @UseGuards(GqlAuthGuard) // Temporarily commented out
   async submitExpenseRequest(

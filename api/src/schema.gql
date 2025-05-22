@@ -176,6 +176,7 @@ type Query {
   listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
   budgets(year: Int!): [BudgetBalance!]!
   expenseRequest(id: Int!): ExpenseRequest
+  expenseRequests: [ExpenseRequest!]
 }
 
 input RangeInput {

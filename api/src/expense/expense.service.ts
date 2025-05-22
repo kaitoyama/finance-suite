@@ -48,6 +48,12 @@ export class ExpenseService {
     });
   }
 
+  async findAll(): Promise<FullExpenseRequest[]> {
+    return this.prisma.expenseRequest.findMany({
+      include: expenseRequestIncludeRelations,
+    });
+  }
+
   async createDraftExpenseRequest(
     input: CreateExpenseRequestInput,
     requester: PrismaUser,
