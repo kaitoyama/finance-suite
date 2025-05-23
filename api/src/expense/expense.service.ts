@@ -1,9 +1,35 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { ExpenseRequest as PrismaExpenseRequest, Prisma, RequestState, User as PrismaUser } from '@prisma/client';
-import { expenseStateMachine, ExpenseContext, ExpenseEvent, ExpenseStateValue } from './state.machine';
-import { WebhookService, WebhookPayload } from '../common/services/webhook.service';
-import { transition, MachineSnapshot, AnyEventObject, StateValue, AnyActorRef, MetaObject } from 'xstate';
+import {
+  ExpenseRequest as PrismaExpenseRequest,
+  Prisma,
+  RequestState,
+  User as PrismaUser,
+} from '@prisma/client';
+import {
+  expenseStateMachine,
+  ExpenseContext,
+  ExpenseEvent,
+  ExpenseStateValue,
+} from './state.machine';
+import {
+  WebhookService,
+  WebhookPayload,
+} from '../common/services/webhook.service';
+import {
+  transition,
+  MachineSnapshot,
+  AnyEventObject,
+  StateValue,
+  AnyActorRef,
+  MetaObject,
+} from 'xstate';
 import { isDeepStrictEqual } from 'util';
 import { PubSub } from 'graphql-subscriptions';
 
@@ -30,7 +56,7 @@ const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
 };
 
 export type FullExpenseRequest = Prisma.ExpenseRequestGetPayload<{
-  include: typeof expenseRequestIncludeRelations
+  include: typeof expenseRequestIncludeRelations;
 }>;
 
 export const EXPENSE_REQUEST_STATE_CHANGED_EVENT = 'expenseRequestStateChanged';
@@ -67,9 +93,13 @@ export class ExpenseService {
       where: { username: requesterUsername },
     });
     if (!requester) {
-      throw new NotFoundException(`User with username ${requesterUsername} not found`);
+      throw new NotFoundException(
+        `User with username ${requesterUsername} not found`,
+      );
     }
-    this.logger.log(`User ${requester.id} creating draft expense request for amount ${input.amount}`);
+    this.logger.log(
+      `User ${requester.id} creating draft expense request for amount ${input.amount}`,
+    );
     return this.prisma.expenseRequest.create({
       data: {
         amount: new Prisma.Decimal(input.amount),
@@ -101,40 +131,73 @@ export class ExpenseService {
       );
     }
 
-    const currentPrismaStateValue = expenseRequest.state as ExpenseStateValue;
-    const machineInitialContext: ExpenseContext = { expenseRequest: expenseRequest as PrismaExpenseRequest };
+    const currentPrismaStateValue = expenseRequest.state;
+    const machineInitialContext: ExpenseContext = {
+      expenseRequest: expenseRequest as PrismaExpenseRequest,
+    };
 
-    const currentStateSnapshot: MachineSnapshot<ExpenseContext, AnyEventObject, Record<string, AnyActorRef>, StateValue, string, any, MetaObject, any> = expenseStateMachine.resolveState({
+    const currentStateSnapshot: MachineSnapshot<
+      ExpenseContext,
+      AnyEventObject,
+      Record<string, AnyActorRef>,
+      StateValue,
+      string,
+      any,
+      MetaObject,
+      any
+    > = expenseStateMachine.resolveState({
       value: currentPrismaStateValue,
       context: machineInitialContext,
     });
 
-    const [nextStateSnapshot, actions]: [MachineSnapshot<ExpenseContext, AnyEventObject, Record<string, AnyActorRef>, StateValue, string, any, MetaObject, any>, ReadonlyArray<object>] = transition(expenseStateMachine, currentStateSnapshot, event);
+    const [nextStateSnapshot, actions]: [
+      MachineSnapshot<
+        ExpenseContext,
+        AnyEventObject,
+        Record<string, AnyActorRef>,
+        StateValue,
+        string,
+        any,
+        MetaObject,
+        any
+      >,
+      ReadonlyArray<object>,
+    ] = transition(expenseStateMachine, currentStateSnapshot, event);
 
     const oldStateValue = currentStateSnapshot.value as RequestState;
     const newStateValue = nextStateSnapshot.value as RequestState;
 
     const hasStateValueChanged = oldStateValue !== newStateValue;
-    const hasContextChanged = !isDeepStrictEqual(machineInitialContext, nextStateSnapshot.context);
-    const hasRelevantChange = hasStateValueChanged || hasContextChanged || actions.length > 0;
+    const hasContextChanged = !isDeepStrictEqual(
+      machineInitialContext,
+      nextStateSnapshot.context,
+    );
+    const hasRelevantChange =
+      hasStateValueChanged || hasContextChanged || actions.length > 0;
 
     if (!hasRelevantChange) {
       throw new BadRequestException(
-        `Invalid event: ${event.type} for current state: ${oldStateValue}. State remains ${newStateValue}, no actions generated.`
+        `Invalid event: ${event.type} for current state: ${oldStateValue}. State remains ${newStateValue}, no actions generated.`,
       );
     }
 
-    const dataToUpdate: Prisma.ExpenseRequestUpdateInput = { state: newStateValue };
-    let fireWebhook = true;
+    const dataToUpdate: Prisma.ExpenseRequestUpdateInput = {
+      state: newStateValue,
+    };
+    const fireWebhook = true;
 
     if (event.type === 'APPROVE' && newStateValue === 'APPROVED') {
-      if (!currentUser) throw new BadRequestException('Approver user context is required for APPROVE event');
+      if (!currentUser)
+        throw new BadRequestException(
+          'Approver user context is required for APPROVE event',
+        );
       dataToUpdate.approver = { connect: { id: currentUser.id } };
       dataToUpdate.approvedAt = new Date();
     }
 
     if (event.type === 'PAY' && newStateValue === 'PAID') {
-      if (!event.paymentId) throw new BadRequestException('Payment ID is required for PAY event');
+      if (!event.paymentId)
+        throw new BadRequestException('Payment ID is required for PAY event');
       dataToUpdate.payment = { connect: { id: event.paymentId } };
     }
 
@@ -152,11 +215,12 @@ export class ExpenseService {
         newState: newStateValue,
         data: updatedExpenseRequest,
       };
-      this.webhookService.sendWebhook(webhookPayload)
-        .catch(err => this.logger.error('Failed to send webhook', err.stack));
-      
-      this.pubSub.publish(EXPENSE_REQUEST_STATE_CHANGED_EVENT, { 
-        [EXPENSE_REQUEST_STATE_CHANGED_EVENT]: updatedExpenseRequest 
+      this.webhookService
+        .sendWebhook(webhookPayload)
+        .catch((err) => this.logger.error('Failed to send webhook', err.stack));
+
+      this.pubSub.publish(EXPENSE_REQUEST_STATE_CHANGED_EVENT, {
+        [EXPENSE_REQUEST_STATE_CHANGED_EVENT]: updatedExpenseRequest,
       });
     }
 
@@ -165,4 +229,4 @@ export class ExpenseService {
     );
     return updatedExpenseRequest;
   }
-} 
+}

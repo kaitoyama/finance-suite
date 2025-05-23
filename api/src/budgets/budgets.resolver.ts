@@ -15,7 +15,9 @@ export class BudgetsResolver {
   }
 
   @Query(() => [BudgetDto], { name: 'listBudgetsByYear' })
-  async listBudgetsByYear(@Args('fiscalYear', { type: () => Int }) fiscalYear: number): Promise<Budget[]> {
+  async listBudgetsByYear(
+    @Args('fiscalYear', { type: () => Int }) fiscalYear: number,
+  ): Promise<Budget[]> {
     return this.budgetsService.listBudgetsByYear(fiscalYear);
   }
 
@@ -25,4 +27,4 @@ export class BudgetsResolver {
   ): Promise<BudgetBalance[]> {
     return this.budgetsService.getBudgetBalances(year);
   }
-} 
+}

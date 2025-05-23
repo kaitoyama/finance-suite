@@ -1,9 +1,21 @@
-import { Resolver, Mutation, Args, Int, Query, Context, Subscription } from '@nestjs/graphql';
+import {
+  Resolver,
+  Mutation,
+  Args,
+  Int,
+  Query,
+  Context,
+  Subscription,
+} from '@nestjs/graphql';
 // import { UseGuards } from '@nestjs/common'; // Temporarily commented out
 // import { GqlAuthGuard } from '../common/guards/gql-auth.guard'; // Path TBD
 // import { CurrentUser } from '../common/decorators/current-user.decorator'; // Path TBD
 import { User as PrismaUser, Prisma } from '@prisma/client';
-import { ExpenseService, EXPENSE_REQUEST_STATE_CHANGED_EVENT, FullExpenseRequest } from './expense.service';
+import {
+  ExpenseService,
+  EXPENSE_REQUEST_STATE_CHANGED_EVENT,
+  FullExpenseRequest,
+} from './expense.service';
 import { ExpenseRequest as GQLExpenseRequest } from './entities/expense-request.entity';
 import { CreateExpenseRequestInput } from './dto/create-expense-request.input';
 import { MarkExpensePaidInput } from './dto/mark-expense-paid.input';
@@ -32,43 +44,54 @@ type PaymentAttachmentWithRelation = Prisma.PaymentAttachmentGetPayload<{
 
 // Helper function to map Prisma ExpenseRequest to GraphQL ExpenseRequest
 function mapPrismaExpenseToGql(
-  prismaExpense: FullExpenseRequest | null
+  prismaExpense: FullExpenseRequest | null,
 ): GQLExpenseRequest | null {
   if (!prismaExpense) {
     return null;
   }
 
   // Cast prismaExpense.payment to our more specific type if it exists
-  const paymentWithIncludedAttachments = prismaExpense.payment as PaymentWithAttachments | null | undefined;
+  const paymentWithIncludedAttachments = prismaExpense.payment as
+    | PaymentWithAttachments
+    | null
+    | undefined;
 
-  const mappedPayment = paymentWithIncludedAttachments ? {
-    ...paymentWithIncludedAttachments,
-    amount: paymentWithIncludedAttachments.amount.toNumber(),
-    // Now, paymentWithIncludedAttachments.attachments should be correctly typed
-    attachments: paymentWithIncludedAttachments.attachments?.map((pa: PaymentAttachmentWithRelation) => ({
-      ...pa.attachment,
-      // Ensure all fields of your GQL Attachment are covered.
-      // If GQL Attachment has an 'amount' field from Prisma Attachment's Decimal, convert it.
-      id: pa.attachment.id, // Assuming GQL Attachment has id
-      s3Key: pa.attachment.s3Key, // Assuming GQL Attachment has s3Key
-      title: pa.attachment.title, // Assuming GQL Attachment has title
-      // If your Attachment model has an amount field that is Decimal
-      amount: pa.attachment.amount.toNumber(),
-      // Add other fields from pa.attachment as needed for your GQL Attachment type
-    })) || undefined,
-  } : undefined;
+  const mappedPayment = paymentWithIncludedAttachments
+    ? {
+        ...paymentWithIncludedAttachments,
+        amount: paymentWithIncludedAttachments.amount.toNumber(),
+        // Now, paymentWithIncludedAttachments.attachments should be correctly typed
+        attachments:
+          paymentWithIncludedAttachments.attachments?.map(
+            (pa: PaymentAttachmentWithRelation) => ({
+              ...pa.attachment,
+              // Ensure all fields of your GQL Attachment are covered.
+              // If GQL Attachment has an 'amount' field from Prisma Attachment's Decimal, convert it.
+              id: pa.attachment.id, // Assuming GQL Attachment has id
+              s3Key: pa.attachment.s3Key, // Assuming GQL Attachment has s3Key
+              title: pa.attachment.title, // Assuming GQL Attachment has title
+              // If your Attachment model has an amount field that is Decimal
+              amount: pa.attachment.amount.toNumber(),
+              // Add other fields from pa.attachment as needed for your GQL Attachment type
+            }),
+          ) || undefined,
+      }
+    : undefined;
 
-  const mappedExpenseAttachment = prismaExpense.attachment ? {
-    ...prismaExpense.attachment,
-    amount: prismaExpense.attachment.amount.toNumber(),
-  } : undefined;
+  const mappedExpenseAttachment = prismaExpense.attachment
+    ? {
+        ...prismaExpense.attachment,
+        amount: prismaExpense.attachment.amount.toNumber(),
+      }
+    : undefined;
 
   return {
     ...prismaExpense,
     amount: prismaExpense.amount.toNumber(),
-    approvedAt: prismaExpense.approvedAt === null ? undefined : prismaExpense.approvedAt,
+    approvedAt:
+      prismaExpense.approvedAt === null ? undefined : prismaExpense.approvedAt,
     requester: prismaExpense.requester as any,
-    approver: prismaExpense.approver as any || undefined,
+    approver: (prismaExpense.approver as any) || undefined,
     payment: mappedPayment as any, // Cast to any for GQL output type, or define a GQLPaymentWithAttachments
     attachment: mappedExpenseAttachment as any, // Cast to any for GQL output type
   };
@@ -96,18 +119,26 @@ export class ExpenseResolver {
   // @UseGuards(GqlAuthGuard) // Temporarily commented out
   async getExpenseRequests(): Promise<GQLExpenseRequest[]> {
     const prismaExpenses = await this.expenseService.findAll();
-    return prismaExpenses.map(mapPrismaExpenseToGql).filter(Boolean) as GQLExpenseRequest[];
+    return prismaExpenses
+      .map(mapPrismaExpenseToGql)
+      .filter(Boolean) as GQLExpenseRequest[];
   }
 
   @Mutation(() => GQLExpenseRequest)
   // @UseGuards(GqlAuthGuard) // Temporarily commented out
   async submitExpenseRequest(
     @Args('input') input: CreateExpenseRequestInput,
-    @Context('req') req: Request, 
+    @Context('req') req: Request,
   ): Promise<GQLExpenseRequest> {
     const username = req.username!;
-    const draft = await this.expenseService.createDraftExpenseRequest(input, username);
-    const submittedPrisma = await this.expenseService.transitionState(draft.id, { type: 'SUBMIT' });
+    const draft = await this.expenseService.createDraftExpenseRequest(
+      input,
+      username,
+    );
+    const submittedPrisma = await this.expenseService.transitionState(
+      draft.id,
+      { type: 'SUBMIT' },
+    );
     // The service now publishes the event, including the mapped object if needed, or resolver maps payload.
     // For simplicity, we assume the published payload from service is `FullExpenseRequest`.
     // The subscription resolver will then map it using `mapPrismaExpenseToGql`.
@@ -127,7 +158,11 @@ export class ExpenseResolver {
     if (!approver) {
       throw new NotFoundException(`User with username ${username} not found`);
     }
-    const approvedPrisma = await this.expenseService.transitionState(id, { type: 'APPROVE', approverId: approver.id }, approver);
+    const approvedPrisma = await this.expenseService.transitionState(
+      id,
+      { type: 'APPROVE', approverId: approver.id },
+      approver,
+    );
     return mapPrismaExpenseToGql(approvedPrisma)!;
   }
 
@@ -136,7 +171,9 @@ export class ExpenseResolver {
   async rejectExpenseRequest(
     @Args('id', { type: () => Int }) id: number,
   ): Promise<GQLExpenseRequest> {
-    const rejectedPrisma = await this.expenseService.transitionState(id, { type: 'REJECT' });
+    const rejectedPrisma = await this.expenseService.transitionState(id, {
+      type: 'REJECT',
+    });
     return mapPrismaExpenseToGql(rejectedPrisma)!;
   }
 
@@ -157,7 +194,9 @@ export class ExpenseResolver {
   async closeExpenseRequest(
     @Args('id', { type: () => Int }) id: number,
   ): Promise<GQLExpenseRequest> {
-    const closedPrisma = await this.expenseService.transitionState(id, { type: 'CLOSE' });
+    const closedPrisma = await this.expenseService.transitionState(id, {
+      type: 'CLOSE',
+    });
     return mapPrismaExpenseToGql(closedPrisma)!;
   }
 
@@ -166,11 +205,13 @@ export class ExpenseResolver {
     name: EXPENSE_REQUEST_STATE_CHANGED_EVENT,
     // Optional: Add filter if clients can subscribe to specific expense request IDs
     // filter: (payload, variables) => payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT].id === variables.expenseId,
-    resolve: (payload) => mapPrismaExpenseToGql(payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT]),
+    resolve: (payload) =>
+      mapPrismaExpenseToGql(payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT]),
   })
-  expenseRequestStateChangedSubscription(
+  expenseRequestStateChangedSubscription() {
     // @Args('expenseId', { type: () => Int, nullable: true }) expenseId?: number, // if using filter
-  ) {
-    return (this.pubSub as any).asyncIterator(EXPENSE_REQUEST_STATE_CHANGED_EVENT);
+    return (this.pubSub as any).asyncIterator(
+      EXPENSE_REQUEST_STATE_CHANGED_EVENT,
+    );
   }
-} 
+}

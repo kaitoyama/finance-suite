@@ -9,7 +9,9 @@ export class VouchersResolver {
   constructor(private readonly vouchersService: VouchersService) {}
 
   @Mutation(() => Voucher)
-  createVoucher(@Args('createVoucherInput') createVoucherInput: CreateVoucherInput) {
+  createVoucher(
+    @Args('createVoucherInput') createVoucherInput: CreateVoucherInput,
+  ) {
     return this.vouchersService.create(createVoucherInput);
   }
 
@@ -24,8 +26,13 @@ export class VouchersResolver {
   }
 
   @Mutation(() => Voucher)
-  updateVoucher(@Args('updateVoucherInput') updateVoucherInput: UpdateVoucherInput) {
-    return this.vouchersService.update(updateVoucherInput.id, updateVoucherInput);
+  updateVoucher(
+    @Args('updateVoucherInput') updateVoucherInput: UpdateVoucherInput,
+  ) {
+    return this.vouchersService.update(
+      updateVoucherInput.id,
+      updateVoucherInput,
+    );
   }
 
   @Mutation(() => Voucher)

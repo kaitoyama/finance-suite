@@ -44,8 +44,6 @@ import { ExpenseModule } from './expense/expense.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(UserHeaderMiddleware)
-      .forRoutes('*'); // GraphQL も REST も全部通す
+    consumer.apply(UserHeaderMiddleware).forRoutes('*'); // GraphQL も REST も全部通す
   }
 }

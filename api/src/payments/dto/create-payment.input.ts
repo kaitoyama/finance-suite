@@ -26,7 +26,10 @@ registerEnumType(PaymentMethodEnum, {
 
 @InputType()
 export class CreatePaymentInput {
-  @Field(() => Int, { nullable: true, description: 'ID of the invoice to associate this payment with' })
+  @Field(() => Int, {
+    nullable: true,
+    description: 'ID of the invoice to associate this payment with',
+  })
   @IsOptional()
   @IsInt()
   invoiceId?: number;
@@ -43,12 +46,16 @@ export class CreatePaymentInput {
   amount: number; // Keep as number for GraphQL input, convert to Decimal in service
 
   // --- New fields ---
-  @Field(() => PaymentDirectionEnum, { description: 'Direction of the payment (IN/OUT)' })
+  @Field(() => PaymentDirectionEnum, {
+    description: 'Direction of the payment (IN/OUT)',
+  })
   @IsNotEmpty()
   @IsEnum(PaymentDirectionEnum)
   direction: PaymentDirectionEnum;
 
-  @Field(() => PaymentMethodEnum, { description: 'Method of the payment (BANK/CASH/OTHER)' })
+  @Field(() => PaymentMethodEnum, {
+    description: 'Method of the payment (BANK/CASH/OTHER)',
+  })
   @IsNotEmpty()
   @IsEnum(PaymentMethodEnum)
   method: PaymentMethodEnum;
@@ -69,4 +76,4 @@ export class CreatePaymentInput {
   @IsInt({ each: true })
   attachmentIds?: number[];
   // --- End new fields ---
-} 
+}

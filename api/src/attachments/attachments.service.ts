@@ -27,7 +27,7 @@ export class AttachmentsService {
       key,
       value,
     }));
-    return { url:postURL, fields, objectKey:filename };
+    return { url: postURL, fields, objectKey: filename };
   }
 
   async createAttachment(input: CreateAttachmentInput, username: string) {

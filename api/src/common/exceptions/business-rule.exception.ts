@@ -1,5 +1,5 @@
 export class BusinessRuleException extends Error {
-  public static readonly DEBIT_CREDIT_MISMATCH = "DEBIT_CREDIT_MISMATCH";
+  public static readonly DEBIT_CREDIT_MISMATCH = 'DEBIT_CREDIT_MISMATCH';
   public readonly code: string;
 
   constructor(message: string, code: string) {

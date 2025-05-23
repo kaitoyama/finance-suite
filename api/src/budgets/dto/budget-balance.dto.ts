@@ -22,4 +22,4 @@ export class BudgetBalance {
 
   @Field(() => Float, { description: 'Consumption ratio 0.00–1.00' })
   ratio: number;
-} 
+}

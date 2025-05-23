@@ -44,9 +44,11 @@ describe('PaymentsService', () => {
         invoiceId: null,
         overpaidAmount: null,
         expenseRequestId: null,
-        attachments: []
+        attachments: [],
       };
-      jest.spyOn(prisma.payment, 'create').mockResolvedValue(mockPayment as any); // any for attachments if not modeled precisely
+      jest
+        .spyOn(prisma.payment, 'create')
+        .mockResolvedValue(mockPayment as any); // any for attachments if not modeled precisely
 
       const result = await service.createPayment(createPaymentInput);
       expect(result).toEqual(mockPayment);
@@ -64,33 +66,47 @@ describe('PaymentsService', () => {
     });
 
     it('should throw a validation error if direction is omitted', async () => {
-      const createPaymentInput: any = { // Use any to allow missing properties
+      const createPaymentInput: any = {
+        // Use any to allow missing properties
         paidAt: new Date(),
         amount: 100,
         method: PaymentMethod.CASH,
       };
-      const metadata: ArgumentMetadata = { type: 'body', metatype: CreatePaymentInput };
+      const metadata: ArgumentMetadata = {
+        type: 'body',
+        metatype: CreatePaymentInput,
+      };
       try {
         await validationPipe.transform(createPaymentInput, metadata);
       } catch (e) {
-        expect(e.getResponse().message).toContain('direction should not be empty');
-        expect(e.getResponse().message).toContain('direction must be one of the following values: IN, OUT');
+        expect(e.getResponse().message).toContain(
+          'direction should not be empty',
+        );
+        expect(e.getResponse().message).toContain(
+          'direction must be one of the following values: IN, OUT',
+        );
       }
     });
 
     it('should throw a validation error if method is omitted', async () => {
-      const createPaymentInput: any = { // Use any to allow missing properties
+      const createPaymentInput: any = {
+        // Use any to allow missing properties
         paidAt: new Date(),
         amount: 100,
         direction: PaymentDirection.IN,
       };
-      const metadata: ArgumentMetadata = { type: 'body', metatype: CreatePaymentInput };
-       try {
+      const metadata: ArgumentMetadata = {
+        type: 'body',
+        metatype: CreatePaymentInput,
+      };
+      try {
         await validationPipe.transform(createPaymentInput, metadata);
       } catch (e) {
         expect(e.getResponse().message).toContain('method should not be empty');
-        expect(e.getResponse().message).toContain('method must be one of the following values: BANK, CASH, OTHER');
+        expect(e.getResponse().message).toContain(
+          'method must be one of the following values: BANK, CASH, OTHER',
+        );
       }
     });
   });
-}); 
+});

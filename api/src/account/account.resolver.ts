@@ -8,7 +8,9 @@ export class AccountResolver {
   constructor(private readonly accountService: AccountService) {}
 
   @Mutation(() => Account)
-  createAccount(@Args('createAccountInput') createAccountInput: CreateAccountInput) {
+  createAccount(
+    @Args('createAccountInput') createAccountInput: CreateAccountInput,
+  ) {
     return this.accountService.create(createAccountInput);
   }
 
@@ -21,4 +23,4 @@ export class AccountResolver {
   findOne(@Args('id', { type: () => Int }) id: number) {
     return this.accountService.findOne(id);
   }
-} 
+}

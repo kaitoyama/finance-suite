@@ -6,19 +6,23 @@ import { CreateJournalEntryInput } from '../dto/create-journal-entry.input';
 import { UpdateJournalEntryInput } from '../dto/update-journal-entry.input';
 
 // Mock DTOs
-const mockCreateJournalEntryInput = (lines: any[]): CreateJournalEntryInput => ({
+const mockCreateJournalEntryInput = (
+  lines: any[],
+): CreateJournalEntryInput => ({
   datetime: new Date(),
   description: 'Test Entry',
   lines,
 });
 
-const mockUpdateJournalEntryInput = (id: number, lines: any[]): UpdateJournalEntryInput => ({
+const mockUpdateJournalEntryInput = (
+  id: number,
+  lines: any[],
+): UpdateJournalEntryInput => ({
   id,
   datetime: new Date(),
   description: 'Test Update Entry',
   lines,
 });
-
 
 describe('BalanceCheckPipe', () => {
   let pipe: BalanceCheckPipe;
@@ -52,7 +56,7 @@ describe('BalanceCheckPipe', () => {
         pipe.transform(value, metadata);
       } catch (error) {
         expect(error).toBeInstanceOf(BusinessRuleException);
-        expect(error.message).toBe("Debit and credit totals do not match.");
+        expect(error.message).toBe('Debit and credit totals do not match.');
         expect(error.code).toBe(BusinessRuleException.DEBIT_CREDIT_MISMATCH);
       }
     });
@@ -66,9 +70,9 @@ describe('BalanceCheckPipe', () => {
       ]);
       expect(() => pipe.transform(value, metadata)).toThrow(
         new BusinessRuleException(
-          "Debit and credit totals do not match.",
-          BusinessRuleException.DEBIT_CREDIT_MISMATCH
-        )
+          'Debit and credit totals do not match.',
+          BusinessRuleException.DEBIT_CREDIT_MISMATCH,
+        ),
       );
     });
   });

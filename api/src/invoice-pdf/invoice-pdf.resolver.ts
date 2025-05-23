@@ -1,7 +1,10 @@
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { PdfService } from '../common/services/pdf.service';
 import { MinioService } from '../storage/minio.service';
-import { GenerateInvoicePdfInput, GenerateInvoicePdfPayload } from './dto/generate-invoice-pdf.dto';
+import {
+  GenerateInvoicePdfInput,
+  GenerateInvoicePdfPayload,
+} from './dto/generate-invoice-pdf.dto';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -45,24 +48,31 @@ export class InvoicePdfResolver {
         subjectText: input.subjectText,
         // dueDateText will be formatted in PdfService if passed as YYYY-MM-DD or if it uses its default
         // Pass the raw string if provided, otherwise PdfService default logic applies based on `input.date`
-        dueDateText: input.dueDateText ? this.formatDateToYyyyMmDd(input.dueDateText) : undefined,
+        dueDateText: input.dueDateText
+          ? this.formatDateToYyyyMmDd(input.dueDateText)
+          : undefined,
         itemDescriptionText: input.itemDescriptionText,
         date: input.date, // PdfService uses this for default due date calculation
       };
 
-      this.logger.debug(`Template data for ${input.invoiceNo}: ${JSON.stringify(templateData)}`);
+      this.logger.debug(
+        `Template data for ${input.invoiceNo}: ${JSON.stringify(templateData)}`,
+      );
 
       const pdfBuffer = await this.pdfService.generatePdfFromTemplate(
         this.templatePath,
         templateData,
       );
 
-      this.logger.log(`PDF buffer generated for ${input.invoiceNo}, uploading to MinIO...`);
+      this.logger.log(
+        `PDF buffer generated for ${input.invoiceNo}, uploading to MinIO...`,
+      );
 
       await this.minioService.uploadPdf(pdfBuffer, pdfKey);
       this.logger.log(`PDF ${pdfKey} uploaded to MinIO successfully.`);
 
-      const presignedUrl = await this.minioService.generatePresignedGetUrl(pdfKey);
+      const presignedUrl =
+        await this.minioService.generatePresignedGetUrl(pdfKey);
       this.logger.log(`Presigned URL generated for ${pdfKey}: ${presignedUrl}`);
 
       return {
@@ -70,8 +80,11 @@ export class InvoicePdfResolver {
         presignedUrl,
       };
     } catch (error) {
-      this.logger.error(`Failed to generate invoice PDF for ${input.invoiceNo}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to generate invoice PDF for ${input.invoiceNo}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
-} 
+}

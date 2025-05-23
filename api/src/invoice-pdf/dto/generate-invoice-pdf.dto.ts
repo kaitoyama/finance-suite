@@ -44,4 +44,4 @@ export class GenerateInvoicePdfPayload {
 
   @Field(() => String)
   presignedUrl: string;
-} 
+}

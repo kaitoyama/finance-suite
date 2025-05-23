@@ -1,4 +1,10 @@
-import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { InvoiceStatus as PrismaInvoiceStatus } from '@prisma/client';
 
 // Register the enum with GraphQL
@@ -37,4 +43,4 @@ export class Invoice {
 
   // Note: createdById and createdBy (relation) are not exposed in GraphQL as per the issue spec,
   // but can be added if needed.
-} 
+}

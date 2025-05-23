@@ -11,10 +11,14 @@ export class MinioService {
   constructor() {
     // Parse the endpoint URL to extract host and protocol
     const endpointUrl = new URL(process.env.S3_ENDPOINT!);
-    
+
     this.client = new Client({
       endPoint: endpointUrl.hostname,
-      port: endpointUrl.port ? parseInt(endpointUrl.port) : (endpointUrl.protocol === 'https:' ? 443 : 80),
+      port: endpointUrl.port
+        ? parseInt(endpointUrl.port)
+        : endpointUrl.protocol === 'https:'
+          ? 443
+          : 80,
       useSSL: endpointUrl.protocol === 'https:',
       accessKey: process.env.S3_ACCESS_KEY!,
       secretKey: process.env.S3_SECRET_KEY!,
@@ -28,8 +32,8 @@ export class MinioService {
     const policy = this.client.newPostPolicy();
     policy.setBucket(this.defaultBucket); // Using default bucket for posts
     policy.setKey(key);
-    policy.setExpires(new Date(Date.now() + 5 * 60 * 1000));   // 5分
-    return await this.client.presignedPostPolicy(policy);      // MinIO公式API:contentReference[oaicite:3]{index=3}
+    policy.setExpires(new Date(Date.now() + 5 * 60 * 1000)); // 5分
+    return await this.client.presignedPostPolicy(policy); // MinIO公式API:contentReference[oaicite:3]{index=3}
   }
 
   async uploadPdf(buffer: Buffer, key: string): Promise<void> {
@@ -39,12 +43,19 @@ export class MinioService {
       });
     } catch (error) {
       // Add proper logging here
-      console.error(`Failed to upload PDF to MinIO (bucket: ${this.pdfBucket}, key: ${key})`, error);
+      console.error(
+        `Failed to upload PDF to MinIO (bucket: ${this.pdfBucket}, key: ${key})`,
+        error,
+      );
       throw new Error(`MinIO PDF Upload Error: ${error.message}`);
     }
   }
 
-  async generatePresignedGetUrl(key: string, bucketName: string = this.pdfBucket, expirySeconds: number = 5 * 60): Promise<string> {
+  async generatePresignedGetUrl(
+    key: string,
+    bucketName: string = this.pdfBucket,
+    expirySeconds: number = 5 * 60,
+  ): Promise<string> {
     try {
       return await this.client.presignedGetObject(
         bucketName,
@@ -53,7 +64,10 @@ export class MinioService {
       );
     } catch (error) {
       // Add proper logging here
-      console.error(`Failed to generate presigned GET URL for MinIO (bucket: ${this.pdfBucket}, key: ${key})`, error);
+      console.error(
+        `Failed to generate presigned GET URL for MinIO (bucket: ${this.pdfBucket}, key: ${key})`,
+        error,
+      );
       throw new Error(`MinIO Presigned URL Error: ${error.message}`);
     }
   }

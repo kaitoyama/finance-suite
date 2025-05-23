@@ -7,7 +7,11 @@ import { Account, Budget, PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 // Helper to run GraphQL queries/mutations
-const graphqlQuery = (app: INestApplication, query: string, variables?: Record<string, any>) => {
+const graphqlQuery = (
+  app: INestApplication,
+  query: string,
+  variables?: Record<string, any>,
+) => {
   return request(app.getHttpServer())
     .post('/graphql')
     .send({ query, variables });
@@ -77,11 +81,15 @@ describe('BudgetsResolver (e2e)', () => {
       expect(response.body.data.setBudget.accountId).toBe(testAccount.id);
       expect(response.body.data.setBudget.fiscalYear).toBe(fiscalYear);
       // Prisma returns Decimal, GraphQL returns Float. Compare string representations for precision.
-      expect(new Decimal(response.body.data.setBudget.amountPlanned).toFixed(2)).toBe(amountPlanned.toFixed(2));
+      expect(
+        new Decimal(response.body.data.setBudget.amountPlanned).toFixed(2),
+      ).toBe(amountPlanned.toFixed(2));
 
       // Verify in DB
       const dbBudget = await prisma.budget.findUnique({
-        where: { accountId_fiscalYear: { accountId: testAccount.id, fiscalYear } },
+        where: {
+          accountId_fiscalYear: { accountId: testAccount.id, fiscalYear },
+        },
       });
       expect(dbBudget).toBeDefined();
       expect(dbBudget?.amountPlanned.toFixed(2)).toBe(amountPlanned.toFixed(2));
@@ -124,11 +132,15 @@ describe('BudgetsResolver (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.data.setBudget.accountId).toBe(testAccount.id);
       expect(response.body.data.setBudget.fiscalYear).toBe(fiscalYear);
-      expect(new Decimal(response.body.data.setBudget.amountPlanned).toFixed(2)).toBe(updatedAmount.toFixed(2));
+      expect(
+        new Decimal(response.body.data.setBudget.amountPlanned).toFixed(2),
+      ).toBe(updatedAmount.toFixed(2));
 
       // Verify in DB
       const dbBudget = await prisma.budget.findUnique({
-        where: { accountId_fiscalYear: { accountId: testAccount.id, fiscalYear } },
+        where: {
+          accountId_fiscalYear: { accountId: testAccount.id, fiscalYear },
+        },
       });
       expect(dbBudget?.amountPlanned.toFixed(2)).toBe(updatedAmount.toFixed(2));
     });
@@ -149,7 +161,9 @@ describe('BudgetsResolver (e2e)', () => {
       const response = await graphqlQuery(app, mutation, variables);
       expect(response.status).toBe(400); // Or 200 with errors array, depending on GraphQL server config
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('fiscalYear must not be less than 2000');
+      expect(response.body.errors[0].message).toContain(
+        'fiscalYear must not be less than 2000',
+      );
     });
 
     it('should return a validation error for negative amountPlanned', async () => {
@@ -168,10 +182,12 @@ describe('BudgetsResolver (e2e)', () => {
       const response = await graphqlQuery(app, mutation, variables);
       expect(response.status).toBe(400);
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain('amountPlanned must not be less than 0');
+      expect(response.body.errors[0].message).toContain(
+        'amountPlanned must not be less than 0',
+      );
     });
 
-     it('should return an error for non-existent accountId (FK constraint)', async () => {
+    it('should return an error for non-existent accountId (FK constraint)', async () => {
       const mutation = `
         mutation SetBudget($input: BudgetInput!) {
           setBudget(input: $input) { id }
@@ -192,7 +208,9 @@ describe('BudgetsResolver (e2e)', () => {
       } catch (error) {
         // If the error is caught and re-thrown as a NestJS/GraphQL error, check that
         // This part is highly dependent on how Prisma errors are propagated
-        expect(error.response.errors[0].extensions.code).toBe('INTERNAL_SERVER_ERROR');
+        expect(error.response.errors[0].extensions.code).toBe(
+          'INTERNAL_SERVER_ERROR',
+        );
       }
       // More robust check: Querying Prisma directly for a failed insert (if possible)
       // Or ensure the GraphQL response indicates a failure related to foreign key
@@ -203,7 +221,6 @@ describe('BudgetsResolver (e2e)', () => {
       // For now, let's assume it triggers a GraphQL error that can be caught.
       // expect(response.body.errors[0].message).toContain('Foreign key constraint failed');
     });
-
   });
 
   describe('budgets query', () => {
@@ -211,9 +228,21 @@ describe('BudgetsResolver (e2e)', () => {
       // Seed some budgets for querying
       await prisma.budget.createMany({
         data: [
-          { accountId: testAccount.id, fiscalYear: 2023, amountPlanned: new Decimal('200.00') },
-          { accountId: testAccount.id, fiscalYear: 2024, amountPlanned: new Decimal('300.00') },
-          { accountId: testAccount.id, fiscalYear: 2024, amountPlanned: new Decimal('400.00') }, // Duplicate for test
+          {
+            accountId: testAccount.id,
+            fiscalYear: 2023,
+            amountPlanned: new Decimal('200.00'),
+          },
+          {
+            accountId: testAccount.id,
+            fiscalYear: 2024,
+            amountPlanned: new Decimal('300.00'),
+          },
+          {
+            accountId: testAccount.id,
+            fiscalYear: 2024,
+            amountPlanned: new Decimal('400.00'),
+          }, // Duplicate for test
         ],
         skipDuplicates: true, // Important for the upsert logic in setBudget or direct creates
       });
@@ -246,7 +275,7 @@ describe('BudgetsResolver (e2e)', () => {
 
     it('should return an empty array if no budgets exist for the fiscalYear', async () => {
       const fiscalYearToQuery = 1900; // Unlikely to have budgets
-       const query = `
+      const query = `
         query GetBudgets($fiscalYear: Int!) {
           budgets(fiscalYear: $fiscalYear) {
             id
@@ -260,4 +289,4 @@ describe('BudgetsResolver (e2e)', () => {
       expect(response.body.data.budgets).toEqual([]);
     });
   });
-}); 
+});

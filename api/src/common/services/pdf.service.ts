@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import puppeteer, { Browser, Page } from 'puppeteer';
 import * as fs from 'fs/promises';
 import * as handlebars from 'handlebars';
@@ -10,8 +15,7 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
   private browser: Browser | null = null;
   private readonly logger = new Logger(PdfService.name);
 
-  constructor(private readonly configService: ConfigService) {
-  }
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
     try {
@@ -28,13 +32,15 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
         // executablePath: '/usr/bin/google-chrome-stable',
       });
       this.logger.log('Puppeteer browser instance initialized successfully.');
-      
+
       const page = await this.browser.newPage();
       await page.close();
       this.logger.log('Puppeteer browser warmed up.');
-
     } catch (error) {
-      this.logger.error('Failed to initialize Puppeteer browser instance.', error);
+      this.logger.error(
+        'Failed to initialize Puppeteer browser instance.',
+        error,
+      );
       this.browser = null;
     }
   }
@@ -55,13 +61,15 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
   private formatYenCurrency(amount: number): string {
     return `¥${this.formatCurrency(amount)}`;
   }
-  
+
   async generatePdfFromTemplate(
     templatePath: string,
     data: Record<string, any>,
   ): Promise<Buffer> {
     if (!this.browser) {
-      this.logger.error('Puppeteer browser is not initialized. PDF generation cannot proceed.');
+      this.logger.error(
+        'Puppeteer browser is not initialized. PDF generation cannot proceed.',
+      );
       throw new Error('PDF generation service is not ready.');
     }
 
@@ -70,7 +78,13 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
       // __dirname is .../api/dist/common/services
       // templatePath is e.g., "invoice.html"
       // We want .../api/dist/templates/invoice.html
-      const resolvedTemplatePath = path.join(__dirname, '..', '..', '..', templatePath);
+      const resolvedTemplatePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        templatePath,
+      );
       const templateHtml = await fs.readFile(resolvedTemplatePath, 'utf-8');
       const template = handlebars.compile(templateHtml);
 
@@ -80,10 +94,22 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
         AMOUNT_YEN_IN_TABLE: this.formatYenCurrency(data.amount),
         ITEM_AMOUNT_FORMATTED: this.formatCurrency(data.amount),
         SUBJECT_TEXT: data.subjectText || '',
-        DUE_DATE_TEXT: data.dueDateText || new Date(new Date(data.date).getFullYear(), new Date(data.date).getMonth() + 1, 0).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/'),
+        DUE_DATE_TEXT:
+          data.dueDateText ||
+          new Date(
+            new Date(data.date).getFullYear(),
+            new Date(data.date).getMonth() + 1,
+            0,
+          )
+            .toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })
+            .replace(/\//g, '/'),
         ITEM_DESCRIPTION_TEXT: data.itemDescriptionText || '',
       };
-      
+
       const htmlContent = template(templateData);
 
       page = await this.browser.newPage();
@@ -101,11 +127,16 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
           left: '0mm',
         },
       });
-      
-      this.logger.log(`PDF generated successfully for invoice: ${data.invoiceNo}`);
+
+      this.logger.log(
+        `PDF generated successfully for invoice: ${data.invoiceNo}`,
+      );
       return Buffer.from(pdfBuffer);
     } catch (error) {
-      this.logger.error(`Error generating PDF for invoice ${data.invoiceNo}:`, error);
+      this.logger.error(
+        `Error generating PDF for invoice ${data.invoiceNo}:`,
+        error,
+      );
       throw new Error(`Failed to generate PDF: ${error.message}`);
     } finally {
       if (page) {
@@ -113,4 +144,4 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
       }
     }
   }
-} 
+}

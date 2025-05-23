@@ -110,8 +110,11 @@ type Payment {
   method: PaymentMethod!
   invoice: Invoice
   invoiceId: Int
+  overpaidAmount: Float
+  expenseRequestId: Int
   attachments: [Attachment]
   createdAt: DateTime
+  updatedAt: DateTime
 }
 
 enum PaymentLabel {

@@ -28,7 +28,10 @@ export class JournalResolver {
     const isAdmin = req.isAdmin || false; // Default to false if undefined
 
     // Find or create the user based on username from the header
-    const user = await this.userService.findOrCreateByUsername(username, isAdmin);
+    const user = await this.userService.findOrCreateByUsername(
+      username,
+      isAdmin,
+    );
     // No need to check if user is null/undefined as findOrCreateByUsername will always return a user or throw
 
     return this.journalService.create(createJournalEntryInput, user);

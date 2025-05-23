@@ -9,9 +9,9 @@ import { PubSub } from 'graphql-subscriptions';
 
 @Module({
   providers: [
-    PrismaService, 
-    ExpenseService, 
-    ExpenseResolver, 
+    PrismaService,
+    ExpenseService,
+    ExpenseResolver,
     WebhookService,
     ConfigService,
     {
@@ -19,8 +19,8 @@ import { PubSub } from 'graphql-subscriptions';
       useFactory: () => {
         return new PubSub();
       },
-    }
+    },
   ],
   exports: [ExpenseService],
 })
-export class ExpenseModule {} 
+export class ExpenseModule {}

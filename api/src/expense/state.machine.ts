@@ -1,9 +1,12 @@
 import { createMachine } from 'xstate';
-import { ExpenseRequest, RequestState as PrismaRequestState } from '@prisma/client';
+import {
+  ExpenseRequest,
+  RequestState as PrismaRequestState,
+} from '@prisma/client';
 
 export interface ExpenseContext {
   expenseRequest?: ExpenseRequest;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   error?: any;
 }
 
@@ -59,4 +62,4 @@ export const expenseStateMachine = createMachine({
       type: 'final',
     },
   },
-}); 
+});

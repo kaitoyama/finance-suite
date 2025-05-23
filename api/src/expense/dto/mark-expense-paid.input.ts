@@ -12,4 +12,4 @@ export class MarkExpensePaidInput {
   @IsInt()
   @IsNotEmpty()
   paymentId: number;
-} 
+}

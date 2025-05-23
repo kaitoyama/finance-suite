@@ -11,7 +11,10 @@ export class AttachmentsResolver {
   constructor(private readonly svc: AttachmentsService) {}
 
   @Query(() => PresignedPayload, { name: 'getPresignedS3Url' })
-  getPresignedS3Url(@Args('title') title: string, @UserHeader() user: { username: string }) {
+  getPresignedS3Url(
+    @Args('title') title: string,
+    @UserHeader() user: { username: string },
+  ) {
     return this.svc.getPresignedS3Url(title, user.username);
   }
 

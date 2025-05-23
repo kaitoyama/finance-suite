@@ -1,6 +1,12 @@
 import { InputType, Field } from '@nestjs/graphql';
 import { JournalLineInput } from './journal-line.input';
-import { IsOptional, IsString, IsArray, ValidateNested, IsDate } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsDate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 @InputType()

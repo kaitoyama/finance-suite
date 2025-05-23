@@ -1,5 +1,9 @@
 import { ObjectType, Field, Int, registerEnumType } from '@nestjs/graphql';
-import { PaymentLabel as PaymentLabelEnum, PaymentDirection, PaymentMethod } from '@prisma/client';
+import {
+  PaymentLabel as PaymentLabelEnum,
+  PaymentDirection,
+  PaymentMethod,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Invoice } from '../../invoice/entities/invoice.entity';
 import { Attachment } from '../../attachments/entities/attachment.entity';
@@ -42,9 +46,18 @@ export class Payment {
   @Field(() => Int, { nullable: true })
   invoiceId?: number;
 
+  @Field(() => Number, { nullable: true })
+  overpaidAmount?: Decimal;
+
+  @Field(() => Int, { nullable: true })
+  expenseRequestId?: number;
+
   @Field(() => [Attachment], { nullable: 'itemsAndList' })
   attachments?: Attachment[];
 
   @Field({ nullable: true })
   createdAt?: Date;
-} 
+
+  @Field({ nullable: true })
+  updatedAt?: Date;
+}

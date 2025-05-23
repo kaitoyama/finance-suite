@@ -4,7 +4,8 @@ import * as React from "react";
 import { useParams } from "next/navigation";
 import { useGetInvoiceById, useGetPresignedS3Url } from "@/hooks/useInvoice";
 import { Button } from "@/components/ui/button";
-import { ArrowDownToLine, ExternalLink, RotateCw } from "lucide-react";
+import { ArrowDownToLine, ExternalLink, RotateCw, CreditCard } from "lucide-react";
+import Link from "next/link";
 
 export default function InvoicePreviewPage() {
   const params = useParams();
@@ -54,14 +55,24 @@ export default function InvoicePreviewPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">請求書プレビュー: #{invoice.invoiceNo || invoice.id}</h1>
-        {downloadUrl && (
-          <Button asChild>
-            <a href={downloadUrl} download={`invoice-${invoice.invoiceNo || invoice.id}.pdf`}>
-              <ArrowDownToLine className="mr-2 h-4 w-4" />
-              ダウンロード
-            </a>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {(invoice.status === 'UNPAID' || invoice.status === 'PARTIAL') && (
+            <Link href={`/invoices/${invoice.id}/pay`}>
+              <Button>
+                <CreditCard className="mr-2 h-4 w-4" />
+                入金記録
+              </Button>
+            </Link>
+          )}
+          {downloadUrl && (
+            <Button asChild variant="outline">
+              <a href={downloadUrl} download={`invoice-${invoice.invoiceNo || invoice.id}.pdf`}>
+                <ArrowDownToLine className="mr-2 h-4 w-4" />
+                ダウンロード
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mb-6 p-4 border rounded-lg shadow-sm bg-white">

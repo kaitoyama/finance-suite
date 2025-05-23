@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { PdfService } from '../common/services/pdf.service';
 import { MinioService } from '../storage/minio.service';
+import { JournalService } from '../journal/journal.service';
 import { InvoiceInput } from './dto/invoice.input'; // Will create this DTO later
 import { User } from '@prisma/client'; // Assuming User entity is directly from prisma client
 import { Invoice, InvoiceStatus } from '@prisma/client';
@@ -14,14 +15,78 @@ export class InvoiceService {
     private readonly prisma: PrismaService,
     private readonly pdfService: PdfService,
     private readonly minioService: MinioService,
+    private readonly journalService: JournalService,
   ) {}
 
   private formatJapaneseDate(date: Date): string {
-    return date.toLocaleDateString('ja-JP-u-ca-japanese', { year: 'numeric', month: 'long', day: 'numeric' });
+    return date.toLocaleDateString('ja-JP-u-ca-japanese', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   private formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency: 'JPY',
+    }).format(amount);
+  }
+
+  private async createJournalEntryForInvoice(
+    invoice: Invoice,
+    user: User,
+  ): Promise<void> {
+    try {
+      // Get required accounts for invoice journal entry
+      const receivableAccount = await this.prisma.account.findFirst({
+        where: { code: '120' }, // 売掛金
+      });
+      const revenueAccount = await this.prisma.account.findFirst({
+        where: { code: '401' }, // 売上高
+      });
+
+      if (!receivableAccount || !revenueAccount) {
+        this.logger.error(
+          'Required accounts not found for invoice journal entry creation',
+        );
+        this.logger.error('Missing accounts: ', {
+          receivableAccount: receivableAccount ? `${receivableAccount.code} - ${receivableAccount.name}` : 'MISSING (code: 120)',
+          revenueAccount: revenueAccount ? `${revenueAccount.code} - ${revenueAccount.name}` : 'MISSING (code: 401)',
+        });
+        this.logger.error('Please ensure AccountBootstrapService has run successfully on application startup');
+        return;
+      }
+
+      // Create journal entry: Debit Receivables, Credit Revenue
+      await this.journalService.create(
+        {
+          datetime: new Date(),
+          description: `Invoice created - ${invoice.invoiceNo} - ${invoice.partnerName}`,
+          lines: [
+            {
+              accountId: receivableAccount.id,
+              debit: invoice.amount,
+              credit: undefined,
+            },
+            {
+              accountId: revenueAccount.id,
+              debit: undefined,
+              credit: invoice.amount,
+            },
+          ],
+        },
+        user,
+      );
+
+      this.logger.log(`Journal entry created for invoice ${invoice.invoiceNo}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to create journal entry for invoice ${invoice.invoiceNo}:`,
+        error,
+      );
+      // Don't throw error to avoid blocking invoice creation
+    }
   }
 
   async getInvoiceById(id: number): Promise<Invoice | null> {
@@ -45,7 +110,9 @@ export class InvoiceService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (new Date(dueDate) < today) {
-          throw new BadRequestException('Due date must be today or a future date.');
+        throw new BadRequestException(
+          'Due date must be today or a future date.',
+        );
       }
     }
 
@@ -64,7 +131,10 @@ export class InvoiceService {
 
     let sequence = 1;
     if (lastInvoiceOfTheYear) {
-      const lastSequence = parseInt(lastInvoiceOfTheYear.invoiceNo.split('-')[2], 10);
+      const lastSequence = parseInt(
+        lastInvoiceOfTheYear.invoiceNo.split('-')[2],
+        10,
+      );
       sequence = lastSequence + 1;
     }
     const invoiceNo = `INV-${currentYear}-${sequence.toString().padStart(4, '0')}`;
@@ -101,9 +171,15 @@ export class InvoiceService {
         subjectText: description || 'ご請求の件',
         itemDescriptionText: description || 'ご請求の件',
       };
-      pdfBuffer = await this.pdfService.generatePdfFromTemplate(pdfTemplatePath, pdfServiceData);
+      pdfBuffer = await this.pdfService.generatePdfFromTemplate(
+        pdfTemplatePath,
+        pdfServiceData,
+      );
     } catch (error) {
-      this.logger.error(`Failed to generate PDF for ${invoiceNo}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to generate PDF for ${invoiceNo}: ${error.message}`,
+        error.stack,
+      );
       throw new Error(`Failed to generate PDF: ${error.message}`);
     }
 
@@ -113,7 +189,10 @@ export class InvoiceService {
       await this.minioService.uploadPdf(pdfBuffer, pdfKey);
       this.logger.log(`PDF uploaded to MinIO for ${invoiceNo} at ${pdfKey}`);
     } catch (error) {
-      this.logger.error(`Failed to upload PDF to MinIO for ${invoiceNo}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to upload PDF to MinIO for ${invoiceNo}: ${error.message}`,
+        error.stack,
+      );
       // Decide if we should still create the invoice record or not.
       // For now, let's throw, as pdfKey is a required field in the schema.
       throw new Error(`Failed to upload PDF to MinIO: ${error.message}`);
@@ -133,12 +212,21 @@ export class InvoiceService {
           description: description,
         },
       });
-      this.logger.log(`Invoice ${invoiceNo} created successfully for user ${user.username}`);
+      this.logger.log(
+        `Invoice ${invoiceNo} created successfully for user ${user.username}`,
+      );
+
+      // 6. Create journal entry for the invoice (Debit Receivables, Credit Revenue)
+      await this.createJournalEntryForInvoice(newInvoice, user);
+
       return newInvoice;
     } catch (error) {
-      this.logger.error(`Failed to save invoice ${invoiceNo} to database: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to save invoice ${invoiceNo} to database: ${error.message}`,
+        error.stack,
+      );
       // TODO: Consider deleting the PDF from MinIO if DB save fails (compensation transaction)
       throw new Error(`Failed to save invoice to database: ${error.message}`);
     }
   }
-} 
+}

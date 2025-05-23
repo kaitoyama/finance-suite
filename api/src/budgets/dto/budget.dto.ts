@@ -17,4 +17,4 @@ export class BudgetDto {
 
   @Field()
   createdAt: Date;
-} 
+}

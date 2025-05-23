@@ -5,9 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,          // ← 全モジュールで env 利用可
+      isGlobal: true, // ← 全モジュールで env 利用可
       cache: true,
-      envFilePath: ['.env'],   // デフォルトは .env
+      envFilePath: ['.env'], // デフォルトは .env
     }),
   ],
 })

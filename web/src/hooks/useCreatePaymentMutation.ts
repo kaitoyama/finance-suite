@@ -9,9 +9,10 @@ export const createPaymentMutationDocument = gql`
       paidAt
       amount
       label
-      # invoice and invoiceId are available if needed
-      # The API design implies that ExpenseRequest status change is a side-effect handled by the backend,
-      # not directly returned by createPayment. We'll rely on re-fetching or optimistic UI for that.
+      invoiceId
+      direction
+      method
+      createdAt
     }
   }
 `; 

@@ -40,23 +40,26 @@ export class BudgetsService {
       where: {
         fiscalYear,
       },
-      include: { account: true }
+      include: { account: true },
     });
   }
 
   async getBudgetBalances(year: number): Promise<BudgetBalance[]> {
-    const fiscalYearStartSetting = this.configService.get<string>('FISCAL_YEAR_START') || '04-01';
-    const [startMonth, startDay] = fiscalYearStartSetting.split('-').map(Number);
+    const fiscalYearStartSetting =
+      this.configService.get<string>('FISCAL_YEAR_START') || '04-01';
+    const [startMonth, startDay] = fiscalYearStartSetting
+      .split('-')
+      .map(Number);
     const startDate = new Date(Date.UTC(year, startMonth - 1, startDay));
     const endDate = new Date(Date.UTC(year + 1, startMonth - 1, startDay - 1));
 
     const budgetsForYear = await this.prisma.budget.findMany({
       where: {
         fiscalYear: year,
-        amountPlanned: { gt: 0 }, 
+        amountPlanned: { gt: 0 },
       },
       include: {
-        account: true, 
+        account: true,
       },
     });
 
@@ -66,7 +69,8 @@ export class BudgetsService {
 
     const journalEntriesInDateRange = await this.prisma.journalEntry.findMany({
       where: {
-        datetime: { // Assuming JournalEntry has 'datetime'
+        datetime: {
+          // Assuming JournalEntry has 'datetime'
           gte: startDate,
           lte: endDate,
         },
@@ -82,7 +86,10 @@ export class BudgetsService {
       },
     });
 
-    const accountAggregates = new Map<number, { totalDebit: Decimal; totalCredit: Decimal }>();
+    const accountAggregates = new Map<
+      number,
+      { totalDebit: Decimal; totalCredit: Decimal }
+    >();
 
     for (const entry of journalEntriesInDateRange) {
       if (entry.lines) {
@@ -92,13 +99,17 @@ export class BudgetsService {
             totalCredit: new Decimal(0),
           };
           // Ensure debit/credit are Decimals or add as numbers if they are already numbers
-          currentAgg.totalDebit = currentAgg.totalDebit.add(new Decimal(line.debit?.toString() || '0'));
-          currentAgg.totalCredit = currentAgg.totalCredit.add(new Decimal(line.credit?.toString() || '0'));
+          currentAgg.totalDebit = currentAgg.totalDebit.add(
+            new Decimal(line.debit?.toString() || '0'),
+          );
+          currentAgg.totalCredit = currentAgg.totalCredit.add(
+            new Decimal(line.credit?.toString() || '0'),
+          );
           accountAggregates.set(line.accountId, currentAgg);
         }
       }
     }
-    
+
     const budgetBalances: BudgetBalance[] = budgetsForYear.map((budget) => {
       const account = budget.account;
       const planned = budget.amountPlanned.toNumber();
@@ -116,11 +127,12 @@ export class BudgetsService {
       ) {
         actualValue = sumCredit - sumDebit;
       }
-      
+
       const actual = actualValue;
       const remaining = planned - actual;
       // Ensure planned is not zero before division and handle toFixed for precision
-      const ratio = planned === 0 ? 0 : parseFloat((actual / planned).toFixed(4));
+      const ratio =
+        planned === 0 ? 0 : parseFloat((actual / planned).toFixed(4));
 
       return {
         accountId: account.id,
@@ -130,10 +142,10 @@ export class BudgetsService {
         actual,
         remaining,
         // Ensure ratio is within 0-1 bounds, even with potential floating point inaccuracies
-        ratio: Math.max(0, Math.min(1, ratio)), 
+        ratio: Math.max(0, Math.min(1, ratio)),
       };
     });
 
     return budgetBalances;
   }
-} 
+}

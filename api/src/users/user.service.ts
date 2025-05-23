@@ -13,7 +13,10 @@ export class UserService {
     });
   }
 
-  async findOrCreateByUsername(username: string, isAdmin: boolean = false): Promise<User> {
+  async findOrCreateByUsername(
+    username: string,
+    isAdmin: boolean = false,
+  ): Promise<User> {
     const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -32,4 +35,4 @@ export class UserService {
   }
 
   // Potentially other user-related methods like create, findAll, findOne, update, remove
-} 
+}

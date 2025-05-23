@@ -16,7 +16,12 @@ describe('InvoicePdfResolver', () => {
   let minioService: jest.Mocked<MinioService>;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockTemplatePath = path.join(process.cwd(), 'api', 'templates', 'invoice.html');
+  const mockTemplatePath = path.join(
+    process.cwd(),
+    'api',
+    'templates',
+    'invoice.html',
+  );
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,9 +59,13 @@ describe('InvoicePdfResolver', () => {
     configService = module.get(ConfigService); // Get the mocked ConfigService instance
 
     // Default mock implementations
-    pdfService.generatePdfFromTemplate.mockResolvedValue(Buffer.from('pdf content'));
+    pdfService.generatePdfFromTemplate.mockResolvedValue(
+      Buffer.from('pdf content'),
+    );
     minioService.uploadPdf.mockResolvedValue(undefined);
-    minioService.generatePresignedGetUrl.mockResolvedValue('http://s3.com/signed-url');
+    minioService.generatePresignedGetUrl.mockResolvedValue(
+      'http://s3.com/signed-url',
+    );
   });
 
   it('should be defined', () => {
@@ -70,7 +79,7 @@ describe('InvoicePdfResolver', () => {
     date: '2025-01-15',
     subjectText: 'Test Subject',
     dueDateText: '2025/01/31',
-    itemDescriptionText: 'Test Item'
+    itemDescriptionText: 'Test Item',
   };
 
   describe('generateInvoicePdf', () => {
@@ -90,8 +99,14 @@ describe('InvoicePdfResolver', () => {
         }),
       );
       const expectedPdfKey = `invoices/${validInput.invoiceNo}.pdf`;
-      expect(minioService.uploadPdf).toHaveBeenCalledWith(Buffer.from('pdf content'), expectedPdfKey);
-      expect(minioService.generatePresignedGetUrl).toHaveBeenCalledWith(expectedPdfKey, 300);
+      expect(minioService.uploadPdf).toHaveBeenCalledWith(
+        Buffer.from('pdf content'),
+        expectedPdfKey,
+      );
+      expect(minioService.generatePresignedGetUrl).toHaveBeenCalledWith(
+        expectedPdfKey,
+        300,
+      );
       expect(result).toEqual({
         pdfKey: expectedPdfKey,
         presignedUrl: 'http://s3.com/signed-url',
@@ -99,45 +114,53 @@ describe('InvoicePdfResolver', () => {
     });
 
     it('should return an error if MinIO upload fails', async () => {
-      minioService.uploadPdf.mockRejectedValueOnce(new Error('MinIO Upload Failed'));
+      minioService.uploadPdf.mockRejectedValueOnce(
+        new Error('MinIO Upload Failed'),
+      );
 
-      await expect(resolver.generateInvoicePdf(validInput)).rejects.toThrow('MinIO Upload Failed');
+      await expect(resolver.generateInvoicePdf(validInput)).rejects.toThrow(
+        'MinIO Upload Failed',
+      );
       expect(pdfService.generatePdfFromTemplate).toHaveBeenCalled(); // Still attempts to generate PDF
     });
 
     it('should return an error if template is missing (PdfService fails)', async () => {
       // Simulate PdfService failing due to template issues or other reasons
-      pdfService.generatePdfFromTemplate.mockRejectedValueOnce(new Error('Template processing failed'));
+      pdfService.generatePdfFromTemplate.mockRejectedValueOnce(
+        new Error('Template processing failed'),
+      );
 
-      await expect(resolver.generateInvoicePdf(validInput)).rejects.toThrow('Template processing failed');
+      await expect(resolver.generateInvoicePdf(validInput)).rejects.toThrow(
+        'Template processing failed',
+      );
       expect(minioService.uploadPdf).not.toHaveBeenCalled();
       expect(minioService.generatePresignedGetUrl).not.toHaveBeenCalled();
     });
 
     it('should use default subject, due date, and item description if not provided', async () => {
-        const inputWithoutOptionalTexts: GenerateInvoicePdfInput = {
-            invoiceNo: 'INV-2025-002',
-            partnerName: 'Another Partner',
-            amount: 50000,
-            date: '2025-02-10',
-            // subjectText, dueDateText, itemDescriptionText are omitted
-        };
+      const inputWithoutOptionalTexts: GenerateInvoicePdfInput = {
+        invoiceNo: 'INV-2025-002',
+        partnerName: 'Another Partner',
+        amount: 50000,
+        date: '2025-02-10',
+        // subjectText, dueDateText, itemDescriptionText are omitted
+      };
 
-        await resolver.generateInvoicePdf(inputWithoutOptionalTexts);
+      await resolver.generateInvoicePdf(inputWithoutOptionalTexts);
 
-        expect(pdfService.generatePdfFromTemplate).toHaveBeenCalledWith(
-            mockTemplatePath,
-            expect.objectContaining({
-                INVOICE_NO: inputWithoutOptionalTexts.invoiceNo,
-                PARTNER_NAME: inputWithoutOptionalTexts.partnerName,
-                ISSUE_DATE: '2025/2/10', 
-                amount: inputWithoutOptionalTexts.amount,
-                subjectText: undefined, // Resolver passes undefined, PdfService will use defaults
-                dueDateText: undefined, // Resolver passes undefined, PdfService will use defaults
-                itemDescriptionText: undefined, // Resolver passes undefined, PdfService will use defaults
-                date: '2025-02-10' //This is passed to PdfService for default due date calculation
-            }),
-        );
+      expect(pdfService.generatePdfFromTemplate).toHaveBeenCalledWith(
+        mockTemplatePath,
+        expect.objectContaining({
+          INVOICE_NO: inputWithoutOptionalTexts.invoiceNo,
+          PARTNER_NAME: inputWithoutOptionalTexts.partnerName,
+          ISSUE_DATE: '2025/2/10',
+          amount: inputWithoutOptionalTexts.amount,
+          subjectText: undefined, // Resolver passes undefined, PdfService will use defaults
+          dueDateText: undefined, // Resolver passes undefined, PdfService will use defaults
+          itemDescriptionText: undefined, // Resolver passes undefined, PdfService will use defaults
+          date: '2025-02-10', //This is passed to PdfService for default due date calculation
+        }),
+      );
     });
   });
-}); 
+});

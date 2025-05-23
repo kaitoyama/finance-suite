@@ -5,9 +5,7 @@ import { Logger } from '@nestjs/common';
 @Resolver()
 export class AppResolver {
   private readonly logger = new Logger(AppResolver.name);
-  constructor(
-    private readonly minioService: MinioService,
-  ) {}
+  constructor(private readonly minioService: MinioService) {}
 
   @Query(() => String, { description: 'Health-check' })
   hello() {
@@ -26,10 +24,13 @@ export class AppResolver {
       const url = await this.minioService.generatePresignedGetUrl(key);
       return url;
     } catch (error) {
-      this.logger.error(`Failed to generate presigned URL for key: ${key}`, error);
+      this.logger.error(
+        `Failed to generate presigned URL for key: ${key}`,
+        error,
+      );
       // Depending on desired behavior, you might rethrow or return null
       // For now, returning null to indicate failure to the client gracefully
-      return null; 
+      return null;
     }
   }
 }

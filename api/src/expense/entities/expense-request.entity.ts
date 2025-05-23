@@ -1,4 +1,10 @@
-import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity'; // Assuming User entity path
 import { Attachment } from '../../attachments/entities/attachment.entity'; // Path to the new Attachment entity
 import { Payment } from '../../payments/entities/payment.entity'; // Assuming Payment entity path
@@ -42,4 +48,4 @@ export class ExpenseRequest {
   @Field(() => Payment, { nullable: true })
   payment?: Payment;
   // paymentId is implicitly available via payment.id
-} 
+}

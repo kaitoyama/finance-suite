@@ -8,4 +8,4 @@ import { PdfService } from './pdf.service';
   providers: [PdfService],
   exports: [PdfService],
 })
-export class PdfModule {} 
+export class PdfModule {}

@@ -19,4 +19,4 @@ export class BudgetInput {
   @Min(0) // As per AC1 & AC4: amountPlanned >= 0
   @IsNotEmpty()
   amountPlanned: Decimal;
-} 
+}

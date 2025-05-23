@@ -9,4 +9,4 @@ import { ConfigModule } from '@nestjs/config'; // Ensure ConfigModule is importe
   providers: [BudgetsResolver, BudgetsService],
   exports: [BudgetsService], // Export service if other modules might need it
 })
-export class BudgetsModule {} 
+export class BudgetsModule {}

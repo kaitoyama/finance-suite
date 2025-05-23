@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service'; // Correct path
 import { CreateJournalEntryInput } from './dto/create-journal-entry.input';
 import { UpdateJournalEntryInput } from './dto/update-journal-entry.input';
@@ -15,7 +19,9 @@ export class JournalService {
 
     // Validation 1: Lines existence and minimum count
     if (!lines || lines.length < 2) {
-      throw new BadRequestException('Journal entry must have at least two lines.');
+      throw new BadRequestException(
+        'Journal entry must have at least two lines.',
+      );
     }
 
     // Validation 2: Debit/Credit balance
@@ -28,13 +34,16 @@ export class JournalService {
     if (totalDebit !== totalCredit) {
       throw new BadRequestException('Total debit must equal total credit.');
     }
-    if (totalDebit === 0) { // Also implies totalCredit is 0
-        throw new BadRequestException('Journal entry total amount cannot be zero.');
+    if (totalDebit === 0) {
+      // Also implies totalCredit is 0
+      throw new BadRequestException(
+        'Journal entry total amount cannot be zero.',
+      );
     }
 
     // Validation 3 & 4: Individual line validation and Account existence
     for (const line of lines) {
-      if ((line.debit && line.credit) && (line.debit !== 0 && line.credit !== 0)) {
+      if (line.debit && line.credit && line.debit !== 0 && line.credit !== 0) {
         throw new BadRequestException(
           `Line for account ID ${line.accountId} cannot have both debit and credit amounts.`,
         );
@@ -44,9 +53,12 @@ export class JournalService {
           `Line for account ID ${line.accountId} must have either a debit or a credit amount.`,
         );
       }
-      if ((line.debit && line.debit <= 0) || (line.credit && line.credit <= 0)) {
+      if (
+        (line.debit && line.debit <= 0) ||
+        (line.credit && line.credit <= 0)
+      ) {
         throw new BadRequestException(
-          `Amounts for account ID ${line.accountId} must be positive.`
+          `Amounts for account ID ${line.accountId} must be positive.`,
         );
       }
 
@@ -54,7 +66,9 @@ export class JournalService {
         where: { id: line.accountId },
       });
       if (!accountExists) {
-        throw new NotFoundException(`Account with ID ${line.accountId} not found.`);
+        throw new NotFoundException(
+          `Account with ID ${line.accountId} not found.`,
+        );
       }
     }
 

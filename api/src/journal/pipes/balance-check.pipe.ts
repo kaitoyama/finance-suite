@@ -6,7 +6,10 @@ import { BusinessRuleException } from '../../common/exceptions/business-rule.exc
 
 @Injectable()
 export class BalanceCheckPipe implements PipeTransform {
-  transform(value: CreateJournalEntryInput | UpdateJournalEntryInput, _metadata: ArgumentMetadata) {
+  transform(
+    value: CreateJournalEntryInput | UpdateJournalEntryInput,
+    _metadata: ArgumentMetadata,
+  ) {
     if (!value.lines || value.lines.length === 0) {
       return value;
     }
@@ -21,8 +24,8 @@ export class BalanceCheckPipe implements PipeTransform {
 
     if (!totalDebit.equals(totalCredit)) {
       throw new BusinessRuleException(
-        "Debit and credit totals do not match.",
-        BusinessRuleException.DEBIT_CREDIT_MISMATCH
+        'Debit and credit totals do not match.',
+        BusinessRuleException.DEBIT_CREDIT_MISMATCH,
       );
     }
 

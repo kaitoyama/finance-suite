@@ -9,5 +9,6 @@ import { UsersModule } from '../users/users.module'; // Corrected import: UsersM
   // controllers: [JournalController], // Removed
   imports: [PrismaModule, UsersModule], // Corrected module name: UsersModule
   providers: [JournalService, JournalResolver],
+  exports: [JournalService], // Export JournalService so other modules can use it
 })
 export class JournalModule {}

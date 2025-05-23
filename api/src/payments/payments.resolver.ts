@@ -1,16 +1,28 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import { PaymentsService } from './payments.service';
 import { Payment } from './entities/payment.entity';
 import { CreatePaymentInput } from './dto/create-payment.input';
 import { UpdatePaymentInput } from './dto/update-payment.input';
+import { UserHeader } from '../common/decorators/user-header.decorator';
 
 @Resolver(() => Payment)
 export class PaymentsResolver {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Mutation(() => Payment)
-  createPayment(@Args('createPaymentInput') createPaymentInput: CreatePaymentInput) {
-    return this.paymentsService.createPayment(createPaymentInput);
+  async createPayment(
+    @Args('createPaymentInput') createPaymentInput: CreatePaymentInput,
+    @UserHeader() user: { username: string; isAdmin: boolean },
+  ) {
+    // Get user ID from username (create if doesn't exist)
+    const userRecord = await this.paymentsService.getUserByUsername(
+      user.username,
+      user.isAdmin,
+    );
+    return this.paymentsService.createPayment(
+      createPaymentInput,
+      userRecord.id,
+    );
   }
 
   @Query(() => [Payment], { name: 'payments' })
@@ -35,4 +47,4 @@ export class PaymentsResolver {
   removePayment(@Args('id', { type: () => Int }) id: number) {
     return this.paymentsService.remove(id);
   }
-} 
+}

@@ -18,4 +18,4 @@ export class CreateAccountInput {
   @IsEnum(AccountCategory)
   @IsNotEmpty()
   category: AccountCategory;
-} 
+}
