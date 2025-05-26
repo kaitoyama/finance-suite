@@ -7,7 +7,7 @@ export class BudgetDto {
   id: number;
 
   @Field(() => Int)
-  accountId: number;
+  categoryId: number;
 
   @Field(() => Int)
   fiscalYear: number;

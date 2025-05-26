@@ -158,10 +158,24 @@ enum RequestState {
   CLOSED
 }
 
+type PaginationInfo {
+  totalItems: Int!
+  totalPages: Int!
+  currentPage: Int!
+  limit: Int!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type PaginatedExpenseRequestResponse {
+  items: [ExpenseRequest!]!
+  pagination: PaginationInfo!
+}
+
 type BudgetBalance {
-  accountId: Int!
-  accountCode: String!
-  accountName: String!
+  categoryId: Int!
+  categoryName: String!
+  categoryDescription: String
   planned: Float!
   actual: Float!
   remaining: Float!
@@ -172,10 +186,36 @@ type BudgetBalance {
 
 type BudgetDto {
   id: Int!
-  accountId: Int!
+  categoryId: Int!
   fiscalYear: Int!
   amountPlanned: Float!
   createdAt: DateTime!
+}
+
+type AccountSummary {
+  accountId: Float!
+  accountCode: String!
+  accountName: String!
+  balance: Float!
+}
+
+type ProfitLossStatement {
+  fiscalYear: Float!
+  startDate: String!
+  endDate: String!
+  revenues: [AccountSummary!]!
+  expenses: [AccountSummary!]!
+  totalRevenue: Float!
+  totalExpense: Float!
+  netIncome: Float!
+}
+
+type Category {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type Query {
@@ -197,14 +237,23 @@ type Query {
   payment(id: Int!): Payment
   expenseRequest(id: Int!): ExpenseRequest
   expenseRequests: [ExpenseRequest!]
+  expenseRequestsPaginated(pagination: PaginationInput): PaginatedExpenseRequestResponse!
   listBudgetsByYear(fiscalYear: Int!): [BudgetDto!]!
   budgets(year: Int!): [BudgetBalance!]!
+  profitLossStatement(fiscalYear: Int!): ProfitLossStatement!
+  categories: [Category!]!
+  category(id: Int!): Category!
 }
 
 input RangeInput {
   startDate: DateTime
   endDate: DateTime
   searchTerm: String
+}
+
+input PaginationInput {
+  page: Int = 1
+  limit: Int = 20
 }
 
 type Mutation {
@@ -228,6 +277,9 @@ type Mutation {
   markExpensePaid(input: MarkExpensePaidInput!): ExpenseRequest!
   closeExpenseRequest(id: Int!): ExpenseRequest!
   setBudget(input: BudgetInput!): BudgetDto!
+  createCategory(createCategoryInput: CreateCategoryInput!): Category!
+  updateCategory(updateCategoryInput: UpdateCategoryInput!): Category!
+  removeCategory(id: Int!): Category!
 }
 
 input CreateVoucherInput {
@@ -338,6 +390,9 @@ input UpdatePaymentInput {
 input CreateExpenseRequestInput {
   amount: Float!
   attachmentId: Int!
+  accountId: Int
+  categoryId: Int
+  description: String
 }
 
 input MarkExpensePaidInput {
@@ -346,9 +401,20 @@ input MarkExpensePaidInput {
 }
 
 input BudgetInput {
-  accountId: Int!
+  categoryId: Int!
   fiscalYear: Int!
   amountPlanned: Float!
+}
+
+input CreateCategoryInput {
+  name: String!
+  description: String
+}
+
+input UpdateCategoryInput {
+  name: String
+  description: String
+  id: Int!
 }
 
 type Subscription {

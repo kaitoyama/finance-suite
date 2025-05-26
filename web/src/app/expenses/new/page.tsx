@@ -30,13 +30,15 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { useCreateExpenseRequestMutation } from '@/hooks/useCreateExpenseRequestMutation';
-import { useGetAccounts } from '@/hooks/useAccount'; // Assuming useAccountsQuery is the correct hook name
+import { useGetCategories } from '@/hooks/useCategory';
+import { useGetAccounts } from '@/hooks/useAccount';
 import { useCreateAttachment, useCreatePresignedPost } from '@/hooks/useAttachment';
 import { CreateAttachmentInput, CreateExpenseRequestInput } from '@/gql/graphql'; // Import generated type
 
 const expenseFormSchema = z.object({
   amount: z.coerce.number().int().positive({ message: 'Amount must be an integer and positive' }),
-  accountId: z.string().min(1, { message: 'Expense account is required' }), // Will be string from Select, convert to Int for mutation
+  accountId: z.string().min(1, { message: '勘定科目の選択は必須です' }),
+  categoryId: z.string().min(1, { message: 'カテゴリの選択は必須です' }),
   description: z.string().optional(),
   attachment: z.instanceof(File).optional(),
 });
@@ -50,11 +52,13 @@ export default function NewExpenseRequestPage() {
     defaultValues: {
       amount: 0,
       accountId: '',
+      categoryId: '',
       description: '',
     },
   });
 
   const { result: createResult, executeMutation: createExpenseRequest } = useCreateExpenseRequestMutation();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useGetCategories();
   const { accounts, loading: accountsLoading, error: accountsError } = useGetAccounts();
   const { createAttachment, loading: attachmentLoading, error: attachmentError } = useCreateAttachment();
   const { presignedPost, loading: presignedPostLoading, error: presignedPostError } = useCreatePresignedPost();
@@ -143,7 +147,10 @@ export default function NewExpenseRequestPage() {
       // 4. Submit expense request
       const expenseInput: CreateExpenseRequestInput = {
         amount: values.amount,
-        attachmentId: finalAttachmentId
+        attachmentId: finalAttachmentId,
+        accountId: values.accountId ? parseInt(values.accountId, 10) : undefined,
+        categoryId: values.categoryId ? parseInt(values.categoryId, 10) : undefined,
+        description: values.description || undefined,
       };
       const submissionPromise = createExpenseRequest({ input: expenseInput });
 
@@ -172,15 +179,18 @@ export default function NewExpenseRequestPage() {
   };
 
   useEffect(() => {
-    if (accountsError) {
-      toast.error(`Failed to load accounts: ${accountsError.message}`);
+    if (categoriesError) {
+      toast.error(`カテゴリの読み込みに失敗しました: ${categoriesError.message}`);
     }
-  }, [accountsError]);
+    if (accountsError) {
+      toast.error(`勘定科目の読み込みに失敗しました: ${accountsError.message}`);
+    }
+  }, [categoriesError, accountsError]);
 
   return (
     <div className="container mx-auto py-10">
       <Toaster position="top-center" />
-      <h1 className="text-3xl font-bold mb-8">Create New Expense Request</h1>
+      <h1 className="text-3xl font-bold mb-8">新規経費申請</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
           <FormField
@@ -188,7 +198,7 @@ export default function NewExpenseRequestPage() {
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount * (JPY)</FormLabel>
+                <FormLabel>金額 * (円)</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -208,20 +218,50 @@ export default function NewExpenseRequestPage() {
             name="accountId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Expense Account (科目) *</FormLabel>
+                <FormLabel>勘定科目 *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={accountsLoading}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an account" />
+                      <SelectValue placeholder="勘定科目を選択" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {accountsLoading ? (
                       <Skeleton className="h-8 w-full" />
                     ) : (
-                      accounts?.map((account: { id: string; name: string; code?: string }) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.code ? `${account.code} - ` : ''}{account.name}
+                      accounts?.map((account) => (
+                        <SelectItem key={account.id} value={account.id.toString()}>
+                          {account.code} - {account.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>カテゴリ *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={categoriesLoading}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="カテゴリを選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categoriesLoading ? (
+                      <Skeleton className="h-8 w-full" />
+                    ) : (
+                      categories?.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                          {category.description && ` - ${category.description}`}
                         </SelectItem>
                       ))
                     )}

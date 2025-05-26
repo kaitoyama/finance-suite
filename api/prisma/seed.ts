@@ -39,12 +39,24 @@ async function main() {
 
   await prisma.account.createMany({ data: accounts, skipDuplicates: true });
 
-  // --- 3. Initial Budgets (for current fiscal year) ---------------------
-  const currentFiscalYear = parseInt(process.env.FISCAL_YEAR || new Date().getFullYear().toString());
-  const allAccounts = await prisma.account.findMany({ select: { id: true } });
+  // --- 3. Initial Categories --------------------------------------------
+  const categories: Prisma.CategoryCreateManyInput[] = [
+    { name: '事務用品', description: '文房具、事務機器など' },
+    { name: '交通費', description: '出張、移動にかかる費用' },
+    { name: '接待交際費', description: '会議、懇親会などの費用' },
+    { name: '研修費', description: '社員研修、セミナー参加費' },
+    { name: '広告宣伝費', description: 'マーケティング、広告にかかる費用' },
+    { name: '消耗品費', description: '短期間で消費される物品' },
+  ];
 
-  const budgetsToCreate: Prisma.BudgetCreateManyInput[] = allAccounts.map(acc => ({
-    accountId: acc.id,
+  await prisma.category.createMany({ data: categories, skipDuplicates: true });
+
+  // --- 4. Initial Budgets (for current fiscal year) ---------------------
+  const currentFiscalYear = parseInt(process.env.FISCAL_YEAR || new Date().getFullYear().toString());
+  const allCategories = await prisma.category.findMany({ select: { id: true } });
+
+  const budgetsToCreate: Prisma.BudgetCreateManyInput[] = allCategories.map(cat => ({
+    categoryId: cat.id,
     fiscalYear: currentFiscalYear,
     amountPlanned: 0, // Default to 0 as per AC5
   }));

@@ -19,6 +19,8 @@ import {
 import { ExpenseRequest as GQLExpenseRequest } from './entities/expense-request.entity';
 import { CreateExpenseRequestInput } from './dto/create-expense-request.input';
 import { MarkExpensePaidInput } from './dto/mark-expense-paid.input';
+import { PaginationInput } from '../common/dto/pagination.input';
+import { PaginatedExpenseRequestResponse } from './dto/paginated-expense-request.dto';
 import { NotFoundException, UseGuards } from '@nestjs/common'; // Will be needed if we use a guard that populates req.user
 import { PubSub } from 'graphql-subscriptions'; // Import PubSub
 import { Inject } from '@nestjs/common'; // Import Inject
@@ -97,6 +99,8 @@ function mapPrismaExpenseToGql(
   };
 }
 
+// Paginated type is now imported from DTO
+
 @Resolver(() => GQLExpenseRequest)
 export class ExpenseResolver {
   constructor(
@@ -122,6 +126,33 @@ export class ExpenseResolver {
     return prismaExpenses
       .map(mapPrismaExpenseToGql)
       .filter(Boolean) as GQLExpenseRequest[];
+  }
+
+  @Query(() => PaginatedExpenseRequestResponse, { name: 'expenseRequestsPaginated' })
+  // @UseGuards(GqlAuthGuard) // Temporarily commented out
+  async getExpenseRequestsPaginated(
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+  ): Promise<PaginatedExpenseRequestResponse> {
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 20;
+    
+    const result = await this.expenseService.findAllPaginated(page, limit);
+    
+    const mappedItems = result.items
+      .map(mapPrismaExpenseToGql)
+      .filter(Boolean) as GQLExpenseRequest[];
+
+    return {
+      items: mappedItems,
+      pagination: {
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+        currentPage: result.currentPage,
+        limit,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      },
+    };
   }
 
   @Mutation(() => GQLExpenseRequest)

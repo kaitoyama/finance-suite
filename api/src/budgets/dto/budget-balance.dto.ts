@@ -3,13 +3,13 @@ import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 @ObjectType()
 export class BudgetBalance {
   @Field(() => Int)
-  accountId: number;
+  categoryId: number;
 
   @Field()
-  accountCode: string;
+  categoryName: string;
 
-  @Field()
-  accountName: string;
+  @Field({ nullable: true })
+  categoryDescription?: string;
 
   @Field(() => Float)
   planned: number;

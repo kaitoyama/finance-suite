@@ -7,7 +7,7 @@ export class BudgetInput {
   @Field(() => Int)
   @IsInt()
   @IsNotEmpty()
-  accountId: number;
+  categoryId: number;
 
   @Field(() => Int)
   @IsInt()

@@ -44,11 +44,36 @@ model Account {
   category     AccountCategory
   // relations
   journalLines JournalLine[]
-  budgets      Budget[]
+  legacyBudgets LegacyBudget[]
+  expenses     ExpenseRequest[] @relation("ExpenseAccount")
 }
 
-/// 予算（年度別・科目別）
+/// 予算カテゴリ（支出の分類）
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // relations
+  budgets     Budget[]
+  expenses    ExpenseRequest[] @relation("ExpenseCategory")
+}
+
+/// 予算（年度別・カテゴリ別）
 model Budget {
+  id        Int      @id @default(autoincrement())
+  category  Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  fiscalYear Int // e.g. 2025
+  amountPlanned Decimal @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  @@unique([categoryId, fiscalYear])
+}
+
+/// 旧予算テーブル（後方互換性のため残す）
+model LegacyBudget {
   id        Int      @id @default(autoincrement())
   account   Account  @relation(fields: [accountId], references: [id])
   accountId Int
@@ -57,6 +82,7 @@ model Budget {
   createdAt DateTime @default(now())
 
   @@unique([accountId, fiscalYear])
+  @@map("Budget_old")
 }
 
 /// 添付ファイル（証憑）メタ情報
@@ -110,6 +136,7 @@ model ExpenseRequest {
   state        RequestState @default(DRAFT)
   createdAt    DateTime     @default(now())
   approvedAt   DateTime?
+  description  String?      // 支出の説明
   // relations
   attachment   Attachment   @relation("ExpenseAttachment", fields: [attachmentId], references: [id])
   attachmentId Int          @unique
@@ -119,6 +146,10 @@ model ExpenseRequest {
   approverId   Int?
   payment      Payment?     @relation("ExpensePayment")
   paymentId    Int?
+  account      Account?     @relation("ExpenseAccount", fields: [accountId], references: [id])
+  accountId    Int?
+  category     Category?    @relation("ExpenseCategory", fields: [categoryId], references: [id])
+  categoryId   Int?
 }
 
 enum RequestState {

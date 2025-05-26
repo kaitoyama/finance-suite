@@ -141,19 +141,6 @@ export class InvoiceService {
 
     // 2. Prepare data for PDF template
     const createdAt = new Date();
-    const templateData = {
-      partnerName,
-      amount: this.formatCurrency(amount), // Formatted for display
-      rawAmount: amount, // Raw amount for calculations if any or for PdfService's internal formatting
-      dueDate: this.formatJapaneseDate(new Date(dueDate)),
-      description: description || 'ご請求の件',
-      invoiceNo,
-      createdAt: this.formatJapaneseDate(createdAt),
-      // Re-using PdfService's internal formatting for these, by passing raw values
-      // For consistency, better to let PdfService handle all its specific formatting needs if possible
-      // However, the current PdfService formats based on fixed keys like AMOUNT_YEN, not necessarily 'amount'
-      // So we provide pre-formatted values based on template's {{placeholders}}
-    };
 
     // 3. Generate PDF
     const pdfTemplatePath = 'templates/invoice.html'; // Ensure this path is correct

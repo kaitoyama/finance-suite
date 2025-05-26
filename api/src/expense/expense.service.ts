@@ -36,8 +36,9 @@ import { PubSub } from 'graphql-subscriptions';
 export interface CreateExpenseRequestInput {
   amount: number;
   attachmentId: number;
-  // requesterId will be taken from the authenticated user
-  description?: string; // Added description as an example optional field
+  accountId?: number;
+  categoryId?: number;
+  description?: string;
 }
 
 const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
@@ -53,6 +54,8 @@ const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
     },
   },
   attachment: true,
+  account: true,
+  category: true,
 };
 
 export type FullExpenseRequest = Prisma.ExpenseRequestGetPayload<{
@@ -85,6 +88,40 @@ export class ExpenseService {
     });
   }
 
+  async findAllPaginated(page: number = 1, limit: number = 20): Promise<{
+    items: FullExpenseRequest[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  }> {
+    const skip = (page - 1) * limit;
+    
+    const [items, totalItems] = await Promise.all([
+      this.prisma.expenseRequest.findMany({
+        include: expenseRequestIncludeRelations,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.expenseRequest.count(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      items,
+      totalItems,
+      totalPages,
+      currentPage: page,
+      hasNextPage,
+      hasPreviousPage,
+    };
+  }
+
   async createDraftExpenseRequest(
     input: CreateExpenseRequestInput,
     requesterUsername: string,
@@ -105,8 +142,10 @@ export class ExpenseService {
         amount: new Prisma.Decimal(input.amount),
         attachmentId: input.attachmentId,
         requesterId: requester.id,
+        accountId: input.accountId,
+        categoryId: input.categoryId,
+        description: input.description,
         state: 'DRAFT',
-        // description: input.description, // If you add description to model
       },
       include: expenseRequestIncludeRelations,
     });

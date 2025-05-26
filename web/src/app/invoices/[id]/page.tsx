@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useGetInvoiceById, useGetPresignedS3Url } from "@/hooks/useInvoice";
 import { Button } from "@/components/ui/button";
 import { ArrowDownToLine, ExternalLink, RotateCw, CreditCard } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 
 export default function InvoicePreviewPage() {
@@ -36,44 +37,47 @@ export default function InvoicePreviewPage() {
   }, [invoice?.pdfKey, presignedUrlData?.url, fetchingUrl, fetchUrlError]);
 
   if (fetchingInvoice) {
-    return <div className="container mx-auto p-4 text-center">請求書情報を読み込み中...</div>;
+    return <div className="text-center">請求書情報を読み込み中...</div>;
   }
 
   if (invoiceError) {
     return (
-      <div className="container mx-auto p-4 text-center text-red-500">
+      <div className="text-center text-red-500">
         請求書情報の読み込みエラー: {invoiceError.message}
       </div>
     );
   }
 
   if (!invoice) {
-    return <div className="container mx-auto p-4 text-center">請求書が見つかりません。</div>;
+    return <div className="text-center">請求書が見つかりません。</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">請求書プレビュー: #{invoice.invoiceNo || invoice.id}</h1>
-        <div className="flex gap-2">
-          {(invoice.status === 'UNPAID' || invoice.status === 'PARTIAL') && (
-            <Link href={`/invoices/${invoice.id}/pay`}>
-              <Button>
-                <CreditCard className="mr-2 h-4 w-4" />
-                入金記録
+    <div>
+      <PageHeader
+        title={`請求書 #${invoice.invoiceNo || invoice.id}`}
+        description="請求書の詳細とPDFプレビュー"
+        actions={
+          <>
+            {(invoice.status === 'UNPAID' || invoice.status === 'PARTIAL') && (
+              <Link href={`/invoices/${invoice.id}/pay`}>
+                <Button>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  入金記録
+                </Button>
+              </Link>
+            )}
+            {downloadUrl && (
+              <Button asChild variant="outline">
+                <a href={downloadUrl} download={`invoice-${invoice.invoiceNo || invoice.id}.pdf`}>
+                  <ArrowDownToLine className="mr-2 h-4 w-4" />
+                  ダウンロード
+                </a>
               </Button>
-            </Link>
-          )}
-          {downloadUrl && (
-            <Button asChild variant="outline">
-              <a href={downloadUrl} download={`invoice-${invoice.invoiceNo || invoice.id}.pdf`}>
-                <ArrowDownToLine className="mr-2 h-4 w-4" />
-                ダウンロード
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
+            )}
+          </>
+        }
+      />
 
       <div className="mb-6 p-4 border rounded-lg shadow-sm bg-white">
         <h2 className="text-xl font-semibold mb-3">請求情報</h2>

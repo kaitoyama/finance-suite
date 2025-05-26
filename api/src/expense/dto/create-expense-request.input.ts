@@ -1,5 +1,5 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
-import { IsInt, IsNotEmpty, IsNumber, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber, Min, IsOptional, IsString } from 'class-validator';
 
 @InputType()
 export class CreateExpenseRequestInput {
@@ -13,12 +13,18 @@ export class CreateExpenseRequestInput {
   @IsNotEmpty()
   attachmentId: number;
 
-  // requesterId will be taken from the authenticated user context in the resolver
-  // No need to expose it in the GraphQL input
+  @Field(() => Int, { nullable: true })
+  @IsInt()
+  @IsOptional()
+  accountId?: number;
 
-  // Optional: Add description if it's part of the model and desired in creation
-  // @Field({ nullable: true })
-  // @IsString()
-  // @IsOptional()
-  // description?: string;
+  @Field(() => Int, { nullable: true })
+  @IsInt()
+  @IsOptional()
+  categoryId?: number;
+
+  @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

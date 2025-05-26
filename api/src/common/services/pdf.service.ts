@@ -90,23 +90,22 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
 
       const templateData = {
         ...data,
+        date: new Date(data.date).toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }),
         AMOUNT_YEN: this.formatYenCurrency(data.amount),
         AMOUNT_YEN_IN_TABLE: this.formatYenCurrency(data.amount),
         ITEM_AMOUNT_FORMATTED: this.formatCurrency(data.amount),
         SUBJECT_TEXT: data.subjectText || '',
         DUE_DATE_TEXT:
           data.dueDateText ||
-          new Date(
-            new Date(data.date).getFullYear(),
-            new Date(data.date).getMonth() + 1,
-            0,
-          )
-            .toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            })
-            .replace(/\//g, '/'),
+          new Date(data.dueDate).toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }),
         ITEM_DESCRIPTION_TEXT: data.itemDescriptionText || '',
       };
 

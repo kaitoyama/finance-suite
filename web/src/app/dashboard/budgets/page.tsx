@@ -1,64 +1,186 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGetBudgets } from '../../../hooks/useBudgets';
+import { useGetBudgets, useSetBudget } from '../../../hooks/useBudgets';
+import { useGetCategories } from '../../../hooks/useCategory';
 import { BudgetBalance } from '../../../gql/graphql';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const budgetFormSchema = z.object({
+  categoryId: z.string().min(1, 'カテゴリを選択してください'),
+  fiscalYear: z.number().min(2000, '年度は2000年以降である必要があります'),
+  amountPlanned: z.number().min(0, '予算額は0以上である必要があります'),
+});
+
+type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 
 const BudgetsDashboardPage = () => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [yearInput, setYearInput] = useState<string>(currentYear.toString());
+  const [showBudgetForm, setShowBudgetForm] = useState<boolean>(false);
 
   const { budgets, loading, error, refetchBudgets } = useGetBudgets(selectedYear);
+  const { categories } = useGetCategories();
+  const { setBudget } = useSetBudget();
+
+  const form = useForm<BudgetFormValues>({
+    resolver: zodResolver(budgetFormSchema),
+    defaultValues: {
+      categoryId: '',
+      fiscalYear: selectedYear,
+      amountPlanned: 0,
+    },
+  });
 
   const handleYearChange = () => {
     const newYear = parseInt(yearInput, 10);
     if (!isNaN(newYear)) {
       setSelectedYear(newYear);
+      form.setValue('fiscalYear', newYear);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Oh no... {error.message}</p>;
+  const onSubmitBudget = async (values: BudgetFormValues) => {
+    try {
+      await setBudget({
+        categoryId: parseInt(values.categoryId, 10),
+        fiscalYear: values.fiscalYear,
+        amountPlanned: values.amountPlanned,
+      });
+      form.reset();
+      setShowBudgetForm(false);
+      refetchBudgets();
+    } catch (error) {
+      console.error('Failed to set budget:', error);
+    }
+  };
+
+  if (loading) return <p>読み込み中...</p>;
+  if (error) return <p>エラーが発生しました: {error.message}</p>;
 
   const budgetList = budgets || [];
 
   return (
-    <div className="container mx-auto p-4">
-      <Card className="mb-4">
+    <div>
+      <PageHeader
+        title="予算管理"
+        description="年度別予算の計画と実績を管理"
+      />
+      
+      <Card>
         <CardHeader>
-          <CardTitle>Budget Overview</CardTitle>
+          <CardTitle>予算概要</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-2 mb-4 items-center">
             <Input
               type="number"
-              placeholder="Enter Year"
+              placeholder="年度を入力"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
               className="max-w-xs"
             />
-            <Button onClick={handleYearChange}>View Budget for Year</Button>
+            <Button onClick={handleYearChange}>予算を表示</Button>
+            <Button 
+              onClick={() => setShowBudgetForm(!showBudgetForm)}
+              variant="outline"
+            >
+              {showBudgetForm ? '予算設定を閉じる' : '予算を設定'}
+            </Button>
           </div>
-          <p className="text-lg font-semibold mb-2">Displaying budget for: {selectedYear}</p>
+          
+          {showBudgetForm && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>予算設定</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmitBudget)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>カテゴリ</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="カテゴリを選択" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories?.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.name}
+                                  {category.description && ` - ${category.description}`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="amountPlanned"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>予算額</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="予算額を入力"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex space-x-2">
+                      <Button type="submit">予算を設定</Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowBudgetForm(false)}
+                      >
+                        キャンセル
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+
+          <p className="text-lg font-semibold mb-2">表示中の年度: {selectedYear}</p>
           {budgetList.length === 0 && !loading && (
-            <p>No budget data available for the selected year or no budgets with planned amounts.</p>
+            <p>選択された年度の予算データがありません。</p>
           )}
           {budgetList.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Account Name</TableHead>
-                  <TableHead>Account Code</TableHead>
-                  <TableHead className="text-right">Planned</TableHead>
-                  <TableHead className="text-right">Actual</TableHead>
-                  <TableHead className="text-right">Remaining</TableHead>
-                  <TableHead className="text-right">Ratio (%)</TableHead>
+                  <TableHead>カテゴリ名</TableHead>
+                  <TableHead>説明</TableHead>
+                  <TableHead className="text-right">予算</TableHead>
+                  <TableHead className="text-right">実績</TableHead>
+                  <TableHead className="text-right">残予算</TableHead>
+                  <TableHead className="text-right">使用率 (%)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -66,18 +188,18 @@ const BudgetsDashboardPage = () => {
                   if (!budget) return null;
                   const ratioPercentage = (budget.ratio * 100).toFixed(2);
                   return (
-                    <TableRow key={budget.accountId}>
-                      <TableCell>{budget.accountName}</TableCell>
-                      <TableCell>{budget.accountCode}</TableCell>
-                      <TableCell className="text-right">{budget.planned.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{budget.actual.toLocaleString()}</TableCell>
+                    <TableRow key={budget.categoryId}>
+                      <TableCell>{budget.categoryName}</TableCell>
+                      <TableCell>{budget.categoryDescription || '-'}</TableCell>
+                      <TableCell className="text-right">¥{budget.planned.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">¥{budget.actual.toLocaleString()}</TableCell>
                       <TableCell
                         className={cn(
                           'text-right',
                           budget.remaining < 0 ? 'text-red-500' : ''
                         )}
                       >
-                        {budget.remaining.toLocaleString()}
+                        ¥{budget.remaining.toLocaleString()}
                       </TableCell>
                       <TableCell
                         className={cn(

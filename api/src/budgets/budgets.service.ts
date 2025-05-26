@@ -14,13 +14,13 @@ export class BudgetsService {
   ) {}
 
   async setBudget(input: BudgetInput): Promise<Budget> {
-    const { accountId, fiscalYear, amountPlanned } = input;
+    const { categoryId, fiscalYear, amountPlanned } = input;
     const amountPlannedDecimal = new Decimal(amountPlanned.toString());
 
     return this.prisma.budget.upsert({
       where: {
-        accountId_fiscalYear: {
-          accountId,
+        categoryId_fiscalYear: {
+          categoryId,
           fiscalYear,
         },
       },
@@ -28,7 +28,7 @@ export class BudgetsService {
         amountPlanned: amountPlannedDecimal,
       },
       create: {
-        accountId,
+        categoryId,
         fiscalYear,
         amountPlanned: amountPlannedDecimal,
       },
@@ -40,7 +40,7 @@ export class BudgetsService {
       where: {
         fiscalYear,
       },
-      include: { account: true },
+      include: { category: true },
     });
   }
 
@@ -59,7 +59,7 @@ export class BudgetsService {
         amountPlanned: { gt: 0 },
       },
       include: {
-        account: true,
+        category: true,
       },
     });
 
@@ -67,77 +67,47 @@ export class BudgetsService {
       return [];
     }
 
-    const journalEntriesInDateRange = await this.prisma.journalEntry.findMany({
+    // Get all paid expenses within the fiscal year grouped by category
+    const expensesByCategory = await this.prisma.expenseRequest.findMany({
       where: {
-        datetime: {
-          // Assuming JournalEntry has 'datetime'
+        state: 'PAID',
+        approvedAt: {
           gte: startDate,
           lte: endDate,
         },
+        categoryId: { not: null },
       },
       include: {
-        lines: {
-          select: {
-            accountId: true,
-            debit: true,
-            credit: true,
-          },
-        },
+        category: true,
       },
     });
 
-    const accountAggregates = new Map<
-      number,
-      { totalDebit: Decimal; totalCredit: Decimal }
-    >();
+    const categoryAggregates = new Map<number, Decimal>();
 
-    for (const entry of journalEntriesInDateRange) {
-      if (entry.lines) {
-        for (const line of entry.lines) {
-          const currentAgg = accountAggregates.get(line.accountId) || {
-            totalDebit: new Decimal(0),
-            totalCredit: new Decimal(0),
-          };
-          // Ensure debit/credit are Decimals or add as numbers if they are already numbers
-          currentAgg.totalDebit = currentAgg.totalDebit.add(
-            new Decimal(line.debit?.toString() || '0'),
-          );
-          currentAgg.totalCredit = currentAgg.totalCredit.add(
-            new Decimal(line.credit?.toString() || '0'),
-          );
-          accountAggregates.set(line.accountId, currentAgg);
-        }
+    for (const expense of expensesByCategory) {
+      if (expense.categoryId) {
+        const current = categoryAggregates.get(expense.categoryId) || new Decimal(0);
+        categoryAggregates.set(
+          expense.categoryId,
+          current.add(new Decimal(expense.amount.toString()))
+        );
       }
     }
 
     const budgetBalances: BudgetBalance[] = budgetsForYear.map((budget) => {
-      const account = budget.account;
+      const category = budget.category;
       const planned = budget.amountPlanned.toNumber();
 
-      const aggregate = accountAggregates.get(budget.accountId);
-      const sumDebit = aggregate?.totalDebit?.toNumber() || 0;
-      const sumCredit = aggregate?.totalCredit?.toNumber() || 0;
-
-      let actualValue = sumDebit - sumCredit;
-
-      if (
-        account.category === AccountCategory.REVENUE ||
-        account.category === AccountCategory.LIABILITY ||
-        account.category === AccountCategory.EQUITY
-      ) {
-        actualValue = sumCredit - sumDebit;
-      }
-
-      const actual = actualValue;
+      const actual = categoryAggregates.get(budget.categoryId)?.toNumber() || 0;
       const remaining = planned - actual;
       // Ensure planned is not zero before division and handle toFixed for precision
       const ratio =
         planned === 0 ? 0 : parseFloat((actual / planned).toFixed(4));
 
       return {
-        accountId: account.id,
-        accountCode: account.code,
-        accountName: account.name,
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryDescription: category.description || undefined,
         planned,
         actual,
         remaining,

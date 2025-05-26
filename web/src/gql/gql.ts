@@ -21,7 +21,12 @@ type Documents = {
     "\n  mutation ApproveExpenseRequest($id: Int!) {\n    approveExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": typeof types.ApproveExpenseRequestDocument,
     "\n    mutation createPresignedPost($filename: String!) {\n      createPresignedPost(filename: $filename) {\n        url\n        fields {\n          key\n          value\n        }\n        objectKey\n      }\n    }\n  ": typeof types.CreatePresignedPostDocument,
     "\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  ": typeof types.CreateAttachmentDocument,
-    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": typeof types.GetBudgetsDocument,
+    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      categoryId\n      categoryName\n      categoryDescription\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": typeof types.GetBudgetsDocument,
+    "\n  mutation SetBudget($input: BudgetInput!) {\n    setBudget(input: $input) {\n      id\n      categoryId\n      fiscalYear\n      amountPlanned\n    }\n  }\n": typeof types.SetBudgetDocument,
+    "\n  query GetCategories {\n    categories {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": typeof types.GetCategoriesDocument,
+    "\n  mutation CreateCategory($createCategoryInput: CreateCategoryInput!) {\n    createCategory(createCategoryInput: $createCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": typeof types.CreateCategoryDocument,
+    "\n  mutation UpdateCategory($updateCategoryInput: UpdateCategoryInput!) {\n    updateCategory(updateCategoryInput: $updateCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": typeof types.UpdateCategoryDocument,
+    "\n  mutation RemoveCategory($id: Int!) {\n    removeCategory(id: $id) {\n      id\n      name\n    }\n  }\n": typeof types.RemoveCategoryDocument,
     "\n  mutation CreateExpenseRequest($input: CreateExpenseRequestInput!) {\n    submitExpenseRequest(input: $input) {\n      id\n    }\n  }\n": typeof types.CreateExpenseRequestDocument,
     "\n  mutation CreatePayment($input: CreatePaymentInput!) {\n    createPayment(createPaymentInput: $input) {\n      id\n      paidAt\n      amount\n      label\n      invoiceId\n      direction\n      method\n      createdAt\n    }\n  }\n": typeof types.CreatePaymentDocument,
     "\n  query ExpenseRequestById($id: Int!) {\n    expenseRequest(id: $id) {\n      id\n      amount\n      state\n      createdAt\n      approvedAt\n      requester {\n        id\n        username\n      }\n      approver {\n        id\n        username\n      }\n      payment {\n        id\n        amount\n        paidAt\n        direction\n        method\n        attachments {\n            id\n            s3Key\n            title\n            amount\n        }\n      }\n      attachment {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  }\n": typeof types.ExpenseRequestByIdDocument,
@@ -33,6 +38,7 @@ type Documents = {
     "\n  query GetPresignedS3Url($title: String!) {\n    getPresignedS3Url(title: $title) {\n      url\n      objectKey\n    }\n  }\n": typeof types.GetPresignedS3UrlDocument,
     "\n  mutation CreateJournalEntry($createJournalEntryInput: CreateJournalEntryInput!) {\n    createJournalEntry(createJournalEntryInput: $createJournalEntryInput) {\n      id\n      datetime\n      description\n      lines {\n        id\n        accountId\n        debit\n        credit\n      }\n    }\n  }\n": typeof types.CreateJournalEntryDocument,
     "\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n": typeof types.GetJournalEntriesDocument,
+    "\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n": typeof types.GetProfitLossStatementDocument,
     "\n  mutation RejectExpenseRequest($id: Int!) {\n    rejectExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": typeof types.RejectExpenseRequestDocument,
 };
 const documents: Documents = {
@@ -43,7 +49,12 @@ const documents: Documents = {
     "\n  mutation ApproveExpenseRequest($id: Int!) {\n    approveExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": types.ApproveExpenseRequestDocument,
     "\n    mutation createPresignedPost($filename: String!) {\n      createPresignedPost(filename: $filename) {\n        url\n        fields {\n          key\n          value\n        }\n        objectKey\n      }\n    }\n  ": types.CreatePresignedPostDocument,
     "\n    mutation createAttachment($input: CreateAttachmentInput!) {\n      createAttachment(input: $input) {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  ": types.CreateAttachmentDocument,
-    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": types.GetBudgetsDocument,
+    "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      categoryId\n      categoryName\n      categoryDescription\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n": types.GetBudgetsDocument,
+    "\n  mutation SetBudget($input: BudgetInput!) {\n    setBudget(input: $input) {\n      id\n      categoryId\n      fiscalYear\n      amountPlanned\n    }\n  }\n": types.SetBudgetDocument,
+    "\n  query GetCategories {\n    categories {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": types.GetCategoriesDocument,
+    "\n  mutation CreateCategory($createCategoryInput: CreateCategoryInput!) {\n    createCategory(createCategoryInput: $createCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": types.CreateCategoryDocument,
+    "\n  mutation UpdateCategory($updateCategoryInput: UpdateCategoryInput!) {\n    updateCategory(updateCategoryInput: $updateCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n": types.UpdateCategoryDocument,
+    "\n  mutation RemoveCategory($id: Int!) {\n    removeCategory(id: $id) {\n      id\n      name\n    }\n  }\n": types.RemoveCategoryDocument,
     "\n  mutation CreateExpenseRequest($input: CreateExpenseRequestInput!) {\n    submitExpenseRequest(input: $input) {\n      id\n    }\n  }\n": types.CreateExpenseRequestDocument,
     "\n  mutation CreatePayment($input: CreatePaymentInput!) {\n    createPayment(createPaymentInput: $input) {\n      id\n      paidAt\n      amount\n      label\n      invoiceId\n      direction\n      method\n      createdAt\n    }\n  }\n": types.CreatePaymentDocument,
     "\n  query ExpenseRequestById($id: Int!) {\n    expenseRequest(id: $id) {\n      id\n      amount\n      state\n      createdAt\n      approvedAt\n      requester {\n        id\n        username\n      }\n      approver {\n        id\n        username\n      }\n      payment {\n        id\n        amount\n        paidAt\n        direction\n        method\n        attachments {\n            id\n            s3Key\n            title\n            amount\n        }\n      }\n      attachment {\n        id\n        s3Key\n        title\n        amount\n      }\n    }\n  }\n": types.ExpenseRequestByIdDocument,
@@ -55,6 +66,7 @@ const documents: Documents = {
     "\n  query GetPresignedS3Url($title: String!) {\n    getPresignedS3Url(title: $title) {\n      url\n      objectKey\n    }\n  }\n": types.GetPresignedS3UrlDocument,
     "\n  mutation CreateJournalEntry($createJournalEntryInput: CreateJournalEntryInput!) {\n    createJournalEntry(createJournalEntryInput: $createJournalEntryInput) {\n      id\n      datetime\n      description\n      lines {\n        id\n        accountId\n        debit\n        credit\n      }\n    }\n  }\n": types.CreateJournalEntryDocument,
     "\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n": types.GetJournalEntriesDocument,
+    "\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n": types.GetProfitLossStatementDocument,
     "\n  mutation RejectExpenseRequest($id: Int!) {\n    rejectExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": types.RejectExpenseRequestDocument,
 };
 
@@ -103,7 +115,27 @@ export function graphql(source: "\n    mutation createAttachment($input: CreateA
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"): (typeof documents)["\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      accountId\n      accountCode\n      accountName\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"];
+export function graphql(source: "\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      categoryId\n      categoryName\n      categoryDescription\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"): (typeof documents)["\n  query GetBudgets($year: Int!) {\n    budgets(year: $year) {\n      categoryId\n      categoryName\n      categoryDescription\n      planned\n      actual\n      remaining\n      ratio\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SetBudget($input: BudgetInput!) {\n    setBudget(input: $input) {\n      id\n      categoryId\n      fiscalYear\n      amountPlanned\n    }\n  }\n"): (typeof documents)["\n  mutation SetBudget($input: BudgetInput!) {\n    setBudget(input: $input) {\n      id\n      categoryId\n      fiscalYear\n      amountPlanned\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetCategories {\n    categories {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  query GetCategories {\n    categories {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateCategory($createCategoryInput: CreateCategoryInput!) {\n    createCategory(createCategoryInput: $createCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  mutation CreateCategory($createCategoryInput: CreateCategoryInput!) {\n    createCategory(createCategoryInput: $createCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateCategory($updateCategoryInput: UpdateCategoryInput!) {\n    updateCategory(updateCategoryInput: $updateCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateCategory($updateCategoryInput: UpdateCategoryInput!) {\n    updateCategory(updateCategoryInput: $updateCategoryInput) {\n      id\n      name\n      description\n      createdAt\n      updatedAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation RemoveCategory($id: Int!) {\n    removeCategory(id: $id) {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  mutation RemoveCategory($id: Int!) {\n    removeCategory(id: $id) {\n      id\n      name\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -148,6 +180,10 @@ export function graphql(source: "\n  mutation CreateJournalEntry($createJournalE
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n"): (typeof documents)["\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

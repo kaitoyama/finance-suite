@@ -13,6 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, CreditCard } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -69,44 +70,38 @@ export default function InvoicePaymentPage() {
 
   if (fetchingInvoice) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center">Loading invoice information...</div>
-      </div>
+      <div className="text-center">Loading invoice information...</div>
     );
   }
 
   if (invoiceError) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center text-red-500">
-          Error loading invoice: {invoiceError.message}
-        </div>
+      <div className="text-center text-red-500">
+        Error loading invoice: {invoiceError.message}
       </div>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center">Invoice not found.</div>
-      </div>
+      <div className="text-center">Invoice not found.</div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <Link href={`/invoices/${id}`}>
-          <Button variant="outline" className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Invoice
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold">Record Payment</h1>
-        <p className="text-muted-foreground">
-          Record a payment for invoice #{invoice.invoiceNo || invoice.id}
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="入金記録"
+        description={`請求書 #${invoice.invoiceNo || invoice.id} の入金を記録`}
+        actions={
+          <Link href={`/invoices/${id}`}>
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              請求書に戻る
+            </Button>
+          </Link>
+        }
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Invoice Information */}

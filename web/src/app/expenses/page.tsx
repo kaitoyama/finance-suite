@@ -13,6 +13,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import toast, { Toaster } from 'react-hot-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { ExpenseRequest as GeneratedExpenseRequestType, User } from '@/gql/graphql'; // Import generated types
 
@@ -188,12 +190,26 @@ const AdminExpensesPage = () => {
     }));
 
   return (
-    <div className="container mx-auto py-10 space-y-8"> {/* Added space-y-8 for spacing between tables */}
+    <div>
+      <PageHeader
+        title="経費申請管理"
+        description="経費申請の承認・管理を行います"
+        actions={
+          <Link href="/expenses/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              新規経費申請
+            </Button>
+          </Link>
+        }
+      />
+      
       <Toaster position="top-center" />
       
-      {/* Pending Expenses Table (existing) */}
-      <div>
-        <h1 className="text-2xl font-bold mb-4">未承認経費一覧</h1>
+      <div className="space-y-8">
+        {/* Pending Expenses Table (existing) */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">未承認経費一覧</h2>
         <DataTable<ExpenseRequestForTable, any>
           columns={columns} // Reusing columns for now
           data={pendingTableData}
@@ -205,9 +221,9 @@ const AdminExpensesPage = () => {
         />
       </div>
 
-      {/* All Expenses Table (new) */}
-      <div>
-        <h1 className="text-2xl font-bold mb-4 mt-8">全経費一覧</h1> {/* Added mt-8 for spacing */}
+        {/* All Expenses Table (new) */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">全経費一覧</h2>
         <DataTable<ExpenseRequestForTable, any>
           columns={columns} // Reusing columns for now, can be customized
           data={allTableData}
@@ -217,6 +233,7 @@ const AdminExpensesPage = () => {
             }
           }}
         />
+        </div>
       </div>
 
       <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
