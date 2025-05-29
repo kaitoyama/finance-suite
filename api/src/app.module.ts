@@ -26,7 +26,7 @@ import { CategoryModule } from './category/category.module';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile:
-        process.env.NODE_ENV === 'development' ? 'src/schema.gql' : false,
+        process.env.NODE_ENV === 'development' ? 'src/schema.gql' : true,
       playground: true,
     }),
     VouchersModule,
