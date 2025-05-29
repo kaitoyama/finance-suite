@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { ExpenseService } from './expense.service';
 import { ExpenseResolver } from './expense.resolver';
 import { WebhookService } from '../common/services/webhook.service';
@@ -9,7 +8,6 @@ import { PubSub } from 'graphql-subscriptions';
 
 @Module({
   providers: [
-    PrismaService,
     ExpenseService,
     ExpenseResolver,
     WebhookService,
