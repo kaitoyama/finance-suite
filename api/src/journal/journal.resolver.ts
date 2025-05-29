@@ -9,7 +9,7 @@ import { UserService } from '../users/user.service'; // Import UserService
 import { UsePipes, NotFoundException } from '@nestjs/common'; // Added UsePipes and NotFoundException
 import { BalanceCheckPipe } from './pipes/balance-check.pipe'; // Import the pipe
 import { Request } from 'express'; // Import typed Express Request
-
+import { JournalEntry as JournalEntryModel } from '@prisma/client';
 @Resolver(() => JournalEntry)
 export class JournalResolver {
   constructor(
@@ -23,7 +23,7 @@ export class JournalResolver {
     @Args('createJournalEntryInput')
     createJournalEntryInput: CreateJournalEntryInput,
     @Context('req') req: Request, // Typed Express request with username/isAdmin
-  ) {
+  ): Promise<JournalEntryModel> {
     const username = req.username!;
     const isAdmin = req.isAdmin || false; // Default to false if undefined
 
@@ -61,7 +61,7 @@ export class JournalResolver {
   async updateJournalEntry(
     @Args('updateJournalEntryInput')
     updateJournalEntryInput: UpdateJournalEntryInput,
-  ) {
+  ): Promise<JournalEntryModel> {
     return this.journalService.update(
       updateJournalEntryInput.id,
       updateJournalEntryInput,
@@ -70,7 +70,7 @@ export class JournalResolver {
 
   @Mutation(() => JournalEntry, { nullable: true }) // Or return a boolean/ID
   // @UseGuards(GqlAuthGuard) // Example: Protect this mutation
-  async removeJournalEntry(@Args('id', { type: () => ID }) id: number) {
+  async removeJournalEntry(@Args('id', { type: () => ID }) id: number): Promise<JournalEntryModel> {
     return this.journalService.remove(id);
   }
 }

@@ -4,7 +4,7 @@ import { Payment } from './entities/payment.entity';
 import { CreatePaymentInput } from './dto/create-payment.input';
 import { UpdatePaymentInput } from './dto/update-payment.input';
 import { UserHeader } from '../common/decorators/user-header.decorator';
-
+import { Payment as PaymentModel } from '@prisma/client';
 @Resolver(() => Payment)
 export class PaymentsResolver {
   constructor(private readonly paymentsService: PaymentsService) {}
@@ -13,7 +13,7 @@ export class PaymentsResolver {
   async createPayment(
     @Args('createPaymentInput') createPaymentInput: CreatePaymentInput,
     @UserHeader() user: { username: string; isAdmin: boolean },
-  ) {
+  ): Promise<PaymentModel> {
     // Get user ID from username (create if doesn't exist)
     const userRecord = await this.paymentsService.getUserByUsername(
       user.username,
@@ -39,12 +39,12 @@ export class PaymentsResolver {
   updatePayment(
     @Args('id', { type: () => Int }) id: number,
     @Args('updatePaymentInput') updatePaymentInput: UpdatePaymentInput,
-  ) {
+  ): Promise<PaymentModel> {
     return this.paymentsService.updatePayment(id, updatePaymentInput);
   }
 
   @Mutation(() => Payment)
-  removePayment(@Args('id', { type: () => Int }) id: number) {
+  removePayment(@Args('id', { type: () => Int }) id: number): Promise<PaymentModel> {
     return this.paymentsService.remove(id);
   }
 }

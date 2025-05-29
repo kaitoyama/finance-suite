@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MinioService } from '../storage/minio.service';
 import { PrismaService } from '../prisma.service';
 import { CreateAttachmentInput } from './dto/create-attachment.input';
+import { Attachment } from '@prisma/client';
 // attachments/attachments.service.ts
 @Injectable()
 export class AttachmentsService {
@@ -30,7 +31,7 @@ export class AttachmentsService {
     return { url: postURL, fields, objectKey: filename };
   }
 
-  async createAttachment(input: CreateAttachmentInput, username: string) {
+  async createAttachment(input: CreateAttachmentInput, username: string): Promise<Attachment> {
     let uploader = await this.prisma.user.findUnique({
       where: { username },
     });
