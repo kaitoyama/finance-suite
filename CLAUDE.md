@@ -59,6 +59,7 @@ Core entities follow double-entry accounting principles:
 - **Authentication**: User header middleware for user context
 - **PDF Generation**: Puppeteer-based invoice PDF creation with Handlebars templates
 - **File Storage**: MinIO integration for attachment handling
+- **Database Connection**: Dynamic DATABASE_URL construction from individual environment variables
 
 ### Frontend Architecture
 - **App Router**: Next.js 15 with file-based routing
@@ -93,13 +94,30 @@ Core entities follow double-entry accounting principles:
 ### Required Environment Variables
 API (.env):
 ```
-DATABASE_URL="mysql://app:appsecret@localhost:3306/finance"
+# MariaDB Database Configuration (New Method)
+NS_MARIADB_HOST=localhost
+NS_MARIADB_PORT=3306
+NS_MARIADB_DATABASE=finance
+NS_MARIADB_USER=app
+NS_MARIADB_PASSWORD=appsecret
+
+# Legacy DATABASE_URL (still supported for backward compatibility)
+# DATABASE_URL="mysql://app:appsecret@localhost:3306/finance"
+
+# Other Configuration
 FRONTEND_URL="http://localhost:3001"
 MINIO_ENDPOINT="localhost"
 MINIO_PORT="9000"
 MINIO_ACCESS_KEY="minioadmin"
 MINIO_SECRET_KEY="minioadmin"
 ```
+
+### Database Connection
+The application now supports two methods for database configuration:
+1. **Individual Environment Variables** (Recommended): Use `NS_MARIADB_*` variables for flexible configuration
+2. **Legacy DATABASE_URL**: Still supported for backward compatibility
+
+The `DatabaseConfigService` automatically constructs the connection URL from individual variables with sensible defaults.
 
 ### Default Ports
 - API: http://localhost:3000

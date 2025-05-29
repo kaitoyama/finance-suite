@@ -97,6 +97,34 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
+## Environment Configuration
+
+This application supports flexible database configuration through individual environment variables:
+
+### MariaDB Configuration
+Create a `.env` file in the `api/` directory with the following variables:
+
+```bash
+# MariaDB Database Configuration (Recommended)
+NS_MARIADB_HOST=localhost
+NS_MARIADB_PORT=3306
+NS_MARIADB_DATABASE=finance
+NS_MARIADB_USER=app
+NS_MARIADB_PASSWORD=appsecret
+
+# Legacy DATABASE_URL (still supported for backward compatibility)
+# DATABASE_URL="mysql://app:appsecret@localhost:3306/finance"
+
+# Other Configuration
+FRONTEND_URL="http://localhost:3001"
+MINIO_ENDPOINT="localhost"
+MINIO_PORT="9000"
+MINIO_ACCESS_KEY="minioadmin"
+MINIO_SECRET_KEY="minioadmin"
+```
+
+The application will automatically construct the database connection URL from the individual `NS_MARIADB_*` variables. If these are not provided, it will fall back to sensible defaults.
+
 ## Running Migrations
 
 To run database migrations, use the following command:
