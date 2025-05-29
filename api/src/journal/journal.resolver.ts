@@ -52,7 +52,9 @@ export class JournalResolver {
 
   @Query(() => JournalEntry, { name: 'journalEntry', nullable: true })
   // @UseGuards(GqlAuthGuard) // Example: Protect this query
-  async journalEntry(@Args('id', { type: () => ID }) id: number): Promise<JournalEntryModel | null> {
+  async journalEntry(
+    @Args('id', { type: () => ID }) id: number,
+  ): Promise<JournalEntryModel | null> {
     return this.journalService.findOne(id);
   }
 
@@ -70,7 +72,9 @@ export class JournalResolver {
 
   @Mutation(() => JournalEntry, { nullable: true }) // Or return a boolean/ID
   // @UseGuards(GqlAuthGuard) // Example: Protect this mutation
-  async removeJournalEntry(@Args('id', { type: () => ID }) id: number): Promise<JournalEntryModel> {
+  async removeJournalEntry(
+    @Args('id', { type: () => ID }) id: number,
+  ): Promise<JournalEntryModel> {
     return this.journalService.remove(id);
   }
 }

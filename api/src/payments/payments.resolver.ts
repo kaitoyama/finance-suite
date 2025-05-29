@@ -31,7 +31,9 @@ export class PaymentsResolver {
   }
 
   @Query(() => Payment, { name: 'payment', nullable: true })
-  findOne(@Args('id', { type: () => Int }) id: number): Promise<PaymentModel | null> {
+  findOne(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<PaymentModel | null> {
     return this.paymentsService.findOne(id);
   }
 
@@ -44,7 +46,9 @@ export class PaymentsResolver {
   }
 
   @Mutation(() => Payment)
-  removePayment(@Args('id', { type: () => Int }) id: number): Promise<PaymentModel> {
+  removePayment(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<PaymentModel> {
     return this.paymentsService.remove(id);
   }
 }

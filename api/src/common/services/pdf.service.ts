@@ -1,58 +1,14 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 
 @Injectable()
-export class PdfService implements OnModuleInit, OnModuleDestroy {
-  private browser: Browser | null = null;
+export class PdfService {
   private readonly logger = new Logger(PdfService.name);
 
   constructor(private readonly configService: ConfigService) {}
-
-  async onModuleInit(): Promise<void> {
-    try {
-      this.logger.log('Initializing Puppeteer browser instance...');
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--font-render-hinting=none',
-          '--enable-precise-memory-info',
-        ],
-        // executablePath: '/usr/bin/google-chrome-stable',
-      });
-      this.logger.log('Puppeteer browser instance initialized successfully.');
-
-      const page = await this.browser.newPage();
-      await page.close();
-      this.logger.log('Puppeteer browser warmed up.');
-    } catch (error) {
-      this.logger.error(
-        'Failed to initialize Puppeteer browser instance.',
-        error,
-      );
-      this.browser = null;
-    }
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    if (this.browser) {
-      this.logger.log('Closing Puppeteer browser instance...');
-      await this.browser.close();
-      this.browser = null;
-      this.logger.log('Puppeteer browser instance closed.');
-    }
-  }
 
   private formatCurrency(amount: number): string {
     return new Intl.NumberFormat('ja-JP').format(amount);
@@ -66,14 +22,6 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
     templatePath: string,
     data: Record<string, any>,
   ): Promise<Buffer> {
-    if (!this.browser) {
-      this.logger.error(
-        'Puppeteer browser is not initialized. PDF generation cannot proceed.',
-      );
-      throw new Error('PDF generation service is not ready.');
-    }
-
-    let page: Page | null = null;
     try {
       // __dirname is .../api/dist/common/services
       // templatePath is e.g., "invoice.html"
@@ -111,36 +59,39 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
 
       const htmlContent = template(templateData);
 
-      page = await this.browser.newPage();
-      await page.emulateMediaType('screen');
-      await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
-      await page.evaluateHandle('document.fonts.ready');
+      // Use external PDF API
+      const apiKey = this.configService.get<string>('PDF_CONVERT_API_KEY');
+      if (!apiKey) {
+        throw new Error('PDF_CONVERT_API_KEY is not configured');
+      }
 
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '0mm',
-          right: '0mm',
-          bottom: '0mm',
-          left: '0mm',
+      const response = await fetch('https://api.pdfg.net/v1', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ html: htmlContent }),
       });
+
+      if (!response.ok) {
+        throw new Error(
+          `PDF API request failed: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const buffer = await response.arrayBuffer();
 
       this.logger.log(
         `PDF generated successfully for invoice: ${data.invoiceNo}`,
       );
-      return Buffer.from(pdfBuffer);
+      return Buffer.from(buffer);
     } catch (error) {
       this.logger.error(
         `Error generating PDF for invoice ${data.invoiceNo}:`,
         error,
       );
       throw new Error(`Failed to generate PDF: ${error.message}`);
-    } finally {
-      if (page) {
-        await page.close();
-      }
     }
   }
 }

@@ -31,7 +31,10 @@ export class AttachmentsService {
     return { url: postURL, fields, objectKey: filename };
   }
 
-  async createAttachment(input: CreateAttachmentInput, username: string): Promise<Attachment> {
+  async createAttachment(
+    input: CreateAttachmentInput,
+    username: string,
+  ): Promise<Attachment> {
     let uploader = await this.prisma.user.findUnique({
       where: { username },
     });

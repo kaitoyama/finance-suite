@@ -51,10 +51,16 @@ export class InvoiceService {
           'Required accounts not found for invoice journal entry creation',
         );
         this.logger.error('Missing accounts: ', {
-          receivableAccount: receivableAccount ? `${receivableAccount.code} - ${receivableAccount.name}` : 'MISSING (code: 120)',
-          revenueAccount: revenueAccount ? `${revenueAccount.code} - ${revenueAccount.name}` : 'MISSING (code: 401)',
+          receivableAccount: receivableAccount
+            ? `${receivableAccount.code} - ${receivableAccount.name}`
+            : 'MISSING (code: 120)',
+          revenueAccount: revenueAccount
+            ? `${revenueAccount.code} - ${revenueAccount.name}`
+            : 'MISSING (code: 401)',
         });
-        this.logger.error('Please ensure AccountBootstrapService has run successfully on application startup');
+        this.logger.error(
+          'Please ensure AccountBootstrapService has run successfully on application startup',
+        );
         return;
       }
 

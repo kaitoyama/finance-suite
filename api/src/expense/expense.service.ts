@@ -88,7 +88,10 @@ export class ExpenseService {
     });
   }
 
-  async findAllPaginated(page: number = 1, limit: number = 20): Promise<{
+  async findAllPaginated(
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
     items: FullExpenseRequest[];
     totalItems: number;
     totalPages: number;
@@ -97,7 +100,7 @@ export class ExpenseService {
     hasPreviousPage: boolean;
   }> {
     const skip = (page - 1) * limit;
-    
+
     const [items, totalItems] = await Promise.all([
       this.prisma.expenseRequest.findMany({
         include: expenseRequestIncludeRelations,

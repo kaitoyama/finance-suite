@@ -86,10 +86,11 @@ export class BudgetsService {
 
     for (const expense of expensesByCategory) {
       if (expense.categoryId) {
-        const current = categoryAggregates.get(expense.categoryId) || new Decimal(0);
+        const current =
+          categoryAggregates.get(expense.categoryId) || new Decimal(0);
         categoryAggregates.set(
           expense.categoryId,
-          current.add(new Decimal(expense.amount.toString()))
+          current.add(new Decimal(expense.amount.toString())),
         );
       }
     }

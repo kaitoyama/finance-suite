@@ -128,16 +128,18 @@ export class ExpenseResolver {
       .filter(Boolean) as GQLExpenseRequest[];
   }
 
-  @Query(() => PaginatedExpenseRequestResponse, { name: 'expenseRequestsPaginated' })
+  @Query(() => PaginatedExpenseRequestResponse, {
+    name: 'expenseRequestsPaginated',
+  })
   // @UseGuards(GqlAuthGuard) // Temporarily commented out
   async getExpenseRequestsPaginated(
     @Args('pagination', { nullable: true }) pagination?: PaginationInput,
   ): Promise<PaginatedExpenseRequestResponse> {
     const page = pagination?.page || 1;
     const limit = pagination?.limit || 20;
-    
+
     const result = await this.expenseService.findAllPaginated(page, limit);
-    
+
     const mappedItems = result.items
       .map(mapPrismaExpenseToGql)
       .filter(Boolean) as GQLExpenseRequest[];

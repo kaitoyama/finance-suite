@@ -1,5 +1,12 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
-import { IsInt, IsNotEmpty, IsNumber, Min, IsOptional, IsString } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  Min,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 @InputType()
 export class CreateExpenseRequestInput {

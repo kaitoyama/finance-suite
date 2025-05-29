@@ -78,12 +78,22 @@ export class PaymentsService {
         'Required accounts not found for automatic journal entry creation',
       );
       console.error('Missing accounts: ', {
-        cashAccount: cashAccount ? `${cashAccount.code} - ${cashAccount.name}` : 'MISSING (code: 101)',
-        bankAccount: bankAccount ? `${bankAccount.code} - ${bankAccount.name}` : 'MISSING (code: 102)',
-        receivableAccount: receivableAccount ? `${receivableAccount.code} - ${receivableAccount.name}` : 'MISSING (code: 120)',
-        expenseAccount: expenseAccount ? `${expenseAccount.code} - ${expenseAccount.name}` : 'MISSING (code: 501)',
+        cashAccount: cashAccount
+          ? `${cashAccount.code} - ${cashAccount.name}`
+          : 'MISSING (code: 101)',
+        bankAccount: bankAccount
+          ? `${bankAccount.code} - ${bankAccount.name}`
+          : 'MISSING (code: 102)',
+        receivableAccount: receivableAccount
+          ? `${receivableAccount.code} - ${receivableAccount.name}`
+          : 'MISSING (code: 120)',
+        expenseAccount: expenseAccount
+          ? `${expenseAccount.code} - ${expenseAccount.name}`
+          : 'MISSING (code: 501)',
       });
-      console.error('Please ensure AccountBootstrapService has run successfully on application startup');
+      console.error(
+        'Please ensure AccountBootstrapService has run successfully on application startup',
+      );
       return;
     }
 

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateCategoryInput } from './dto/create-category.input';
 import { UpdateCategoryInput } from './dto/update-category.input';
@@ -39,7 +43,10 @@ export class CategoryService {
     return category;
   }
 
-  async update(id: number, updateCategoryInput: UpdateCategoryInput): Promise<Category> {
+  async update(
+    id: number,
+    updateCategoryInput: UpdateCategoryInput,
+  ): Promise<Category> {
     try {
       return await this.prisma.category.update({
         where: { id },
@@ -71,7 +78,7 @@ export class CategoryService {
 
     if (budgetCount > 0 || expenseCount > 0) {
       throw new BadRequestException(
-        'このカテゴリは予算または経費で使用されているため削除できません。'
+        'このカテゴリは予算または経費で使用されているため削除できません。',
       );
     }
 
