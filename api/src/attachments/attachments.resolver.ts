@@ -4,7 +4,7 @@ import { CreateAttachmentInput } from 'src/attachments/dto/create-attachment.inp
 import { AttachmentsService } from 'src/attachments/attachments.service';
 import { PresignedPayload } from 'src/attachments/dto/presigned-payload.dto';
 import { UserHeader } from 'src/common/decorators/user-header.decorator';
-
+import { Attachment as AttachmentModel } from '@prisma/client';
 // attachments/attachments.resolver.ts
 @Resolver(() => Attachment)
 export class AttachmentsResolver {
@@ -27,7 +27,7 @@ export class AttachmentsResolver {
   createAttachment(
     @Args('input') input: CreateAttachmentInput,
     @UserHeader() user: { username: string },
-  ) {
+  ): Promise<AttachmentModel> {
     return this.svc.createAttachment(input, user.username);
   }
 }

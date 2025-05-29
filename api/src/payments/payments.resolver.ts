@@ -26,12 +26,12 @@ export class PaymentsResolver {
   }
 
   @Query(() => [Payment], { name: 'payments' })
-  findAll() {
+  findAll(): Promise<PaymentModel[]> {
     return this.paymentsService.findAll();
   }
 
   @Query(() => Payment, { name: 'payment', nullable: true })
-  findOne(@Args('id', { type: () => Int }) id: number) {
+  findOne(@Args('id', { type: () => Int }) id: number): Promise<PaymentModel | null> {
     return this.paymentsService.findOne(id);
   }
 

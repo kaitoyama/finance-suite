@@ -43,7 +43,7 @@ export class JournalResolver {
     @Args('range', { type: () => RangeInput, nullable: true })
     range?: RangeInput,
     // @CurrentUser() user?: User, // If filtering by user or for user-specific data
-  ) {
+  ): Promise<JournalEntryModel[]> {
     // Pass user to service if needed for filtering, e.g., based on user permissions or ownership
     // const user = context.req?.user as User;
     // return this.journalService.findAll(range, user);
@@ -52,7 +52,7 @@ export class JournalResolver {
 
   @Query(() => JournalEntry, { name: 'journalEntry', nullable: true })
   // @UseGuards(GqlAuthGuard) // Example: Protect this query
-  async journalEntry(@Args('id', { type: () => ID }) id: number) {
+  async journalEntry(@Args('id', { type: () => ID }) id: number): Promise<JournalEntryModel | null> {
     return this.journalService.findOne(id);
   }
 
