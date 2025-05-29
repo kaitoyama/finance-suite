@@ -26,7 +26,7 @@ export class DatabaseConfigService {
     }
 
     // Fallback to individual environment variables
-    const host = this.configService.get<string>('NS_MARIADB_HOST') || 
+    const host = this.configService.get<string>('NS_MARIADB_HOSTNAME') || 
                  this.configService.get<string>('DB_HOST') ||
                  this.configService.get<string>('MYSQL_HOST') ||
                  'localhost';
@@ -64,7 +64,7 @@ export class DatabaseConfigService {
     
     // Log all available environment variables for debugging
     this.logger.log('Available environment variables:');
-    const envVars = ['DATABASE_URL', 'MYSQL_URL', 'NS_MARIADB_HOST', 'DB_HOST', 'MYSQL_HOST', 
+    const envVars = ['DATABASE_URL', 'MYSQL_URL', 'NS_MARIADB_HOSTNAME', 'DB_HOST', 'MYSQL_HOST', 
                      'NS_MARIADB_PORT', 'DB_PORT', 'MYSQL_PORT', 'NS_MARIADB_DATABASE', 
                      'DB_NAME', 'MYSQL_DATABASE', 'NS_MARIADB_USER', 'DB_USER', 'MYSQL_USER',
                      'NS_MARIADB_PASSWORD', 'DB_PASSWORD', 'MYSQL_PASSWORD'];

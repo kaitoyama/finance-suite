@@ -106,7 +106,7 @@ Create a `.env` file in the `api/` directory with the following variables:
 
 ```bash
 # MariaDB Database Configuration (Recommended)
-NS_MARIADB_HOST=localhost
+NS_MARIADB_HOSTNAME=localhost
 NS_MARIADB_PORT=3306
 NS_MARIADB_DATABASE=finance
 NS_MARIADB_USER=app
