@@ -51,7 +51,11 @@ export class DatabaseConfigService {
                      this.configService.get<string>('MYSQL_PASSWORD') ||
                      'appsecret';
 
-    const databaseUrl = `mysql://${user}:${password}@${host}:${port}/${database}`;
+    // URL encode username and password to handle special characters
+    const encodedUser = encodeURIComponent(user);
+    const encodedPassword = encodeURIComponent(password);
+
+    const databaseUrl = `mysql://${encodedUser}:${encodedPassword}@${host}:${port}/${database}`;
     
     // Log environment variables for debugging
     this.logger.log('Using individual environment variables');
@@ -62,7 +66,8 @@ export class DatabaseConfigService {
     this.logger.log('Available environment variables:');
     const envVars = ['DATABASE_URL', 'MYSQL_URL', 'NS_MARIADB_HOST', 'DB_HOST', 'MYSQL_HOST', 
                      'NS_MARIADB_PORT', 'DB_PORT', 'MYSQL_PORT', 'NS_MARIADB_DATABASE', 
-                     'DB_NAME', 'MYSQL_DATABASE', 'NS_MARIADB_USER', 'DB_USER', 'MYSQL_USER'];
+                     'DB_NAME', 'MYSQL_DATABASE', 'NS_MARIADB_USER', 'DB_USER', 'MYSQL_USER',
+                     'NS_MARIADB_PASSWORD', 'DB_PASSWORD', 'MYSQL_PASSWORD'];
     
     envVars.forEach(envVar => {
       const value = this.configService.get<string>(envVar);
@@ -72,6 +77,8 @@ export class DatabaseConfigService {
         } else {
           this.logger.log(`${envVar}: ${value}`);
         }
+      } else {
+        this.logger.log(`${envVar}: (not set)`);
       }
     });
     
