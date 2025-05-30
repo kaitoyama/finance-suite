@@ -1,6 +1,6 @@
 import { graphql } from "@/gql";
 import { InvoiceInput } from "@/gql/graphql";
-import { useMutation, useQuery, DocumentNode } from "urql";
+import { useMutation, useQuery } from "urql";
 import React from "react";
 
 const CreateInvoiceMutationDocument = graphql(`
@@ -94,7 +94,7 @@ export const useGetInvoices = () => {
 
 export const useGetPresignedS3Url = (title: string | null | undefined) => {
   const [{ data, fetching, error }, executeQuery] = useQuery({
-    query: GetPresignedS3UrlQueryDocument as DocumentNode,
+    query: GetPresignedS3UrlQueryDocument,
     variables: { title: title || '' },
     pause: !title,
     requestPolicy: 'network-only',
