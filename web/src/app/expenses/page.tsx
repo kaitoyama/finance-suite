@@ -137,7 +137,7 @@ const AdminExpensesPage = () => {
 
   // Data for PENDING expenses table (existing logic)
   const pendingTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: unknown): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
+    .filter((req: GeneratedExpenseRequestType): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
         if (!req) return false;
         const isPending = req.state === 'PENDING';
         const hasValidId = typeof req.id === 'number';
@@ -158,12 +158,12 @@ const AdminExpensesPage = () => {
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachmentId // Assuming attachmentId is what you had for attachment count logic
+      attachmentId: req.attachment.id // Assuming attachmentId is what you had for attachment count logic
     }));
 
   // Data for ALL expenses table (new logic)
   const allTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: unknown): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
+    .filter((req: GeneratedExpenseRequestType): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
         if (!req) return false;
         // Basic type guards, adjust as necessary for your full data structure
         const hasValidId = typeof req.id === 'number';
@@ -185,7 +185,7 @@ const AdminExpensesPage = () => {
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachmentId // Assuming attachmentId is what you had for attachment count logic
+      attachmentId: req.attachment.id // Assuming attachmentId is what you had for attachment count logic
     }));
 
   return (
