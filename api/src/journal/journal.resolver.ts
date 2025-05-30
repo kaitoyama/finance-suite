@@ -4,9 +4,8 @@ import { JournalEntry } from './entities/journal-entry.entity';
 import { CreateJournalEntryInput } from './dto/create-journal-entry.input';
 import { UpdateJournalEntryInput } from './dto/update-journal-entry.input';
 import { RangeInput } from './dto/range.input';
-import { User } from '../users/entities/user.entity'; // Import User entity
 import { UserService } from '../users/user.service'; // Import UserService
-import { UsePipes, NotFoundException } from '@nestjs/common'; // Added UsePipes and NotFoundException
+import { UsePipes } from '@nestjs/common'; // Added UsePipes and NotFoundException
 import { BalanceCheckPipe } from './pipes/balance-check.pipe'; // Import the pipe
 import { Request } from 'express'; // Import typed Express Request
 import { JournalEntry as JournalEntryModel } from '@prisma/client';
