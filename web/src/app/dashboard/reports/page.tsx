@@ -14,7 +14,7 @@ const ReportsPage = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [yearInput, setYearInput] = useState<string>(currentYear.toString());
 
-  const { profitLossStatement, loading, error, refetch } = useProfitLossStatement(selectedYear);
+  const { profitLossStatement, loading, error } = useProfitLossStatement(selectedYear);
 
   const handleYearChange = () => {
     const newYear = parseInt(yearInput, 10);

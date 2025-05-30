@@ -31,7 +31,7 @@ const displayAccountCategory = (category: AccountCategory) => {
 };
 
 export default function AccountsPage() {
-  const { accounts, loading, error, refetchAccounts } = useGetAccounts();
+  const { accounts, loading, error } = useGetAccounts();
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error loading accounts: {error.message}</p>;

@@ -1,10 +1,10 @@
 import { graphql } from '@/gql';
-import { CreateAccountInput, AccountPartsFragmentDoc } from '@/gql/graphql'; // AccountPartsFragmentDoc は後で定義
-import { useMutation, useQuery, UseQueryState, UseQueryExecute } from 'urql';
+import { CreateAccountInput } from '@/gql/graphql';
+import { useMutation, useQuery } from 'urql';
 
 // Fragment for consistent Account data
 // graphql-codegenが自動で `AccountPartsFragment` という型を生成してくれる
-const AccountPartsFragment = graphql(`
+graphql(`
   fragment AccountParts on Account {
     id
     code

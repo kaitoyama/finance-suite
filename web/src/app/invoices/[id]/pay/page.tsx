@@ -192,7 +192,7 @@ export default function InvoicePaymentPage() {
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        For invoices, this is typically "Incoming"
+                        For invoices, this is typically &ldquo;Incoming&rdquo;
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

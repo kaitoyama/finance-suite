@@ -47,8 +47,7 @@ export const GET_EXPENSE_REQUEST_BY_ID_DOCUMENT = gql`
 // Define options type for urql's useQuery, extending UseQueryArgs
 // We are primarily interested in `variables` and `pause` (for skip-like behavior)
 export interface UseExpenseRequestByIdArgs extends Omit<UseQueryArgs<ExpenseRequestByIdQueryVariables, ExpenseRequestByIdQuery>, 'query'> {
-  // No need to redefine variables here as UseQueryArgs already has it.
-  // `pause` is also part of UseQueryArgs.
+  variables: { id: number };
 }
 
 export const useExpenseRequestById = (options: UseExpenseRequestByIdArgs) => {

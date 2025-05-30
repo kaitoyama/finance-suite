@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { ExpenseRequest as GeneratedExpenseRequestType, User } from '@/gql/graphql'; // Import generated types
+import { ExpenseRequest as GeneratedExpenseRequestType } from '@/gql/graphql'; // Import generated types
 
 // Define a more specific type for the requester based on what's used.
 interface RequesterInfo {
@@ -92,39 +92,39 @@ const AdminExpensesPage = () => {
     {
       accessorKey: 'requester.username',
       header: '申請者',
-      cell: ({ row }: any) => row.original.requester?.username || 'N/A',
+      cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => row.original.requester?.username || 'N/A',
     },
     {
         accessorKey: 'amount',
         header: '金額',
-        cell: ({ row }: any) => `¥${row.original.amount.toLocaleString()}`,
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => `¥${row.original.amount.toLocaleString()}`,
     },
     {
         accessorKey: 'attachmentId',
         header: '添付ファイル数',
-        cell: ({ row }: any) => (row.original.attachmentId ? '1' : '0'),
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => (row.original.attachmentId ? '1' : '0'),
     },
     {
         accessorKey: 'createdAt',
         header: '申請日',
-        cell: ({ row }: any) => new Date(row.original.createdAt).toLocaleDateString(),
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
         accessorKey: 'state',
         header: '状態',
-        cell: ({ row }: any) => <Badge variant={row.original.state === 'PENDING' ? 'default' : 'secondary'}>{row.original.state}</Badge>
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => <Badge variant={row.original.state === 'PENDING' ? 'default' : 'secondary'}>{row.original.state}</Badge>
     },
     {
         id: 'actions',
         header: 'アクション',
-        cell: ({ row }: any) => (
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => (
             <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleActionClick(row.original.id, 'approve');}}>承認</Button>
                 <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation();handleActionClick(row.original.id, 'reject');}}>差戻し</Button>
             </div>
         ),
     },
-  ], [refetch, approveExpenseRequest, rejectExpenseRequest]);
+  ], []);
 
   if (fetching && !data) {
     return (
@@ -138,7 +138,7 @@ const AdminExpensesPage = () => {
 
   // Data for PENDING expenses table (existing logic)
   const pendingTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: any): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
+    .filter((req: unknown): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
         if (!req) return false;
         const isPending = req.state === 'PENDING';
         const hasValidId = typeof req.id === 'number';
@@ -148,11 +148,11 @@ const AdminExpensesPage = () => {
             (typeof req.requester === 'object' && 
              req.requester !== null && 
              typeof req.requester.username === 'string' && 
-            (typeof (req.requester as any).id === 'string' || typeof (req.requester as any).id === 'number') 
+            (typeof (req.requester as RequesterInfo).id === 'string' || typeof (req.requester as RequesterInfo).id === 'number') 
             );
         return isPending && hasValidId && hasValidAmount && hasValidCreatedAt && hasValidRequester;
     })
-    .map((req: any) => ({
+    .map((req: GeneratedExpenseRequestType & { state: string, id: number, amount: number, createdAt: string, requester: RequesterInfo | null }) => ({
       __typename: req.__typename,
       id: req.id,
       requester: req.requester ? { __typename: req.requester.__typename, id: String(req.requester.id), username: req.requester.username } : null,
@@ -164,7 +164,7 @@ const AdminExpensesPage = () => {
 
   // Data for ALL expenses table (new logic)
   const allTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: any): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
+    .filter((req: unknown): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
         if (!req) return false;
         // Basic type guards, adjust as necessary for your full data structure
         const hasValidId = typeof req.id === 'number';
@@ -175,11 +175,11 @@ const AdminExpensesPage = () => {
             (typeof req.requester === 'object' && 
              req.requester !== null && 
              typeof req.requester.username === 'string' && 
-             (typeof (req.requester as any).id === 'string' || typeof (req.requester as any).id === 'number')
+             (typeof (req.requester as RequesterInfo).id === 'string' || typeof (req.requester as RequesterInfo).id === 'number')
             );
         return hasValidId && hasValidAmount && hasValidCreatedAt && hasValidState && hasValidRequester;
     })
-    .map((req: any) => ({
+    .map((req: GeneratedExpenseRequestType & { state: string, id: number, amount: number, createdAt: string, requester: RequesterInfo | null }) => ({
       __typename: req.__typename,
       id: req.id,
       requester: req.requester ? { __typename: req.requester.__typename, id: String(req.requester.id), username: req.requester.username } : null,
@@ -210,10 +210,10 @@ const AdminExpensesPage = () => {
         {/* Pending Expenses Table (existing) */}
         <div>
           <h2 className="text-xl font-semibold mb-4">未承認経費一覧</h2>
-        <DataTable<ExpenseRequestForTable, any>
+        <DataTable<ExpenseRequestForTable, ExpenseRequestForTable>
           columns={columns} // Reusing columns for now
           data={pendingTableData}
-          onRowClick={(row: any) => { 
+          onRowClick={(row: { original: ExpenseRequestForTable }) => { 
             if (row.original.id) { 
                router.push(`/expenses/${row.original.id}`);
             }
@@ -224,10 +224,10 @@ const AdminExpensesPage = () => {
         {/* All Expenses Table (new) */}
         <div>
           <h2 className="text-xl font-semibold mb-4">全経費一覧</h2>
-        <DataTable<ExpenseRequestForTable, any>
+        <DataTable<ExpenseRequestForTable, ExpenseRequestForTable>
           columns={columns} // Reusing columns for now, can be customized
           data={allTableData}
-          onRowClick={(row: any) => { 
+          onRowClick={(row: { original: ExpenseRequestForTable }) => { 
             if (row.original.id) { 
                router.push(`/expenses/${row.original.id}`);
             }

@@ -2,7 +2,6 @@ import {
   createClient,
   cacheExchange,
   fetchExchange,
-  Provider as UrqlProvider,
 } from 'urql'
 
 export const urqlClient = createClient({

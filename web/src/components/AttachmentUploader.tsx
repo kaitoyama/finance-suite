@@ -1,10 +1,9 @@
 'use client';
 import React, { useRef, useState } from 'react';
-import { useAtom } from 'jotai';
 import { useCreatePresignedPost, useCreateAttachment } from '@/hooks/useAttachment';
 export function AttachmentUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [progress, setProgress] = useState(0);
+  const [progress] = useState(0);
   const { presignedPost, loading: presigning } = useCreatePresignedPost();
   const { createAttachment, loading: saving } = useCreateAttachment();
 

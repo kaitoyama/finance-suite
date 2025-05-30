@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { 
   Home,
   FileText,
-  CreditCard,
   BookOpen,
   TrendingUp,
   Receipt,

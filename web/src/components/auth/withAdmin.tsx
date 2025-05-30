@@ -7,9 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
 // Define a type for the props that the wrapped component will receive
 interface WithAdminProps {
-  // Add any specific props you expect the wrapped component to need
-  // For example, if you pass down the username:
-  // username?: string;
+  isAdmin?: boolean;
 }
 
 export default function withAdmin<P extends WithAdminProps>(WrappedComponent: React.ComponentType<P>) {

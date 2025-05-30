@@ -55,7 +55,6 @@ const displayAccountCategoryLabel = (category: AccountCategory) => {
     case 'REVENUE': return '収益';
     case 'EXPENSE': return '費用';
     default:
-      const _exhaustiveCheck: never = category; // Ensures all cases are handled
       return category;
   }
 };
@@ -67,7 +66,7 @@ const accountCategorySelectOptions = accountCategoryValues.map((category) => ({
 
 export default function NewAccountPage() {
   const router = useRouter();
-  const { createAccount, loading, error: submissionError } = useCreateAccount();
+  const { createAccount, error: submissionError } = useCreateAccount();
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),

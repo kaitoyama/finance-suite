@@ -27,7 +27,7 @@ export const expenseRequestByIdQueryDocument = gql`
 `; 
 
 export const useExpenseRequestByIdQuery = (id: number) => {
-  const [{ data, fetching, error }, refetch] = useQuery({
+  const [{ data, fetching, error }] = useQuery({
     query: expenseRequestByIdQueryDocument,
     variables: { id },
   });

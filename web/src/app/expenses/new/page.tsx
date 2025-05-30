@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import toast, { Toaster } from 'react-hot-toast';
@@ -10,7 +10,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -57,11 +56,11 @@ export default function NewExpenseRequestPage() {
     },
   });
 
-  const { result: createResult, executeMutation: createExpenseRequest } = useCreateExpenseRequestMutation();
+  const { executeMutation: createExpenseRequest } = useCreateExpenseRequestMutation();
   const { categories, loading: categoriesLoading, error: categoriesError } = useGetCategories();
   const { accounts, loading: accountsLoading, error: accountsError } = useGetAccounts();
-  const { createAttachment, loading: attachmentLoading, error: attachmentError } = useCreateAttachment();
-  const { presignedPost, loading: presignedPostLoading, error: presignedPostError } = useCreatePresignedPost();
+  const { createAttachment } = useCreateAttachment();
+  const { presignedPost, error: presignedPostError } = useCreatePresignedPost();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -171,8 +170,9 @@ export default function NewExpenseRequestPage() {
         }
       );
 
-    } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred during submission.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during submission.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

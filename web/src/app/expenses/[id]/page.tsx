@@ -7,7 +7,7 @@ import { useGetPresignedS3Url } from '@/hooks/useInvoice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
 import { PaymentAttachmentLinkRenderer } from '@/components/PaymentAttachmentLinkRenderer';
 
@@ -15,7 +15,7 @@ export default function ExpenseDetailPage() {
   const params = useParams();
   const id = params?.id ? parseInt(params.id as string, 10) : undefined;
 
-  const [expenseQueryResult, executeExpenseQuery] = useExpenseRequestById({
+  const [expenseQueryResult] = useExpenseRequestById({
     variables: { id: id! },
     pause: !id,
     requestPolicy: 'cache-and-network',

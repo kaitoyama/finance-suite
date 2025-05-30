@@ -1,22 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import {
   CreatePaymentInput,
   PaymentMethod as GqlPaymentMethod,
-  PaymentDirection as GqlPaymentDirection,
-  User,
   CreateAttachmentInput,
 } from '@/gql/graphql';
 import { useCreatePaymentMutation } from '@/hooks/useCreatePaymentMutation';
 import { useExpenseRequestByIdQuery } from '@/hooks/useExpenseRequestByIdQuery';
 import { useCreateAttachment, useCreatePresignedPost } from '@/hooks/useAttachment';
-import { PaymentForm, PaymentMethod as FormPaymentMethod } from '@/components/PaymentForm'; // Assuming PaymentForm handles its own state/validation for method
+import { PaymentForm } from '@/components/PaymentForm'; // Assuming PaymentForm handles its own state/validation for method
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input'; // For file input
 
 // Temporarily removing Zod schema for simplicity
 // const paymentFormSchema = z.object({ ... });
@@ -48,8 +45,8 @@ export default function PayExpensePage() {
     error: paymentErrorState,           // Correct: object has 'error', alias to 'paymentErrorState'
     createPayment: executeCreatePayment // Correct: object has 'createPayment', alias to 'executeCreatePayment'
   } = useCreatePaymentMutation();
-  const { createAttachment, loading: attachmentLoading, error: attachmentError } = useCreateAttachment();
-  const { presignedPost, loading: presignedPostLoading, error: presignedPostError } = useCreatePresignedPost();
+  const { createAttachment } = useCreateAttachment();
+  const { presignedPost } = useCreatePresignedPost();
 
   const handleFormSubmit = async (values: PaymentFormSubmitValues) => { 
     if (!expenseData?.expenseRequest || !numericId) {
@@ -65,7 +62,7 @@ export default function PayExpensePage() {
       return;
     }
 
-    let uploadedAttachmentIds: number[] = [];
+    const uploadedAttachmentIds: number[] = [];
     for (const file of filesToUpload) { // Iterate over filesFromForm
         try {
           const s3Key = `${self.crypto.randomUUID()}-${file.name}`;
@@ -87,8 +84,9 @@ export default function PayExpensePage() {
           const dbAttachment = await createAttachment(attachmentInput);
           if (!dbAttachment || !dbAttachment.id) throw new Error('Failed to save attachment to DB.');
           uploadedAttachmentIds.push(dbAttachment.id);
-        } catch (error: any) {
-          toast.error(`Attachment upload failed for ${file.name}: ${error.message}`);
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          toast.error(`Attachment upload failed for ${file.name}: ${errorMessage}`);
           return; 
         }
       }
@@ -112,8 +110,9 @@ export default function PayExpensePage() {
       if (!result?.id) throw new Error('Failed to register payment.');
       toast.success('支払いが正常に登録されました。');
       router.push(`/expenses/${expenseData.expenseRequest.id}`);
-    } catch (error: any) {      
-      toast.error(`支払登録エラー: ${error.message || 'Unknown error'}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`支払登録エラー: ${errorMessage}`);
     }
   };
   

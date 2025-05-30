@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -143,9 +142,11 @@ export default function NewJournalEntryPage() {
       await createJournalEntry(input);
       alert("仕訳が正常に作成されました。");
       router.push('/journals');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Failed to create journal entry', e);
-      const errorMessage = e.graphQLErrors?.map((err: any) => err.message).join(", ") || e.message || "仕訳の作成に失敗しました。";
+      const errorMessage = (e instanceof Error && 'graphQLErrors' in e) 
+        ? (e as { graphQLErrors?: Array<{ message: string }> }).graphQLErrors?.map(err => err.message).join(", ") 
+        : e instanceof Error ? e.message : "仕訳の作成に失敗しました。";
       alert("エラー: " + errorMessage);
     }
   };

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams } from "next/navigation";
 import { useGetInvoiceById, useGetPresignedS3Url } from "@/hooks/useInvoice";
 import { Button } from "@/components/ui/button";
-import { ArrowDownToLine, ExternalLink, RotateCw, CreditCard } from "lucide-react";
+import { ArrowDownToLine, RotateCw, CreditCard } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 
@@ -34,7 +34,7 @@ export default function InvoicePreviewPage() {
     if (invoice?.pdfKey && !presignedUrlData?.url && !fetchingUrl && !fetchUrlError) {
         retryFetchUrl();
     }
-  }, [invoice?.pdfKey, presignedUrlData?.url, fetchingUrl, fetchUrlError]);
+  }, [invoice?.pdfKey, presignedUrlData?.url, fetchingUrl, fetchUrlError, retryFetchUrl]);
 
   if (fetchingInvoice) {
     return <div className="text-center">請求書情報を読み込み中...</div>;
