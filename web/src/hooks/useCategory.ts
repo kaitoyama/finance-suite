@@ -64,6 +64,11 @@ export const useCreateCategory = () => {
 
   const createCategory = async (input: { name: string; description?: string }) => {
     const result = await createCategoryMutation({ createCategoryInput: input });
+    
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+    
     return result;
   };
 
@@ -77,6 +82,11 @@ export const useUpdateCategory = () => {
 
   const updateCategory = async (input: { id: number; name?: string; description?: string }) => {
     const result = await updateCategoryMutation({ updateCategoryInput: input });
+    
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+    
     return result;
   };
 
@@ -90,6 +100,11 @@ export const useRemoveCategory = () => {
 
   const removeCategory = async (id: number) => {
     const result = await removeCategoryMutation({ id });
+    
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+    
     return result;
   };
 
