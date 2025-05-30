@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useExpenseRequestsListQuery } from '@/hooks/useExpenseRequestsListQuery'; 
 import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseRequestMutation';
 import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
-import withAdmin from '@/components/auth/withAdmin';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table'; 
 import { ColumnDef } from "@tanstack/react-table"
@@ -256,4 +255,4 @@ const AdminExpensesPage = () => {
   );
 };
 
-export default withAdmin(AdminExpensesPage); 
+export default AdminExpensesPage; 
