@@ -87,7 +87,7 @@ export default function NewExpenseRequestPage() {
           throw new Error(presignedPostError?.message || 'Failed to get upload URL.');
         }
 
-        const { url, fields } = presignedPostResult;
+        const { url } = presignedPostResult;
 
         // 2. Upload file directly to R2 using presigned PUT
         const s3UploadPromise = fetch(url, {

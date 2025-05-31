@@ -12,7 +12,7 @@ export function AttachmentUploader() {
     if (!file) return;
 
     // 1) Presigned PUT URL を取得
-    const { url, fields, objectKey } = await presignedPost(file.name);
+    const { url, objectKey } = await presignedPost(file.name);
     
     // 2) R2 presigned PUT では file を直接 body に送る
     await fetch(url, { 
