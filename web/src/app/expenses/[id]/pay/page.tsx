@@ -68,10 +68,13 @@ export default function PayExpensePage() {
           const s3Key = `${self.crypto.randomUUID()}-${file.name}`;
           const presignedPostResult = await presignedPost(s3Key);
           if (!presignedPostResult) throw new Error('Failed to get S3 presigned post.');
-          const formData = new FormData();
-          presignedPostResult.fields.forEach(({ key, value }) => formData.append(key, value));
-          formData.append('file', file, file.name);
-          const s3Response = await fetch(presignedPostResult.url, { method: 'PUT', body: formData });
+          const s3Response = await fetch(presignedPostResult.url, { 
+            method: 'PUT', 
+            body: file,
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream'
+            }
+          });
           if (!s3Response.ok) {
             const errorText = await s3Response.text();
             throw new Error(`S3 Upload Failed: ${s3Response.status} ${errorText}`);

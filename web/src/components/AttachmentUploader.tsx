@@ -11,16 +11,17 @@ export function AttachmentUploader() {
     const file = fileInputRef.current?.files?.[0];
     if (!file) return;
 
-    // 1) Presigned POST を取得
+    // 1) Presigned PUT URL を取得
     const { url, fields, objectKey } = await presignedPost(file.name);
     
-    // 2) FormData を作成
-    const formData = new FormData();
-    fields.forEach(({ key, value }) => formData.append(key, value));
-    formData.append('file', file);
-
-    // 3) ブラウザから直接 PUT (MDN 推奨パターン)
-    await fetch(url, { method: 'PUT', body: formData });
+    // 2) R2 presigned PUT では file を直接 body に送る
+    await fetch(url, { 
+      method: 'PUT', 
+      body: file,
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream'
+      }
+    });
 
     // 4) メタ情報を GraphQL 経由で保存
     await createAttachment({

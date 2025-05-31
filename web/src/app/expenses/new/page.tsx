@@ -89,14 +89,13 @@ export default function NewExpenseRequestPage() {
 
         const { url, fields } = presignedPostResult;
 
-        // 2. Upload file directly to S3
-        const formData = new FormData();
-        fields.forEach(({ key, value }) => formData.append(key, value));
-        formData.append('file', selectedFile, selectedFile.name);
-
+        // 2. Upload file directly to R2 using presigned PUT
         const s3UploadPromise = fetch(url, {
           method: 'PUT',
-          body: formData,
+          body: selectedFile,
+          headers: {
+            'Content-Type': selectedFile.type || 'application/octet-stream'
+          }
         });
 
         await toast.promise(

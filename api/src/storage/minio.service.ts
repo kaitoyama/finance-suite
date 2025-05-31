@@ -29,11 +29,18 @@ export class MinioService {
   }
 
   async generatePresignedPost(key: string) {
-    const policy = this.client.newPostPolicy();
-    policy.setBucket(this.defaultBucket); // Using default bucket for posts
-    policy.setKey(key);
-    policy.setExpires(new Date(Date.now() + 5 * 60 * 1000)); // 5分
-    return await this.client.presignedPostPolicy(policy); // MinIO公式API:contentReference[oaicite:3]{index=3}
+    // R2 doesn't support presignedPOST, use presignedPUT instead
+    const url = await this.client.presignedPutObject(
+      this.defaultBucket,
+      key,
+      5 * 60 // 5 minutes expiry
+    );
+    
+    // Return format compatible with existing frontend code
+    return {
+      postURL: url,
+      formData: {} // Empty for PUT, file goes directly in body
+    };
   }
 
   async uploadPdf(buffer: Buffer, key: string): Promise<void> {
