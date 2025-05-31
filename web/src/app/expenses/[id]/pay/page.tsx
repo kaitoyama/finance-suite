@@ -71,7 +71,7 @@ export default function PayExpensePage() {
           const formData = new FormData();
           presignedPostResult.fields.forEach(({ key, value }) => formData.append(key, value));
           formData.append('file', file, file.name);
-          const s3Response = await fetch(presignedPostResult.url, { method: 'POST', body: formData });
+          const s3Response = await fetch(presignedPostResult.url, { method: 'PUT', body: formData });
           if (!s3Response.ok) {
             const errorText = await s3Response.text();
             throw new Error(`S3 Upload Failed: ${s3Response.status} ${errorText}`);

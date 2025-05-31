@@ -95,7 +95,7 @@ export default function NewExpenseRequestPage() {
         formData.append('file', selectedFile, selectedFile.name);
 
         const s3UploadPromise = fetch(url, {
-          method: 'POST',
+          method: 'PUT',
           body: formData,
         });
 

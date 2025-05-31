@@ -19,8 +19,8 @@ export function AttachmentUploader() {
     fields.forEach(({ key, value }) => formData.append(key, value));
     formData.append('file', file);
 
-    // 3) ブラウザから直接 POST (MDN 推奨パターン)
-    await fetch(url, { method: 'POST', body: formData });
+    // 3) ブラウザから直接 PUT (MDN 推奨パターン)
+    await fetch(url, { method: 'PUT', body: formData });
 
     // 4) メタ情報を GraphQL 経由で保存
     await createAttachment({
