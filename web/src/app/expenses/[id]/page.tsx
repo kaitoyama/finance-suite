@@ -233,7 +233,7 @@ export default function ExpenseDetailPage() {
               <div className="mt-6">
                 <h4 className="text-lg font-semibold mb-3">Payment Attachments:</h4>
                 <div className="space-y-4">
-                  {payment.attachments.map((actualAttachment: any) => {
+                  {payment.attachments.map((actualAttachment) => {
                     if (!actualAttachment) return null;
                     return (
                       <Card key={actualAttachment.id} className="p-4">

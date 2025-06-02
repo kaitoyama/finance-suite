@@ -53,11 +53,12 @@ export default function EditExpenseRequestPage() {
   const params = useParams();
   const idParam = params.id as string;
   const id = idParam ? parseInt(idParam, 10) : 0;
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Use hooks before any early returns - only call when we have a valid ID
+  // Pass undefined to skip query if id is invalid, ensuring hook is always called
   const { data: expenseData, fetching: expenseLoading, error: expenseError, refetch: refetchExpense } = useExpenseRequestForEdit(id);
   const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
@@ -76,33 +77,18 @@ export default function EditExpenseRequestPage() {
     },
   });
 
-  // Early return if id is invalid - but after hooks
-  if (!idParam || !id || isNaN(id) || id <= 0) {
-    return (
-      <div className="container mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertTitle>Invalid ID</AlertTitle>
-          <AlertDescription>Invalid expense request ID.</AlertDescription>
-        </Alert>
-        <Button onClick={() => router.back()} className="mt-4">戻る</Button>
-      </div>
-    );
-  }
-
   // Initialize form with existing data
   useEffect(() => {
     if (expenseData) {
       form.reset({
         amount: expenseData.amount,
         description: expenseData.description || '',
-        // accountId / categoryId は後で入れる
         accountId: '',
         categoryId: '',
       });
     }
   }, [expenseData, form]);
 
-  // ② 勘定科目が取れたら accountId を、カテゴリが取れたら categoryId を入れる
   useEffect(() => {
     if (expenseData?.account && accounts?.length) {
       form.setValue('accountId', expenseData.account.id.toString(), { shouldValidate: true });
@@ -243,7 +229,7 @@ export default function EditExpenseRequestPage() {
   useEffect(() => {
     // Only show errors if we have a valid ID and are actually trying to load data
     if (!idParam || !id || isNaN(id) || id <= 0) return;
-    
+
     if (categoriesError) {
       toast.error(`Categories loading error: ${categoriesError.message}`);
     }
@@ -252,213 +238,226 @@ export default function EditExpenseRequestPage() {
     }
   }, [categoriesError, accountsError, idParam, id]);
 
-  if (expenseLoading) {
-    return (
-      <div className="container mx-auto py-10">
+  // Condition flags
+  const invalidId = !idParam || !id || isNaN(id) || id <= 0;
+  const loading = expenseLoading;
+  const loadError = expenseError;
+  // Ensure notFound is true only if id is valid and no data/error/loading
+  const notFound = !invalidId && !expenseLoading && !expenseError && !expenseData;
+  const notRejected = !invalidId && expenseData && expenseData.state !== 'REJECTED';
+
+  let content: React.ReactNode;
+
+  if (invalidId) {
+    content = (
+      <>
+        <Alert variant="destructive">
+          <AlertTitle>Invalid ID</AlertTitle>
+          <AlertDescription>Invalid expense request ID.</AlertDescription>
+        </Alert>
+        <Button onClick={() => router.back()} className="mt-4">戻る</Button>
+      </>
+    );
+  } else if (loading) {
+    content = (
+      <>
         <Skeleton className="h-8 w-64 mb-6" />
         <Skeleton className="h-96 w-full" />
-      </div>
+      </>
     );
-  }
-
-  if (expenseError) {
-    return (
-      <div className="container mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertTitle>Error Loading Expense</AlertTitle>
-          <AlertDescription>{expenseError.message}</AlertDescription>
-        </Alert>
-      </div>
+  } else if (loadError) {
+    content = (
+      <Alert variant="destructive">
+        <AlertTitle>Error Loading Expense</AlertTitle>
+        <AlertDescription>{loadError.message}</AlertDescription>
+      </Alert>
     );
-  }
-
-  if (!expenseData) {
-    return (
-      <div className="container mx-auto p-4">
-        <Alert>
-          <AlertTitle>Not Found</AlertTitle>
-          <AlertDescription>Expense request not found.</AlertDescription>
-        </Alert>
-      </div>
+  } else if (notFound) {
+    content = (
+      <Alert>
+        <AlertTitle>Not Found</AlertTitle>
+        <AlertDescription>Expense request not found.</AlertDescription>
+      </Alert>
     );
-  }
-
-  const expense = expenseData;
-
-  // Only allow editing if status is REJECTED
-  if (expense.state !== 'REJECTED') {
-    return (
-      <div className="container mx-auto p-4">
+  } else if (notRejected) {
+    content = (
+      <>
         <Alert>
           <AlertTitle>Cannot Edit</AlertTitle>
           <AlertDescription>
-            Only rejected expense requests can be edited. Current status: {expense.state}
+            Only rejected expense requests can be edited. Current status: {expenseData!.state}
           </AlertDescription>
         </Alert>
         <Button onClick={() => router.back()} className="mt-4">戻る</Button>
-      </div>
+      </>
+    );
+  } else {
+    // expenseData is guaranteed to be valid here
+    const expense = expenseData!;
+    content = (
+      <>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>経費申請の編集</CardTitle>
+            <CardDescription>差し戻しされた経費申請を編集して再提出できます</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">申請ID:</span> {expense.id}</p>
+              <p><span className="font-medium">現在のステータス:</span> <span className="text-red-600">差し戻し</span></p>
+              <p><span className="font-medium">申請日:</span> {new Date(expense.createdAt).toLocaleDateString()}</p>
+              {expense.attachment && (
+                <p><span className="font-medium">現在の添付ファイル:</span> {expense.attachment.title}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>金額 *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="金額を入力"
+                      min="1"
+                      step="1"
+                      {...field}
+                      onChange={event => field.onChange(parseInt(event.target.value, 10) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="accountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>勘定科目 *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={accountsLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="勘定科目を選択" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {accountsLoading ? (
+                        <Skeleton className="h-8 w-full" />
+                      ) : (
+                        accounts?.map((account) => (
+                          <SelectItem key={account.id} value={account.id.toString()}>
+                            {account.code} - {account.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>カテゴリ *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="カテゴリを選択" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categoriesLoading ? (
+                        <Skeleton className="h-8 w-full" />
+                      ) : (
+                        categories?.map((category) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                            {category.description && ` - ${category.description}`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>摘要</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="摘要を入力..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormItem>
+              <FormLabel>新しい証憑ファイル（任意）</FormLabel>
+              <FormControl>
+                <Input type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
+              </FormControl>
+              {selectedFile && <FormDescription>選択されたファイル: {selectedFile.name}</FormDescription>}
+              <FormDescription>
+                新しいファイルを選択しない場合は、現在の証憑ファイルが維持されます。
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+
+            <div className="flex space-x-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting || accountsLoading || categoriesLoading}
+                className="flex-1"
+              >
+                {isSubmitting ? '更新中...' : '変更を保存'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleResubmit}
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? '再提出中...' : '変更せずに再提出'}
+              </Button>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => router.back()}
+              className="w-full"
+            >
+              キャンセル
+            </Button>
+          </form>
+        </Form>
+      </>
     );
   }
-
   return (
     <div className="container mx-auto py-10 max-w-2xl">
       <Toaster position="top-center" />
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>経費申請の編集</CardTitle>
-          <CardDescription>差し戻しされた経費申請を編集して再提出できます</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <p><span className="font-medium">申請ID:</span> {expense.id}</p>
-            <p><span className="font-medium">現在のステータス:</span> <span className="text-red-600">差し戻し</span></p>
-            <p><span className="font-medium">申請日:</span> {new Date(expense.createdAt).toLocaleDateString()}</p>
-            {expense.attachment && (
-              <p><span className="font-medium">現在の添付ファイル:</span> {expense.attachment.title}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>金額 *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="金額を入力"
-                    min="1"
-                    step="1"
-                    {...field} 
-                    onChange={event => field.onChange(parseInt(event.target.value, 10) || 0)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="accountId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>勘定科目 *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={accountsLoading}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="勘定科目を選択" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {accountsLoading ? (
-                      <Skeleton className="h-8 w-full" />
-                    ) : (
-                      accounts?.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.code} - {account.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>カテゴリ *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="カテゴリを選択" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categoriesLoading ? (
-                      <Skeleton className="h-8 w-full" />
-                    ) : (
-                      categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                          {category.description && ` - ${category.description}`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>摘要</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="摘要を入力..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormItem>
-            <FormLabel>新しい証憑ファイル（任意）</FormLabel>
-            <FormControl>
-              <Input type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
-            </FormControl>
-            {selectedFile && <FormDescription>選択されたファイル: {selectedFile.name}</FormDescription>}
-            <FormDescription>
-              新しいファイルを選択しない場合は、現在の証憑ファイルが維持されます。
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-
-          <div className="flex space-x-4">
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || accountsLoading || categoriesLoading} 
-              className="flex-1"
-            >
-              {isSubmitting ? '更新中...' : '変更を保存'}
-            </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={handleResubmit}
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting ? '再提出中...' : '変更せずに再提出'}
-            </Button>
-          </div>
-
-          <Button 
-            type="button" 
-            variant="ghost" 
-            onClick={() => router.back()}
-            className="w-full"
-          >
-            キャンセル
-          </Button>
-        </form>
-      </Form>
+      {content}
     </div>
   );
 }

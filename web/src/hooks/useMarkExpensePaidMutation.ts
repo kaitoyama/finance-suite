@@ -1,7 +1,5 @@
 import { gql } from '@urql/core';
 import { useMutation } from 'urql';
-import { MarkExpensePaidInput } from '@/gql/graphql';
-
 export const markExpensePaidMutationDocument = gql`
   mutation MarkExpensePaid($input: MarkExpensePaidInput!) {
     markExpensePaid(input: $input) {

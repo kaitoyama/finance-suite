@@ -17,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { ExpenseRequest as GeneratedExpenseRequestType } from '@/gql/graphql'; // Import generated types
 
 // Define a more specific type for the requester based on what's used.
 interface RequesterInfo {
@@ -93,7 +92,7 @@ const AdminExpensesPage = () => {
     }
 
     toast.promise(
-      actionPromise.then((res: any) => {
+      actionPromise.then((res) => {
         if (res.error) {
           throw new Error(res.error.message || `Failed to ${dialogAction}`);
         }
@@ -237,7 +236,7 @@ const AdminExpensesPage = () => {
             );
         },
     },
-  ], []);
+  ], [router]);
 
   if (fetching && !data) {
     return (
