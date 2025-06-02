@@ -16,7 +16,6 @@ import {
   expenseStateMachine,
   ExpenseContext,
   ExpenseEvent,
-  ExpenseStateValue,
 } from './state.machine';
 import {
   WebhookService,
@@ -43,20 +42,47 @@ export interface CreateExpenseRequestInput {
 
 const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
   requester: true,
-  approver: true,
+  approver: false,
   payment: {
     include: {
       attachments: {
         include: {
-          attachment: true,
+          attachment: {
+            include: {
+              uploader: true,
+            },
+          },
         },
       },
     },
   },
-  attachment: true,
+  attachment: {
+    include: {
+      uploader: {
+        select: {
+          id: true,
+          username: true,
+          isAdmin: true,
+        },
+      },
+    },
+  },
   account: true,
   category: true,
 };
+
+type AttachmentIncludeRelations = {
+  uploader: {
+    select: {
+      id: true;
+      username: true;
+      isAdmin: true;
+    };
+  };
+};
+export type AttachmentWithUploader = Prisma.AttachmentGetPayload<{
+  include: AttachmentIncludeRelations;
+}>;
 
 export type FullExpenseRequest = Prisma.ExpenseRequestGetPayload<{
   include: typeof expenseRequestIncludeRelations;
@@ -259,9 +285,11 @@ export class ExpenseService {
       };
       this.webhookService
         .sendWebhook(webhookPayload)
-        .catch((err) => this.logger.error('Failed to send webhook', err.stack));
+        .catch((err) =>
+          this.logger.error('Failed to send webhook', (err as Error).stack),
+        );
 
-      this.pubSub.publish(EXPENSE_REQUEST_STATE_CHANGED_EVENT, {
+      await this.pubSub.publish(EXPENSE_REQUEST_STATE_CHANGED_EVENT, {
         [EXPENSE_REQUEST_STATE_CHANGED_EVENT]: updatedExpenseRequest,
       });
     }

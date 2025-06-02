@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Args, Query, Int } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Query } from '@nestjs/graphql';
 import { Attachment } from 'src/attachments/entities/attachment.entity';
 import { CreateAttachmentInput } from 'src/attachments/dto/create-attachment.input';
 import { AttachmentsService } from 'src/attachments/attachments.service';
@@ -11,11 +11,8 @@ export class AttachmentsResolver {
   constructor(private readonly svc: AttachmentsService) {}
 
   @Query(() => PresignedPayload, { name: 'getPresignedS3Url' })
-  getPresignedS3Url(
-    @Args('title') title: string,
-    @UserHeader() user: { username: string },
-  ) {
-    return this.svc.getPresignedS3Url(title, user.username);
+  getPresignedS3Url(@Args('title') title: string) {
+    return this.svc.getPresignedS3Url(title);
   }
 
   @Mutation(() => PresignedPayload, { name: 'createPresignedPost' })

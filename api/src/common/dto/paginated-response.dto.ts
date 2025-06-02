@@ -21,7 +21,11 @@ export class PaginationInfo {
   hasPreviousPage: boolean;
 }
 
-export function createPaginatedType<T>(ItemType: any) {
+import { Type } from '@nestjs/common';
+
+export function createPaginatedType<T>(
+  ItemType: Type<T>,
+): Type<{ items: T[]; pagination: PaginationInfo }> {
   @ObjectType(`Paginated${ItemType.name}Response`)
   class PaginatedResponse {
     @Field(() => [ItemType])

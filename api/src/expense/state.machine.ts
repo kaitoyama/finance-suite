@@ -6,8 +6,7 @@ import {
 
 export interface ExpenseContext {
   expenseRequest?: ExpenseRequest;
-
-  error?: any;
+  error?: Error | string | null;
 }
 
 export type ExpenseEvent =

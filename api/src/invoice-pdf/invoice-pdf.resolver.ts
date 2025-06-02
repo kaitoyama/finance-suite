@@ -41,16 +41,14 @@ export class InvoicePdfResolver {
 
     try {
       const templateData = {
-        INVOICE_NO: input.invoiceNo,
-        PARTNER_NAME: input.partnerName,
-        ISSUE_DATE: this.formatDateToYyyyMmDd(input.date),
+        invoiceNo: input.invoiceNo,
+        partnerName: input.partnerName,
+        issueDate: this.formatDateToYyyyMmDd(input.date),
         amount: input.amount,
         subjectText: input.subjectText,
         // dueDateText will be formatted in PdfService if passed as YYYY-MM-DD or if it uses its default
         // Pass the raw string if provided, otherwise PdfService default logic applies based on `input.date`
-        dueDateText: input.dueDateText
-          ? this.formatDateToYyyyMmDd(input.dueDateText)
-          : undefined,
+        dueDate: this.formatDateToYyyyMmDd(input.dueDateText),
         itemDescriptionText: input.itemDescriptionText,
         date: input.date, // PdfService uses this for default due date calculation
       };
@@ -79,10 +77,12 @@ export class InvoicePdfResolver {
         pdfKey,
         presignedUrl,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Failed to generate invoice PDF for ${input.invoiceNo}: ${error.message}`,
-        error.stack,
+        `Failed to generate invoice PDF for ${input.invoiceNo}: ${
+          (error as Error).message
+        }`,
+        (error as Error).stack,
       );
       throw error;
     }

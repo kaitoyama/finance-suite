@@ -27,9 +27,10 @@ export class GenerateInvoicePdfInput {
   @IsNotEmpty()
   subjectText?: string; // e.g., "CPCTF 2025 協賛費"
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   @IsDateString()
-  dueDateText?: string; // e.g., "2025/6/30"
+  @IsNotEmpty()
+  dueDateText: string; // e.g., "2025/6/30"
 
   @Field(() => String, { nullable: true })
   @IsString()

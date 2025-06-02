@@ -330,7 +330,7 @@ input GenerateInvoicePdfInput {
   amount: Float!
   date: String!
   subjectText: String
-  dueDateText: String
+  dueDateText: String!
   itemDescriptionText: String
 }
 

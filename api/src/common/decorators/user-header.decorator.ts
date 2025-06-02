@@ -1,33 +1,34 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { Request } from 'express';
 
 export interface UserHeaderInfo {
   username: string;
   isAdmin: boolean;
 }
 
+interface GraphQLContext {
+  req: Request;
+}
+
 export const UserHeader = createParamDecorator(
   (data: unknown, context: ExecutionContext): UserHeaderInfo => {
     const gqlCtx = GqlExecutionContext.create(context);
-    const req = gqlCtx.getContext().req;
-    // Assuming middleware adds username and isAdmin to req directly or to req.user
-    if (
-      req.user &&
-      typeof req.user.username === 'string' &&
-      typeof req.user.isAdmin === 'boolean'
-    ) {
-      return { username: req.user.username, isAdmin: req.user.isAdmin };
+    const { req }: GraphQLContext = gqlCtx.getContext();
+
+    // middlewareによってusernameとisAdminが設定されているので、それらを直接使用
+    const username = req.username;
+    const isAdmin = req.isAdmin;
+
+    // middlewareを信頼し、設定された値をそのまま使用
+    if (typeof username === 'string' && typeof isAdmin === 'boolean') {
+      return { username, isAdmin };
     }
-    // Fallback if middleware adds directly to req
-    if (typeof req.username === 'string' && typeof req.isAdmin === 'boolean') {
-      return { username: req.username, isAdmin: req.isAdmin };
-    }
-    // Handle cases where user info might not be available or is in a different format
-    // You might want to throw an error or return a default/undefined value
+
+    // middlewareが正しく動作していない場合の fallback
     console.warn(
       'UserHeader decorator could not find username or isAdmin on request.',
     );
-    // Return a default or throw an error as appropriate for your application
     return { username: 'unknown', isAdmin: false };
   },
 );

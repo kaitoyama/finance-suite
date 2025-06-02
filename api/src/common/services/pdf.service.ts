@@ -4,6 +4,18 @@ import * as handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 
+export interface PdfTemplateData {
+  invoiceNo: string;
+  partnerName?: string;
+  amount: number;
+  date: Date | string;
+  dueDate: Date | string;
+  subjectText?: string;
+  itemDescriptionText?: string;
+  dueDateText?: string;
+  [key: string]: unknown; // Allow additional properties
+}
+
 @Injectable()
 export class PdfService {
   private readonly logger = new Logger(PdfService.name);
@@ -20,7 +32,7 @@ export class PdfService {
 
   async generatePdfFromTemplate(
     templatePath: string,
-    data: Record<string, any>,
+    data: PdfTemplateData,
   ): Promise<Buffer> {
     try {
       // __dirname is .../api/dist/common/services
@@ -91,7 +103,7 @@ export class PdfService {
         `Error generating PDF for invoice ${data.invoiceNo}:`,
         error,
       );
-      throw new Error(`Failed to generate PDF: ${error.message}`);
+      throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

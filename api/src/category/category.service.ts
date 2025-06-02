@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma.service';
 import { CreateCategoryInput } from './dto/create-category.input';
 import { UpdateCategoryInput } from './dto/update-category.input';
-import { Category } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
@@ -18,8 +18,10 @@ export class CategoryService {
         data: createCategoryInput,
       });
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('カテゴリ名が既に存在します。');
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new BadRequestException('カテゴリ名が既に存在します。');
+        }
       }
       throw error;
     }
@@ -56,11 +58,13 @@ export class CategoryService {
         },
       });
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('カテゴリ名が既に存在します。');
-      }
-      if (error.code === 'P2025') {
-        throw new NotFoundException(`ID ${id} のカテゴリが見つかりません。`);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new BadRequestException('カテゴリ名が既に存在します。');
+        }
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`ID ${id} のカテゴリが見つかりません。`);
+        }
       }
       throw error;
     }
@@ -87,8 +91,16 @@ export class CategoryService {
         where: { id },
       });
     } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException(`ID ${id} のカテゴリが見つかりません。`);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
+          throw new BadRequestException(
+            'このカテゴリは他のリソースで使用されているため削除できません。',
+          );
+        }
+
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`ID ${id} のカテゴリが見つかりません。`);
+        }
       }
       throw error;
     }

@@ -4,7 +4,6 @@ import {
   PaymentDirection,
   PaymentMethod,
 } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import { Invoice } from '../../invoice/entities/invoice.entity';
 import { Attachment } from '../../attachments/entities/attachment.entity';
 
@@ -29,7 +28,7 @@ export class Payment {
   paidAt: Date;
 
   @Field(() => Number)
-  amount: Decimal;
+  amount: number;
 
   @Field(() => PaymentLabelEnum)
   label: PaymentLabelEnum;
@@ -47,7 +46,7 @@ export class Payment {
   invoiceId?: number;
 
   @Field(() => Number, { nullable: true })
-  overpaidAmount?: Decimal;
+  overpaidAmount?: number;
 
   @Field(() => Int, { nullable: true })
   expenseRequestId?: number;

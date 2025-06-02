@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { BudgetBalance } from './dto/budget-balance.dto';
-import { AccountCategory, Budget, Prisma } from '@prisma/client';
+import { Budget } from '@prisma/client';
 import { BudgetInput } from './dto/budget.input';
 import { Decimal } from '@prisma/client/runtime/library';
 

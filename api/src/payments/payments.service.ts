@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ExpenseService } from '../expense/expense.service';
+import { User } from '../users/entities/user.entity';
 import { JournalService } from '../journal/journal.service';
 import { UserService } from '../users/user.service';
 
@@ -103,7 +104,7 @@ export class PaymentsService {
       return;
     }
 
-    const mockUser = { id: userId };
+    const mockUser: User = { id: userId, username: '', isAdmin: false };
     const amount = parseFloat(payment.amount.toString());
 
     try {
@@ -129,7 +130,7 @@ export class PaymentsService {
               },
             ],
           },
-          mockUser as any,
+          mockUser,
         );
       } else if (payment.expenseRequestId) {
         // For expense payments: Debit Expense, Credit Cash/Bank
@@ -153,7 +154,7 @@ export class PaymentsService {
               },
             ],
           },
-          mockUser as any,
+          mockUser,
         );
       }
     } catch (error) {

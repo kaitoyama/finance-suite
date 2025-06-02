@@ -33,13 +33,13 @@ export class MinioService {
     const url = await this.client.presignedPutObject(
       this.defaultBucket,
       key,
-      5 * 60 // 5 minutes expiry
+      5 * 60, // 5 minutes expiry
     );
-    
+
     // Return format compatible with existing frontend code
     return {
       postURL: url,
-      formData: {} // Empty for PUT, file goes directly in body
+      formData: {}, // Empty for PUT, file goes directly in body
     };
   }
 

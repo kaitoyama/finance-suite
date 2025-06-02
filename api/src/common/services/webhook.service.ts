@@ -7,8 +7,7 @@ export interface WebhookPayload {
   id: number;
   oldState?: string;
   newState: string;
-
-  [key: string]: any;
+  data?: unknown; // Additional data specific to the webhook type
 }
 
 @Injectable()
@@ -30,7 +29,7 @@ export class WebhookService {
         this.logger.log(`Webhook sent successfully to ${this.webhookUrl}`);
       } catch (error) {
         this.logger.error(
-          `Failed to send webhook to ${this.webhookUrl}: ${error.message}`,
+          `Failed to send webhook to ${this.webhookUrl}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     } else {

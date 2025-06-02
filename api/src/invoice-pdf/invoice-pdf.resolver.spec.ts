@@ -5,8 +5,6 @@ import { PdfService } from '../common/services/pdf.service';
 import { MinioService } from '../storage/minio.service';
 import { GenerateInvoicePdfInput } from './dto/generate-invoice-pdf.dto';
 import * as path from 'path';
-import * as fs from 'fs/promises'; // For checking template existence in a more realistic mock
-
 // Mock file system readFile to simulate template presence/absence
 // jest.mock('fs/promises');
 

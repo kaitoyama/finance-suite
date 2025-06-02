@@ -10,18 +10,19 @@ import {
 // import { UseGuards } from '@nestjs/common'; // Temporarily commented out
 // import { GqlAuthGuard } from '../common/guards/gql-auth.guard'; // Path TBD
 // import { CurrentUser } from '../common/decorators/current-user.decorator'; // Path TBD
-import { User as PrismaUser, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   ExpenseService,
   EXPENSE_REQUEST_STATE_CHANGED_EVENT,
   FullExpenseRequest,
+  AttachmentWithUploader,
 } from './expense.service';
 import { ExpenseRequest as GQLExpenseRequest } from './entities/expense-request.entity';
 import { CreateExpenseRequestInput } from './dto/create-expense-request.input';
 import { MarkExpensePaidInput } from './dto/mark-expense-paid.input';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedExpenseRequestResponse } from './dto/paginated-expense-request.dto';
-import { NotFoundException, UseGuards } from '@nestjs/common'; // Will be needed if we use a guard that populates req.user
+import { NotFoundException } from '@nestjs/common';
 import { PubSub } from 'graphql-subscriptions'; // Import PubSub
 import { Inject } from '@nestjs/common'; // Import Inject
 import { Request } from 'express';
@@ -33,7 +34,11 @@ type PaymentWithAttachments = Prisma.PaymentGetPayload<{
   include: {
     attachments: {
       include: {
-        attachment: true;
+        attachment: {
+          include: {
+            uploader: true;
+          };
+        };
       };
     };
   };
@@ -41,7 +46,13 @@ type PaymentWithAttachments = Prisma.PaymentGetPayload<{
 
 // Type for the individual PaymentAttachment join table entry that includes the target Attachment
 type PaymentAttachmentWithRelation = Prisma.PaymentAttachmentGetPayload<{
-  include: { attachment: true };
+  include: {
+    attachment: {
+      include: {
+        uploader: true;
+      };
+    };
+  };
 }>;
 
 // Helper function to map Prisma ExpenseRequest to GraphQL ExpenseRequest
@@ -62,40 +73,44 @@ function mapPrismaExpenseToGql(
     ? {
         ...paymentWithIncludedAttachments,
         amount: paymentWithIncludedAttachments.amount.toNumber(),
+        invoiceId: paymentWithIncludedAttachments.invoiceId || undefined,
+        overpaidAmount:
+          paymentWithIncludedAttachments.overpaidAmount?.toNumber() ||
+          undefined,
+        expenseRequestId:
+          paymentWithIncludedAttachments.expenseRequestId || undefined,
         // Now, paymentWithIncludedAttachments.attachments should be correctly typed
         attachments:
           paymentWithIncludedAttachments.attachments?.map(
             (pa: PaymentAttachmentWithRelation) => ({
               ...pa.attachment,
               // Ensure all fields of your GQL Attachment are covered.
-              // If GQL Attachment has an 'amount' field from Prisma Attachment's Decimal, convert it.
-              id: pa.attachment.id, // Assuming GQL Attachment has id
-              s3Key: pa.attachment.s3Key, // Assuming GQL Attachment has s3Key
-              title: pa.attachment.title, // Assuming GQL Attachment has title
-              // If your Attachment model has an amount field that is Decimal
+              // If GQL Attachment has an amount field that is Decimal
               amount: pa.attachment.amount.toNumber(),
-              // Add other fields from pa.attachment as needed for your GQL Attachment type
+              expenseRequestId: pa.attachment.expenseRequestId || undefined,
+              // Add required uploader field (if not already included in spread)
+              uploader: pa.attachment.uploader,
             }),
           ) || undefined,
       }
     : undefined;
 
-  const mappedExpenseAttachment = prismaExpense.attachment
-    ? {
-        ...prismaExpense.attachment,
-        amount: prismaExpense.attachment.amount.toNumber(),
-      }
-    : undefined;
+  const mappedExpenseAttachment = {
+    ...prismaExpense.attachment,
+    amount: prismaExpense.attachment.amount.toNumber(),
+    expenseRequestId: prismaExpense.attachment.expenseRequestId || undefined,
+    uploader: (prismaExpense.attachment as AttachmentWithUploader).uploader,
+  };
 
   return {
     ...prismaExpense,
     amount: prismaExpense.amount.toNumber(),
     approvedAt:
       prismaExpense.approvedAt === null ? undefined : prismaExpense.approvedAt,
-    requester: prismaExpense.requester as any,
-    approver: (prismaExpense.approver as any) || undefined,
-    payment: mappedPayment as any, // Cast to any for GQL output type, or define a GQLPaymentWithAttachments
-    attachment: mappedExpenseAttachment as any, // Cast to any for GQL output type
+    requester: prismaExpense.requester,
+    approver: prismaExpense.approver || undefined,
+    payment: mappedPayment,
+    attachment: mappedExpenseAttachment,
   };
 }
 
@@ -238,13 +253,14 @@ export class ExpenseResolver {
     name: EXPENSE_REQUEST_STATE_CHANGED_EVENT,
     // Optional: Add filter if clients can subscribe to specific expense request IDs
     // filter: (payload, variables) => payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT].id === variables.expenseId,
-    resolve: (payload) =>
-      mapPrismaExpenseToGql(payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT]),
+    resolve: (payload: {
+      [EXPENSE_REQUEST_STATE_CHANGED_EVENT]: FullExpenseRequest;
+    }) => mapPrismaExpenseToGql(payload[EXPENSE_REQUEST_STATE_CHANGED_EVENT]),
   })
   expenseRequestStateChangedSubscription() {
     // @Args('expenseId', { type: () => Int, nullable: true }) expenseId?: number, // if using filter
-    return (this.pubSub as any).asyncIterator(
-      EXPENSE_REQUEST_STATE_CHANGED_EVENT,
-    );
+    return this.pubSub.asyncIterableIterator<{
+      [EXPENSE_REQUEST_STATE_CHANGED_EVENT]: FullExpenseRequest;
+    }>(EXPENSE_REQUEST_STATE_CHANGED_EVENT);
   }
 }

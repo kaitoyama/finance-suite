@@ -1,34 +1,20 @@
 import { Resolver, Mutation, Args, Context, Query, Int } from '@nestjs/graphql';
 import { InvoiceService } from './invoice.service';
-import { Invoice as GqlInvoice, Invoice } from './entities/invoice.entity'; // Renamed for clarity
+import { Invoice as GqlInvoice, Invoice } from './entities/invoice.entity';
 import { InvoiceInput } from './dto/invoice.input';
 import {
   User as PrismaUser,
-  Invoice as PrismaInvoiceInterface,
-} from '@prisma/client'; // Use interface for type hint
-import { UserService } from '../users/user.service'; // To fetch PrismaUser
+  Invoice as PrismaInvoice,
+  InvoiceStatus,
+} from '@prisma/client';
+import { UserService } from '../users/user.service';
 import {
   Logger,
   UnauthorizedException,
   InternalServerErrorException,
   NotFoundException,
-} from '@nestjs/common'; // Added Logger, UnauthorizedException, and InternalServerErrorException
+} from '@nestjs/common';
 import { Request } from 'express';
-
-// This is what the linter seems to think PrismaInvoice is. For robustnes, we defensively access properties.
-interface PerceivedPrismaInvoice {
-  id: number;
-  invoiceNo: string;
-  partnerName: string;
-  amount: any; // Prisma's Decimal might be 'any' or specific object here
-  status: any; // Prisma.InvoiceStatus
-  pdfKey: string | null;
-  createdAt: Date;
-  dueDate?: Date; // Make optional based on linter error
-  description?: string | null; // Make optional based on linter error
-  // createdById: number; // Not in GQL type
-  // journalEntryId?: number | null; // Not in GQL type
-}
 
 @Resolver(() => GqlInvoice)
 export class InvoiceResolver {
@@ -101,12 +87,8 @@ export class InvoiceResolver {
       );
     }
 
-    const createdInvoiceUntyped: any = await this.invoiceService.createInvoice(
-      input,
-      prismaUser,
-    );
-    const createdPrismaInvoice =
-      createdInvoiceUntyped as PerceivedPrismaInvoice;
+    const createdPrismaInvoice: PrismaInvoice =
+      await this.invoiceService.createInvoice(input, prismaUser);
 
     if (!createdPrismaInvoice.pdfKey) {
       this.logger.error(
@@ -117,43 +99,15 @@ export class InvoiceResolver {
       );
     }
 
-    if (!createdPrismaInvoice.dueDate) {
-      this.logger.error(
-        `dueDate is missing for invoice ${createdPrismaInvoice.invoiceNo}. This indicates a type generation issue.`,
-      );
-      throw new InternalServerErrorException(
-        'Invoice created successfully, but dueDate is missing in the returned data.',
-      );
-    }
-
-    let finalAmount: number;
-    if (typeof createdPrismaInvoice.amount === 'number') {
-      finalAmount = createdPrismaInvoice.amount;
-    } else if (
-      createdPrismaInvoice.amount &&
-      typeof createdPrismaInvoice.amount.toNumber === 'function'
-    ) {
-      finalAmount = createdPrismaInvoice.amount.toNumber(); // For Prisma Decimal objects
-    } else if (createdPrismaInvoice.amount) {
-      finalAmount = parseFloat(createdPrismaInvoice.amount.toString());
-    } else {
-      this.logger.error(
-        `Amount is missing or invalid for invoice ${createdPrismaInvoice.invoiceNo}`,
-      );
-      throw new InternalServerErrorException(
-        'Invalid amount in created invoice data.',
-      );
-    }
-
     return {
       id: createdPrismaInvoice.id,
       invoiceNo: createdPrismaInvoice.invoiceNo,
       partnerName: createdPrismaInvoice.partnerName,
-      amount: finalAmount,
-      status: createdPrismaInvoice.status, // Assumes GqlInvoice.status is compatible with PrismaInvoice.status
-      pdfKey: createdPrismaInvoice.pdfKey, // Now checked for nullity
+      amount: createdPrismaInvoice.amount, // Float type in schema, no conversion needed
+      status: createdPrismaInvoice.status,
+      pdfKey: createdPrismaInvoice.pdfKey,
       createdAt: createdPrismaInvoice.createdAt,
-      dueDate: createdPrismaInvoice.dueDate, // Now checked for existence
+      dueDate: createdPrismaInvoice.dueDate,
       description: createdPrismaInvoice.description ?? undefined,
     };
   }
