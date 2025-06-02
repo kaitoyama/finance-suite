@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useExpenseRequestsListQuery } from '@/hooks/useExpenseRequestsListQuery'; 
 import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseRequestMutation';
 import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
+import { useUpdateExpenseRequestMutation } from '@/hooks/useUpdateExpenseRequestMutation';
+import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table'; 
 import { ColumnDef } from "@tanstack/react-table"
@@ -32,7 +34,7 @@ interface ExpenseRequestForTable {
   amount: number;
   createdAt: string; // GQL DateTime usually comes as ISO string
   state: string; // Assuming state is always a string e.g. PENDING, APPROVED
-  attachmentId?: string | null; // ID of the attachment, can be string or number based on schema
+  attachmentId?: number | null; // ID of the attachment, GraphQL schema shows this as number
   // attachmentCount?: number; // If you have a specific field for this
 }
 
@@ -41,10 +43,12 @@ const AdminExpensesPage = () => {
   const { data, fetching, error, refetch } = useExpenseRequestsListQuery();
   const { approveExpenseRequest } = useApproveExpenseRequestMutation();
   const { rejectExpenseRequest } = useRejectExpenseRequestMutation();
+  const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
+  const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
-  const [dialogAction, setDialogAction] = useState<'approve' | 'reject' | null>(null);
+  const [dialogAction, setDialogAction] = useState<'approve' | 'reject' | 'submit' | 'edit' | null>(null);
 
   useEffect(() => {
     if (error) {
@@ -52,7 +56,7 @@ const AdminExpensesPage = () => {
     }
   }, [error]);
 
-  const handleActionClick = (id: number, action: 'approve' | 'reject') => {
+  const handleActionClick = (id: number, action: 'approve' | 'reject' | 'submit' | 'edit') => {
     setSelectedExpenseId(id);
     setDialogAction(action);
     setIsDialogOpen(true);
@@ -61,26 +65,48 @@ const AdminExpensesPage = () => {
   const handleConfirmAction = async () => {
     if (!selectedExpenseId || !dialogAction) return;
 
-    const actionPromise = dialogAction === 'approve' 
-      ? approveExpenseRequest({ id: selectedExpenseId })
-      : rejectExpenseRequest({ id: selectedExpenseId });
+    let actionPromise;
+    let successMessage = '';
+
+    switch (dialogAction) {
+      case 'approve':
+        actionPromise = approveExpenseRequest({ id: selectedExpenseId });
+        successMessage = '承認';
+        break;
+      case 'reject':
+        actionPromise = rejectExpenseRequest({ id: selectedExpenseId });
+        successMessage = '差戻し';
+        break;
+      case 'submit':
+        actionPromise = updateExpenseRequest({ 
+          id: selectedExpenseId, 
+          input: { state: 'PENDING' } 
+        });
+        successMessage = '申請';
+        break;
+      case 'edit':
+        actionPromise = resubmitExpenseRequest({ id: selectedExpenseId });
+        successMessage = '再申請';
+        break;
+      default:
+        return;
+    }
 
     toast.promise(
-      actionPromise.then(res => {
-        const mutationResult = dialogAction === 'approve' ? res.data?.approveExpenseRequest : res.data?.rejectExpenseRequest;
-        if (res.error || !mutationResult) {
-          throw new Error(res.error?.message || `Failed to ${dialogAction}`);
+      actionPromise.then((res: any) => {
+        if (res.error) {
+          throw new Error(res.error.message || `Failed to ${dialogAction}`);
         }
         refetch({ requestPolicy: 'network-only' }); 
         setIsDialogOpen(false);
         setSelectedExpenseId(null);
         setDialogAction(null);
-        return `${dialogAction === 'approve' ? 'Approved' : 'Rejected'} successfully.`;
+        return `${successMessage}しました。`;
       }),
       {
-        loading: `Processing ${dialogAction}...`,
+        loading: `${successMessage}中...`,
         success: (message: string) => message,
-        error: (err: Error) => `Failed to ${dialogAction}: ${err.message}`,
+        error: (err: Error) => `${successMessage}に失敗しました: ${err.message}`,
       }
     );
   };
@@ -116,12 +142,100 @@ const AdminExpensesPage = () => {
     {
         id: 'actions',
         header: 'アクション',
-        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => (
-            <div className="space-x-2">
-                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleActionClick(row.original.id, 'approve');}}>承認</Button>
-                <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation();handleActionClick(row.original.id, 'reject');}}>差戻し</Button>
-            </div>
-        ),
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => {
+            const { state, id } = row.original;
+            
+            const renderActionButtons = () => {
+                switch (state) {
+                    case 'DRAFT':
+                        return (
+                            <Button 
+                                variant="default" 
+                                size="sm" 
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    handleActionClick(id, 'submit');
+                                }}
+                            >
+                                申請
+                            </Button>
+                        );
+                    
+                    case 'PENDING':
+                        return (
+                            <>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        handleActionClick(id, 'approve');
+                                    }}
+                                >
+                                    承認
+                                </Button>
+                                <Button 
+                                    variant="destructive" 
+                                    size="sm" 
+                                    onClick={(e) => { 
+                                        e.stopPropagation();
+                                        handleActionClick(id, 'reject');
+                                    }}
+                                >
+                                    差戻し
+                                </Button>
+                            </>
+                        );
+                    
+                    case 'APPROVED':
+                        return (
+                            <Button 
+                                variant="default" 
+                                size="sm" 
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    router.push(`/expenses/${id}/pay`);
+                                }}
+                            >
+                                支払済み
+                            </Button>
+                        );
+                    
+                    case 'PAID':
+                        return (
+                            <Badge variant="outline">支払済み</Badge>
+                        );
+                    
+                    case 'REJECTED':
+                        return (
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    handleActionClick(id, 'edit');
+                                }}
+                            >
+                                再申請
+                            </Button>
+                        );
+                    
+                    case 'CLOSED':
+                        return (
+                            <Badge variant="secondary">完了</Badge>
+                        );
+                    
+                    default:
+                        return null;
+                }
+            };
+
+            return (
+                <div className="space-x-2 flex items-center">
+                    {renderActionButtons()}
+                </div>
+            );
+        },
     },
   ], []);
 
@@ -136,56 +250,42 @@ const AdminExpensesPage = () => {
   }
 
   // Data for PENDING expenses table (existing logic)
-  const pendingTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: GeneratedExpenseRequestType): req is GeneratedExpenseRequestType & { state: 'PENDING', id: number, amount: number, createdAt: string, requester: RequesterInfo | null } => {
+  const pendingTableData: ExpenseRequestForTable[] = (data || [])
+    .filter((req): req is NonNullable<typeof req> & { state: 'PENDING' } => {
         if (!req) return false;
-        const isPending = req.state === 'PENDING';
-        const hasValidId = typeof req.id === 'number';
-        const hasValidAmount = typeof req.amount === 'number';
-        const hasValidCreatedAt = typeof req.createdAt === 'string';
-        const hasValidRequester = req.requester === null || 
-            (typeof req.requester === 'object' && 
-             req.requester !== null && 
-             typeof req.requester.username === 'string' && 
-            (typeof (req.requester as RequesterInfo).id === 'string' || typeof (req.requester as RequesterInfo).id === 'number') 
-            );
-        return isPending && hasValidId && hasValidAmount && hasValidCreatedAt && hasValidRequester;
+        return req.state === 'PENDING';
     })
-    .map((req: GeneratedExpenseRequestType & { state: string, id: number, amount: number, createdAt: string, requester: RequesterInfo | null }) => ({
+    .map((req) => ({
       __typename: req.__typename,
       id: req.id,
-      requester: req.requester ? { __typename: req.requester.__typename, id: String(req.requester.id), username: req.requester.username } : null,
+      requester: req.requester ? { 
+        __typename: req.requester.__typename, 
+        id: String(req.requester.id), 
+        username: req.requester.username 
+      } : null,
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachment.id // Assuming attachmentId is what you had for attachment count logic
+      attachmentId: req.attachment.id
     }));
 
   // Data for ALL expenses table (new logic)
-  const allTableData: ExpenseRequestForTable[] = (data?.expenseRequests || [])
-    .filter((req: GeneratedExpenseRequestType): req is GeneratedExpenseRequestType & { id: number, amount: number, createdAt: string, state: string, requester: RequesterInfo | null } => {
-        if (!req) return false;
-        // Basic type guards, adjust as necessary for your full data structure
-        const hasValidId = typeof req.id === 'number';
-        const hasValidAmount = typeof req.amount === 'number';
-        const hasValidCreatedAt = typeof req.createdAt === 'string';
-        const hasValidState = typeof req.state === 'string';
-        const hasValidRequester = req.requester === null || 
-            (typeof req.requester === 'object' && 
-             req.requester !== null && 
-             typeof req.requester.username === 'string' && 
-             (typeof (req.requester as RequesterInfo).id === 'string' || typeof (req.requester as RequesterInfo).id === 'number')
-            );
-        return hasValidId && hasValidAmount && hasValidCreatedAt && hasValidState && hasValidRequester;
+  const allTableData: ExpenseRequestForTable[] = (data || [])
+    .filter((req): req is NonNullable<typeof req> => {
+        return req !== null && req !== undefined;
     })
-    .map((req: GeneratedExpenseRequestType & { state: string, id: number, amount: number, createdAt: string, requester: RequesterInfo | null }) => ({
+    .map((req) => ({
       __typename: req.__typename,
       id: req.id,
-      requester: req.requester ? { __typename: req.requester.__typename, id: String(req.requester.id), username: req.requester.username } : null,
+      requester: req.requester ? { 
+        __typename: req.requester.__typename, 
+        id: String(req.requester.id), 
+        username: req.requester.username 
+      } : null,
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachment.id // Assuming attachmentId is what you had for attachment count logic
+      attachmentId: req.attachment.id
     }));
 
   return (
@@ -240,13 +340,21 @@ const AdminExpensesPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>確認</AlertDialogTitle>
             <AlertDialogDescription>
-              {`ID: ${selectedExpenseId} の経費申請を${dialogAction === 'approve' ? '承認' : '差戻し'}しますか？`}
+              {`ID: ${selectedExpenseId} の経費申請を${
+                dialogAction === 'approve' ? '承認' :
+                dialogAction === 'reject' ? '差戻し' :
+                dialogAction === 'submit' ? '申請' :
+                dialogAction === 'edit' ? '再申請' : ''
+              }しますか？`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>キャンセル</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmAction}>
-              {dialogAction === 'approve' ? '承認' : '差戻し'}
+              {dialogAction === 'approve' ? '承認' :
+               dialogAction === 'reject' ? '差戻し' :
+               dialogAction === 'submit' ? '申請' :
+               dialogAction === 'edit' ? '再申請' : '実行'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

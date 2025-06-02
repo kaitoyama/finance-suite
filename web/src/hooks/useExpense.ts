@@ -62,12 +62,16 @@ export interface UseExpenseRequestByIdArgs extends Omit<UseQueryArgs<ExpenseRequ
 }
 
 export const useExpenseRequestById = (options: UseExpenseRequestByIdArgs) => {
-  return useQuery<ExpenseRequestByIdQuery, ExpenseRequestByIdQueryVariables>({
+  const [result, refetchExpenseRequest] = useQuery<ExpenseRequestByIdQuery, ExpenseRequestByIdQueryVariables>({
     query: GET_EXPENSE_REQUEST_BY_ID_DOCUMENT,
     ...options, // Spread the options object which includes variables, pause, etc.
   });
-  // The return type of urql's useQuery is an array: [UseQueryState, (opts?: Partial<OperationContext>) => void]
-  // The component consuming this hook will destructure it: const [result, executeQuery] = useExpenseRequestById(...)
-  // For simplicity and consistency with how Apollo hooks often return an object, 
-  // one might choose to transform this, but for now, let's stick to urql's direct return.
+
+  return {
+    data: result.data?.expenseRequest,
+    fetching: result.fetching,
+    error: result.error,
+    refetch: refetchExpenseRequest,
+  };
+
 }; 

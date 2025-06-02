@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { useUpdateExpenseRequestMutation } from '@/hooks/useUpdateExpenseRequestMutation';
 import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
-import { useExpenseRequestById } from '@/hooks/useExpense';
+import { useExpenseRequestForEdit } from '@/hooks/useExpenseRequestForEdit';
 import { useGetCategories } from '@/hooks/useCategory';
 import { useGetAccounts } from '@/hooks/useAccount';
 import { useCreateAttachment, useCreatePresignedPost } from '@/hooks/useAttachment';
@@ -51,23 +51,20 @@ type ExpenseEditFormValues = z.infer<typeof expenseEditFormSchema>;
 export default function EditExpenseRequestPage() {
   const router = useRouter();
   const params = useParams();
-  const id = parseInt(params.id as string, 10);
+  const idParam = params.id as string;
+  const id = idParam ? parseInt(idParam, 10) : 0;
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [expenseQueryResult, refetchExpense] = useExpenseRequestById({
-    variables: { id },
-    requestPolicy: 'cache-and-network',
-  });
-  const { data: expenseData, fetching: expenseLoading, error: expenseError } = expenseQueryResult;
-
+  // Use hooks before any early returns - only call when we have a valid ID
+  const { data: expenseData, fetching: expenseLoading, error: expenseError, refetch: refetchExpense } = useExpenseRequestForEdit(id);
   const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
   const { categories, loading: categoriesLoading, error: categoriesError } = useGetCategories();
   const { accounts, loading: accountsLoading, error: accountsError } = useGetAccounts();
   const { createAttachment } = useCreateAttachment();
   const { presignedPost, error: presignedPostError } = useCreatePresignedPost();
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm<ExpenseEditFormValues>({
     resolver: zodResolver(expenseEditFormSchema),
@@ -79,16 +76,44 @@ export default function EditExpenseRequestPage() {
     },
   });
 
+  // Early return if id is invalid - but after hooks
+  if (!idParam || !id || isNaN(id) || id <= 0) {
+    return (
+      <div className="container mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertTitle>Invalid ID</AlertTitle>
+          <AlertDescription>Invalid expense request ID.</AlertDescription>
+        </Alert>
+        <Button onClick={() => router.back()} className="mt-4">戻る</Button>
+      </div>
+    );
+  }
+
   // Initialize form with existing data
   useEffect(() => {
-    if (expenseData?.expenseRequest) {
-      const expense = expenseData.expenseRequest;
-      form.setValue('amount', expense.amount);
-      form.setValue('accountId', expense.account?.id.toString() || '');
-      form.setValue('categoryId', expense.category?.id.toString() || '');
-      form.setValue('description', expense.description || '');
+    if (expenseData) {
+      form.reset({
+        amount: expenseData.amount,
+        description: expenseData.description || '',
+        // accountId / categoryId は後で入れる
+        accountId: '',
+        categoryId: '',
+      });
     }
   }, [expenseData, form]);
+
+  // ② 勘定科目が取れたら accountId を、カテゴリが取れたら categoryId を入れる
+  useEffect(() => {
+    if (expenseData?.account && accounts?.length) {
+      form.setValue('accountId', expenseData.account.id.toString(), { shouldValidate: true });
+    }
+  }, [expenseData?.account, accounts, form]);
+
+  useEffect(() => {
+    if (expenseData?.category && categories?.length) {
+      form.setValue('categoryId', expenseData.category.id.toString(), { shouldValidate: true });
+    }
+  }, [expenseData?.category, categories, form]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -216,13 +241,16 @@ export default function EditExpenseRequestPage() {
   };
 
   useEffect(() => {
+    // Only show errors if we have a valid ID and are actually trying to load data
+    if (!idParam || !id || isNaN(id) || id <= 0) return;
+    
     if (categoriesError) {
       toast.error(`Categories loading error: ${categoriesError.message}`);
     }
     if (accountsError) {
       toast.error(`Accounts loading error: ${accountsError.message}`);
     }
-  }, [categoriesError, accountsError]);
+  }, [categoriesError, accountsError, idParam, id]);
 
   if (expenseLoading) {
     return (
@@ -244,7 +272,7 @@ export default function EditExpenseRequestPage() {
     );
   }
 
-  if (!expenseData?.expenseRequest) {
+  if (!expenseData) {
     return (
       <div className="container mx-auto p-4">
         <Alert>
@@ -255,7 +283,7 @@ export default function EditExpenseRequestPage() {
     );
   }
 
-  const expense = expenseData.expenseRequest;
+  const expense = expenseData;
 
   // Only allow editing if status is REJECTED
   if (expense.state !== 'REJECTED') {

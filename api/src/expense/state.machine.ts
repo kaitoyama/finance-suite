@@ -57,7 +57,7 @@ export const expenseStateMachine = createMachine({
     },
     REJECTED: {
       on: {
-        EDIT: { target: 'PENDING' },
+        EDIT: { target: 'DRAFT' },
       },
     },
     CLOSED: {

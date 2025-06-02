@@ -1,7 +1,7 @@
-import { gql } from '@urql/core';
+import { graphql } from '@/gql'
 import { useQuery } from 'urql';
 
-export const expenseRequestsListQueryDocument = gql`
+export const expenseRequestsListQueryDocument = graphql(`
   query ExpenseRequestsList {
     expenseRequests {
       id
@@ -21,18 +21,18 @@ export const expenseRequestsListQueryDocument = gql`
       # or retrieve attachments and count them on the client, though less ideal.
     }
   }
-`;
+`);
 
 export const useExpenseRequestsListQuery = () => {
-  const [{ data, fetching, error }, refetch] = useQuery({
+  const [result, refetch] = useQuery({
     query: expenseRequestsListQueryDocument,
     // Add variables here if needed for pagination or filtering
   });
 
   return {
-    data,
-    fetching,
-    error,
+    data: result.data?.expenseRequests || [],
+    fetching: result.fetching,
+    error: result.error,
     refetch, // Exposing refetch for AC-3
   };
 }; 

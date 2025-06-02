@@ -1,7 +1,7 @@
-import { gql } from '@urql/core';
+import { graphql } from '@/gql';
 import { useQuery } from 'urql';
 
-export const expenseRequestDetailQueryDocument = gql`
+export const expenseRequestDetailQueryDocument = graphql(`
   query ExpenseRequestDetail($id: Int!) {
     expenseRequest(id: $id) {
       id
@@ -23,6 +23,7 @@ export const expenseRequestDetailQueryDocument = gql`
         title
         amount
         createdAt
+        s3Key
         uploader {
           id
           username
@@ -44,21 +45,34 @@ export const expenseRequestDetailQueryDocument = gql`
         paidAt
         method
         label
+        direction
+        attachments {
+          id
+          s3Key
+          title
+          amount
+          createdAt
+          uploader {
+            id
+            username
+          }
+        }
       }
     }
   }
-`;
+`);
 
 export const useExpenseRequestDetailQuery = (id: number) => {
-  const [{ data, fetching, error }, refetch] = useQuery({
+  const [result, refetch] = useQuery({
     query: expenseRequestDetailQueryDocument,
-    variables: { id },
+    variables: { id: id || 0 },
+    pause: !id || id <= 0 || isNaN(id), // Pause the query if id is invalid
   });
 
   return {
-    data,
-    fetching,
-    error,
+    data: result.data?.expenseRequest,
+    fetching: result.fetching,
+    error: result.error,
     refetch,
   };
 };

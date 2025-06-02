@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useExpenseRequestById } from '@/hooks/useExpense';
+import { useExpenseRequestDetailQuery } from '@/hooks/useExpenseRequestDetailQuery';
 import { useGetPresignedS3Url } from '@/hooks/useInvoice';
 import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,17 +16,12 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export default function ExpenseDetailPage() {
   const params = useParams();
-  const id = params?.id ? parseInt(params.id as string, 10) : undefined;
+  const idParam = params?.id as string;
+  const id = idParam ? parseInt(idParam, 10) : 0;
   const [isResubmitting, setIsResubmitting] = useState(false);
 
-  const [expenseQueryResult] = useExpenseRequestById({
-    variables: { id: id! },
-    pause: !id,
-    requestPolicy: 'cache-and-network',
-  });
-
-  const { data: expenseData, fetching: loading, error } = expenseQueryResult;
-  const expenseRequest = expenseData?.expenseRequest;
+  const { data: expenseData, fetching: loading, error } = useExpenseRequestDetailQuery(id);
+  const expenseRequest = expenseData;
 
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
 
@@ -72,12 +67,12 @@ export default function ExpenseDetailPage() {
     }
   };
 
-  if (!id) {
+  if (!idParam || !id || isNaN(id) || id <= 0) {
     return (
       <div className="container mx-auto p-4">
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>Expense ID is missing.</AlertDescription>
+          <AlertDescription>Expense ID is missing or invalid.</AlertDescription>
         </Alert>
       </div>
     );
@@ -238,7 +233,7 @@ export default function ExpenseDetailPage() {
               <div className="mt-6">
                 <h4 className="text-lg font-semibold mb-3">Payment Attachments:</h4>
                 <div className="space-y-4">
-                  {payment.attachments.map(actualAttachment => {
+                  {payment.attachments.map((actualAttachment: any) => {
                     if (!actualAttachment) return null;
                     return (
                       <Card key={actualAttachment.id} className="p-4">
@@ -259,6 +254,40 @@ export default function ExpenseDetailPage() {
 
       <div className="flex justify-between items-center mt-6">
         <div className="flex gap-3">
+          {/* DRAFT状態: 申請提出ボタン */}
+          {state === 'DRAFT' && (
+            <Button variant="default">
+              Submit Request
+            </Button>
+          )}
+          
+          {/* PENDING状態: 承認・却下ボタン（管理者向け） */}
+          {state === 'PENDING' && (
+            <>
+              <Button variant="default">
+                Approve
+              </Button>
+              <Button variant="destructive">
+                Reject
+              </Button>
+            </>
+          )}
+          
+          {/* APPROVED状態: 支払いボタン */}
+          {state === 'APPROVED' && (
+            <Button asChild variant="default">
+              <Link href={`/expenses/${id}/pay`}>Pay Expense</Link>
+            </Button>
+          )}
+          
+          {/* PAID状態: クローズボタン */}
+          {state === 'PAID' && (
+            <Button variant="outline">
+              Close Request
+            </Button>
+          )}
+          
+          {/* REJECTED状態: 編集・再申請ボタン */}
           {state === 'REJECTED' && (
             <>
               <Button asChild variant="default">
@@ -273,6 +302,8 @@ export default function ExpenseDetailPage() {
               </Button>
             </>
           )}
+          
+          {/* CLOSED状態: アクションなし（最終状態） */}
         </div>
         <Button variant="outline" asChild>
           <Link href="/expenses">Back to Expenses List</Link>

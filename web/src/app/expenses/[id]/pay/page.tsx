@@ -49,7 +49,7 @@ export default function PayExpensePage() {
   const { presignedPost } = useCreatePresignedPost();
 
   const handleFormSubmit = async (values: PaymentFormSubmitValues) => { 
-    if (!expenseData?.expenseRequest || !numericId) {
+    if (!expenseData || !numericId) {
       toast.error('Expense data not loaded or ID missing.');
       return;
     }
@@ -82,7 +82,7 @@ export default function PayExpensePage() {
           const attachmentInput: CreateAttachmentInput = {
             s3Key,
             title: file.name,
-            amount: expenseData.expenseRequest.amount,
+            amount: expenseData.amount,
           };
           const dbAttachment = await createAttachment(attachmentInput);
           if (!dbAttachment || !dbAttachment.id) throw new Error('Failed to save attachment to DB.');
@@ -99,7 +99,7 @@ export default function PayExpensePage() {
 
     const paymentInput: CreatePaymentInput = {
       paidAt: values.paidAt.toISOString(),
-      amount: expenseData.expenseRequest.amount,
+      amount: expenseData.amount,
       direction: 'OUT', 
       method: values.method, 
       expenseRequestId: numericId,
@@ -112,7 +112,7 @@ export default function PayExpensePage() {
       if (result.error) throw result.error;
       if (!result?.id) throw new Error('Failed to register payment.');
       toast.success('支払いが正常に登録されました。');
-      router.push(`/expenses/${expenseData.expenseRequest.id}`);
+      router.push(`/expenses/${expenseData.id}`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`支払登録エラー: ${errorMessage}`);
@@ -127,12 +127,12 @@ export default function PayExpensePage() {
 
   if (expenseLoading || !numericId) return <div className="container mx-auto p-4">Loading...</div>;
   if (expenseError) return <div className="container mx-auto p-4">Error loading expense: {expenseError.message}</div>;
-  if (!expenseData?.expenseRequest) return <div className="container mx-auto p-4">Expense not found.</div>;
+  if (!expenseData) return <div className="container mx-auto p-4">Expense not found.</div>;
 
   // Prevent payment if not APPROVED, with specific messages for other states
-  if (expenseData.expenseRequest.state !== 'APPROVED') {
+  if (expenseData.state !== 'APPROVED') {
     let message = 'この経費申請は現在支払処理を行えません。'; // Default message
-    const currentState = expenseData.expenseRequest.state;
+    const currentState = expenseData.state;
 
     switch (currentState) {
       case 'PAID':
@@ -175,18 +175,18 @@ export default function PayExpensePage() {
       <h1 className="text-2xl font-bold mb-4">経費支払</h1>
       <div className="mb-6 p-4 border rounded-md">
         <h2 className="text-lg font-semibold mb-2">経費情報</h2>
-        <p>ID: {expenseData.expenseRequest.id}</p>
-        <p>申請者: {expenseData.expenseRequest.requester.username}</p>
-        <p>金額: {expenseData.expenseRequest.amount.toLocaleString()} 円</p>
-        <p>ステータス: {expenseData.expenseRequest.state}</p>
+        <p>ID: {expenseData.id}</p>
+        <p>申請者: {expenseData.requester.username}</p>
+        <p>金額: {expenseData.amount.toLocaleString()} 円</p>
+        <p>ステータス: {expenseData.state}</p>
       </div>
 
       <PaymentForm 
         onSubmit={handleFormSubmit} 
         onCancel={() => router.back()}
         isLoading={paymentFetching}
-        expenseAmount={expenseData.expenseRequest.amount}
-        expenseId={expenseData.expenseRequest.id.toString()}
+        expenseAmount={expenseData.amount}
+        expenseId={expenseData.id.toString()}
       />
     </div>
   );
