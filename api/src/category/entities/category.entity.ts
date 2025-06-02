@@ -8,8 +8,8 @@ export class Category {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
-  description?: string;
+  @Field(() => String, { nullable: true })
+  description?: string | null;
 
   @Field()
   createdAt: Date;

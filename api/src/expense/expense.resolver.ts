@@ -19,10 +19,11 @@ import {
 } from './expense.service';
 import { ExpenseRequest as GQLExpenseRequest } from './entities/expense-request.entity';
 import { CreateExpenseRequestInput } from './dto/create-expense-request.input';
+import { UpdateExpenseRequestInput } from './dto/update-expense-request.input';
 import { MarkExpensePaidInput } from './dto/mark-expense-paid.input';
 import { PaginationInput } from '../common/dto/pagination.input';
 import { PaginatedExpenseRequestResponse } from './dto/paginated-expense-request.dto';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PubSub } from 'graphql-subscriptions'; // Import PubSub
 import { Inject } from '@nestjs/common'; // Import Inject
 import { Request } from 'express';
@@ -246,6 +247,57 @@ export class ExpenseResolver {
       type: 'CLOSE',
     });
     return mapPrismaExpenseToGql(closedPrisma)!;
+  }
+
+  @Mutation(() => GQLExpenseRequest)
+  // @UseGuards(GqlAuthGuard) // Temporarily commented out
+  async updateExpenseRequest(
+    @Args('input') input: UpdateExpenseRequestInput,
+    @Context('req') req: Request,
+  ): Promise<GQLExpenseRequest> {
+    const username = req.username!;
+    const updatedPrisma = await this.expenseService.updateExpenseRequest(
+      input,
+      username,
+    );
+    return mapPrismaExpenseToGql(updatedPrisma)!;
+  }
+
+  @Mutation(() => GQLExpenseRequest)
+  // @UseGuards(GqlAuthGuard) // Temporarily commented out
+  async resubmitExpenseRequest(
+    @Args('id', { type: () => Int }) id: number,
+    @Context('req') req: Request,
+  ): Promise<GQLExpenseRequest> {
+    const username = req.username!;
+
+    // First check if the expense request exists and is in REJECTED state
+    const expenseRequest = await this.expenseService.findById(id);
+    if (!expenseRequest) {
+      throw new NotFoundException(`ExpenseRequest with ID ${id} not found`);
+    }
+
+    // Check if the current user is the requester
+    if (expenseRequest.requester.username !== username) {
+      throw new BadRequestException(
+        'You can only resubmit your own expense requests',
+      );
+    }
+
+    // Check if the expense request is in REJECTED state
+    if (expenseRequest.state !== 'REJECTED') {
+      throw new BadRequestException(
+        'Only rejected expense requests can be resubmitted',
+      );
+    }
+
+    // Transition from REJECTED to DRAFT, then to PENDING
+    await this.expenseService.transitionState(id, { type: 'EDIT' });
+    const resubmittedPrisma = await this.expenseService.transitionState(id, {
+      type: 'SUBMIT',
+    });
+
+    return mapPrismaExpenseToGql(resubmittedPrisma)!;
   }
 
   // Subscription resolver

@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/prisma.service';
-import { Account, Budget, PrismaClient } from '@prisma/client';
+import { Category } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 // Helper to run GraphQL queries/mutations
@@ -20,7 +20,7 @@ const graphqlQuery = (
 describe('BudgetsResolver (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testAccount: Account;
+  let testCategory: Category;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,20 +33,18 @@ describe('BudgetsResolver (e2e)', () => {
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
 
-    // Create a test account
-    testAccount = await prisma.account.create({
+    // Create a test category
+    testCategory = await prisma.category.create({
       data: {
-        code: '9999', // Unique code for test account
-        name: 'Test Budget Account',
-        category: 'EXPENSE',
+        name: 'Test Budget Category',
       },
     });
   });
 
   afterAll(async () => {
     // Clean up test data
-    await prisma.budget.deleteMany({ where: { accountId: testAccount.id } });
-    await prisma.account.delete({ where: { id: testAccount.id } });
+    await prisma.budget.deleteMany({ where: { categoryId: testCategory.id } });
+    await prisma.category.delete({ where: { id: testCategory.id } });
     await app.close();
   });
 
@@ -59,7 +57,7 @@ describe('BudgetsResolver (e2e)', () => {
         mutation SetBudget($input: BudgetInput!) {
           setBudget(input: $input) {
             id
-            accountId
+            categoryId
             fiscalYear
             amountPlanned
             createdAt
@@ -68,7 +66,7 @@ describe('BudgetsResolver (e2e)', () => {
       `;
       const variables = {
         input: {
-          accountId: testAccount.id,
+          categoryId: testCategory.id,
           fiscalYear,
           amountPlanned: parseFloat(amountPlanned.toString()), // GraphQL Float
         },
@@ -78,7 +76,7 @@ describe('BudgetsResolver (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.setBudget).toBeDefined();
-      expect(response.body.data.setBudget.accountId).toBe(testAccount.id);
+      expect(response.body.data.setBudget.categoryId).toBe(testCategory.id);
       expect(response.body.data.setBudget.fiscalYear).toBe(fiscalYear);
       // Prisma returns Decimal, GraphQL returns Float. Compare string representations for precision.
       expect(
@@ -88,7 +86,7 @@ describe('BudgetsResolver (e2e)', () => {
       // Verify in DB
       const dbBudget = await prisma.budget.findUnique({
         where: {
-          accountId_fiscalYear: { accountId: testAccount.id, fiscalYear },
+          categoryId_fiscalYear: { categoryId: testCategory.id, fiscalYear },
         },
       });
       expect(dbBudget).toBeDefined();
@@ -103,7 +101,7 @@ describe('BudgetsResolver (e2e)', () => {
       // Create initial budget
       await prisma.budget.create({
         data: {
-          accountId: testAccount.id,
+          categoryId: testCategory.id,
           fiscalYear,
           amountPlanned: initialAmount,
         },
@@ -113,7 +111,7 @@ describe('BudgetsResolver (e2e)', () => {
         mutation SetBudget($input: BudgetInput!) {
           setBudget(input: $input) {
             id
-            accountId
+            categoryId
             fiscalYear
             amountPlanned
           }
@@ -121,7 +119,7 @@ describe('BudgetsResolver (e2e)', () => {
       `;
       const variables = {
         input: {
-          accountId: testAccount.id,
+          categoryId: testCategory.id,
           fiscalYear,
           amountPlanned: parseFloat(updatedAmount.toString()),
         },
@@ -130,7 +128,7 @@ describe('BudgetsResolver (e2e)', () => {
       const response = await graphqlQuery(app, mutation, variables);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.setBudget.accountId).toBe(testAccount.id);
+      expect(response.body.data.setBudget.categoryId).toBe(testCategory.id);
       expect(response.body.data.setBudget.fiscalYear).toBe(fiscalYear);
       expect(
         new Decimal(response.body.data.setBudget.amountPlanned).toFixed(2),
@@ -139,7 +137,7 @@ describe('BudgetsResolver (e2e)', () => {
       // Verify in DB
       const dbBudget = await prisma.budget.findUnique({
         where: {
-          accountId_fiscalYear: { accountId: testAccount.id, fiscalYear },
+          categoryId_fiscalYear: { categoryId: testCategory.id, fiscalYear },
         },
       });
       expect(dbBudget?.amountPlanned.toFixed(2)).toBe(updatedAmount.toFixed(2));
@@ -153,7 +151,7 @@ describe('BudgetsResolver (e2e)', () => {
       `;
       const variables = {
         input: {
-          accountId: testAccount.id,
+          categoryId: testCategory.id,
           fiscalYear: 1999,
           amountPlanned: 100,
         },
@@ -174,7 +172,7 @@ describe('BudgetsResolver (e2e)', () => {
       `;
       const variables = {
         input: {
-          accountId: testAccount.id,
+          categoryId: testCategory.id,
           fiscalYear: 2027,
           amountPlanned: -50,
         },
@@ -187,7 +185,7 @@ describe('BudgetsResolver (e2e)', () => {
       );
     });
 
-    it('should return an error for non-existent accountId (FK constraint)', async () => {
+    it('should return an error for non-existent categoryId (FK constraint)', async () => {
       const mutation = `
         mutation SetBudget($input: BudgetInput!) {
           setBudget(input: $input) { id }
@@ -195,7 +193,7 @@ describe('BudgetsResolver (e2e)', () => {
       `;
       const variables = {
         input: {
-          accountId: 999999, // Non-existent account ID
+          categoryId: 999999, // Non-existent category ID
           fiscalYear: 2028,
           amountPlanned: 100,
         },
@@ -229,17 +227,17 @@ describe('BudgetsResolver (e2e)', () => {
       await prisma.budget.createMany({
         data: [
           {
-            accountId: testAccount.id,
+            categoryId: testCategory.id,
             fiscalYear: 2023,
             amountPlanned: new Decimal('200.00'),
           },
           {
-            accountId: testAccount.id,
+            categoryId: testCategory.id,
             fiscalYear: 2024,
             amountPlanned: new Decimal('300.00'),
           },
           {
-            accountId: testAccount.id,
+            categoryId: testCategory.id,
             fiscalYear: 2024,
             amountPlanned: new Decimal('400.00'),
           }, // Duplicate for test
@@ -251,16 +249,18 @@ describe('BudgetsResolver (e2e)', () => {
     it('should return budgets for a given fiscalYear', async () => {
       const fiscalYearToQuery = 2024;
       const query = `
-        query GetBudgets($fiscalYear: Int!) {
-          budgets(fiscalYear: $fiscalYear) {
-            id
-            accountId
-            fiscalYear
-            amountPlanned
+        query GetBudgets($year: Int!) {
+          budgets(year: $year) {
+            categoryId
+            categoryName
+            planned
+            actual
+            remaining
+            ratio
           }
         }
       `;
-      const variables = { fiscalYear: fiscalYearToQuery };
+      const variables = { year: fiscalYearToQuery };
 
       const response = await graphqlQuery(app, query, variables);
 
@@ -268,21 +268,20 @@ describe('BudgetsResolver (e2e)', () => {
       expect(response.body.data.budgets).toBeInstanceOf(Array);
       expect(response.body.data.budgets.length).toBeGreaterThanOrEqual(1); // At least the one we added for 2024
       response.body.data.budgets.forEach((budget: any) => {
-        expect(budget.fiscalYear).toBe(fiscalYearToQuery);
-        expect(budget.accountId).toBe(testAccount.id);
+        expect(budget.categoryId).toBe(testCategory.id);
       });
     });
 
     it('should return an empty array if no budgets exist for the fiscalYear', async () => {
       const fiscalYearToQuery = 1900; // Unlikely to have budgets
       const query = `
-        query GetBudgets($fiscalYear: Int!) {
-          budgets(fiscalYear: $fiscalYear) {
-            id
+        query GetBudgets($year: Int!) {
+          budgets(year: $year) {
+            categoryId
           }
         }
       `;
-      const variables = { fiscalYear: fiscalYearToQuery };
+      const variables = { year: fiscalYearToQuery };
       const response = await graphqlQuery(app, query, variables);
 
       expect(response.status).toBe(200);

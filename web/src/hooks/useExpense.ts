@@ -11,6 +11,7 @@ export const GET_EXPENSE_REQUEST_BY_ID_DOCUMENT = gql`
       id
       amount
       state
+      description
       createdAt
       approvedAt
       requester {
@@ -20,6 +21,16 @@ export const GET_EXPENSE_REQUEST_BY_ID_DOCUMENT = gql`
       approver {
         id
         username
+      }
+      account {
+        id
+        name
+        code
+      }
+      category {
+        id
+        name
+        description
       }
       payment {
         id

@@ -1,19 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useExpenseRequestById } from '@/hooks/useExpense';
 import { useGetPresignedS3Url } from '@/hooks/useInvoice';
+import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { PaymentAttachmentLinkRenderer } from '@/components/PaymentAttachmentLinkRenderer';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function ExpenseDetailPage() {
   const params = useParams();
   const id = params?.id ? parseInt(params.id as string, 10) : undefined;
+  const [isResubmitting, setIsResubmitting] = useState(false);
 
   const [expenseQueryResult] = useExpenseRequestById({
     variables: { id: id! },
@@ -24,12 +28,49 @@ export default function ExpenseDetailPage() {
   const { data: expenseData, fetching: loading, error } = expenseQueryResult;
   const expenseRequest = expenseData?.expenseRequest;
 
+  const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
+
   const {
     presignedUrlData,
     fetchingUrl: fetchingPresignedUrl,
     fetchUrlError: presignedUrlError,
     retryFetchUrl: refetchPresignedUrl,
   } = useGetPresignedS3Url(expenseRequest?.attachment?.s3Key);
+
+  const handleResubmit = async () => {
+    if (!id) return;
+    
+    setIsResubmitting(true);
+    try {
+      const result = await resubmitExpenseRequest({ id });
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      toast.success('Expense request resubmitted successfully!');
+      // Refresh the expense data to show updated state
+      window.location.reload();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resubmit expense request';
+      toast.error(errorMessage);
+    } finally {
+      setIsResubmitting(false);
+    }
+  };
+
+  const getStateBadgeVariant = (state: string) => {
+    switch (state) {
+      case 'PENDING':
+        return 'default';
+      case 'APPROVED':
+        return 'secondary';
+      case 'REJECTED':
+        return 'destructive';
+      case 'DRAFT':
+        return 'outline';
+      default:
+        return 'default';
+    }
+  };
 
   if (!id) {
     return (
@@ -69,6 +110,7 @@ export default function ExpenseDetailPage() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      <Toaster position="top-center" />
       <Card>
         <CardHeader>
           <CardTitle>Expense Request Details</CardTitle>
@@ -83,7 +125,11 @@ export default function ExpenseDetailPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">State</TableCell>
-                <TableCell>{state}</TableCell>
+                <TableCell>
+                  <Badge variant={getStateBadgeVariant(state)}>
+                    {state}
+                  </Badge>
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Created At</TableCell>
@@ -211,11 +257,28 @@ export default function ExpenseDetailPage() {
         </Card>
       )}
 
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-between items-center mt-6">
+        <div className="flex gap-3">
+          {state === 'REJECTED' && (
+            <>
+              <Button asChild variant="default">
+                <Link href={`/expenses/${id}/edit`}>Edit Expense</Link>
+              </Button>
+              <Button 
+                onClick={handleResubmit} 
+                disabled={isResubmitting}
+                variant="outline"
+              >
+                {isResubmitting ? 'Resubmitting...' : 'Resubmit'}
+              </Button>
+            </>
+          )}
+        </div>
         <Button variant="outline" asChild>
-            <Link href="/expenses">Back to Expenses List</Link>
+          <Link href="/expenses">Back to Expenses List</Link>
         </Button>
       </div>
+      <Toaster />
     </div>
   );
 }

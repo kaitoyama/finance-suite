@@ -14,7 +14,8 @@ export type ExpenseEvent =
   | { type: 'APPROVE'; approverId: number }
   | { type: 'REJECT' }
   | { type: 'PAY'; paymentId: number }
-  | { type: 'CLOSE' };
+  | { type: 'CLOSE' }
+  | { type: 'EDIT' };
 
 export type ExpenseStateValue = PrismaRequestState;
 export type RequestState = PrismaRequestState;
@@ -55,7 +56,9 @@ export const expenseStateMachine = createMachine({
       },
     },
     REJECTED: {
-      type: 'final',
+      on: {
+        EDIT: { target: 'PENDING' },
+      },
     },
     CLOSED: {
       type: 'final',

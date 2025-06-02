@@ -136,15 +136,26 @@ enum PaymentMethod {
   OTHER
 }
 
+type Category {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type ExpenseRequest {
   id: Int!
   amount: Float!
+  description: String
   state: RequestState!
   createdAt: DateTime!
   approvedAt: DateTime
   attachment: Attachment!
   requester: User!
   approver: User
+  account: Account
+  category: Category
   payment: Payment
 }
 
@@ -210,14 +221,6 @@ type ProfitLossStatement {
   netIncome: Float!
 }
 
-type Category {
-  id: ID!
-  name: String!
-  description: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
 type Query {
   """Health-check"""
   hello: String!
@@ -276,6 +279,8 @@ type Mutation {
   rejectExpenseRequest(id: Int!): ExpenseRequest!
   markExpensePaid(input: MarkExpensePaidInput!): ExpenseRequest!
   closeExpenseRequest(id: Int!): ExpenseRequest!
+  updateExpenseRequest(input: UpdateExpenseRequestInput!): ExpenseRequest!
+  resubmitExpenseRequest(id: Int!): ExpenseRequest!
   setBudget(input: BudgetInput!): BudgetDto!
   createCategory(createCategoryInput: CreateCategoryInput!): Category!
   updateCategory(updateCategoryInput: UpdateCategoryInput!): Category!
@@ -398,6 +403,15 @@ input CreateExpenseRequestInput {
 input MarkExpensePaidInput {
   expenseRequestId: Int!
   paymentId: Int!
+}
+
+input UpdateExpenseRequestInput {
+  id: Int!
+  amount: Float
+  attachmentId: Int
+  accountId: Int
+  categoryId: Int
+  description: String
 }
 
 input BudgetInput {

@@ -2,12 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExpenseService, CreateExpenseRequestInput } from './expense.service';
 import { PrismaService } from '../prisma.service';
 import { WebhookService } from '../common/services/webhook.service';
-import {
-  User as PrismaUser,
-  RequestState,
-  ExpenseRequest as PrismaExpenseRequest,
-  Prisma,
-} from '@prisma/client';
+import { User as PrismaUser, RequestState, Prisma } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 // Mock implementations
@@ -56,7 +51,9 @@ const createMockExpenseRequest = (
   approver: null,
   paymentId: null,
   payment: null,
-  // Add other required fields as per FullExpenseRequest type if necessary
+  description: null,
+  accountId: null,
+  categoryId: null,
 });
 
 describe('ExpenseService', () => {
@@ -139,7 +136,7 @@ describe('ExpenseService', () => {
         state: 'APPROVED' as RequestState,
         approverId: mockApprover.id,
         approver: mockApprover,
-        approvedAt: expect.any(Date),
+        approvedAt: new Date(),
       };
 
       mockPrismaService.expenseRequest.findUnique.mockResolvedValueOnce(
@@ -163,7 +160,7 @@ describe('ExpenseService', () => {
           data: {
             state: 'APPROVED',
             approver: { connect: { id: mockApprover.id } },
-            approvedAt: expect.any(Date),
+            approvedAt: new Date(),
           },
         }),
       );
@@ -263,7 +260,11 @@ describe('ExpenseService', () => {
           requesterId: mockUser.id,
           state: 'DRAFT',
         },
-        include: expect.any(Object), // Check that include is passed
+        include: {
+          requester: true,
+          approver: true,
+          payment: true,
+        },
       });
     });
   });
@@ -276,7 +277,11 @@ describe('ExpenseService', () => {
       expect(result).toEqual(mockData);
       expect(mockPrismaService.expenseRequest.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
-        include: expect.any(Object),
+        include: {
+          requester: true,
+          approver: true,
+          payment: true,
+        },
       });
     });
 

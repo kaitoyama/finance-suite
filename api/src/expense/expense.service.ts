@@ -40,6 +40,15 @@ export interface CreateExpenseRequestInput {
   description?: string;
 }
 
+export interface UpdateExpenseRequestInput {
+  id: number;
+  amount?: number;
+  attachmentId?: number;
+  accountId?: number;
+  categoryId?: number;
+  description?: string;
+}
+
 const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
   requester: true,
   approver: false,
@@ -298,5 +307,70 @@ export class ExpenseService {
       `Expense request ${expenseRequestId} transitioned from ${oldStateValue} to ${newStateValue}`,
     );
     return updatedExpenseRequest;
+  }
+
+  async updateExpenseRequest(
+    input: UpdateExpenseRequestInput,
+    requesterUsername: string,
+  ): Promise<FullExpenseRequest> {
+    // First check if the expense request exists and is in REJECTED state
+    const expenseRequest = await this.prisma.expenseRequest.findUnique({
+      where: { id: input.id },
+      include: { requester: true },
+    });
+
+    if (!expenseRequest) {
+      throw new NotFoundException(
+        `ExpenseRequest with ID ${input.id} not found`,
+      );
+    }
+
+    // Check if the current user is the requester
+    if (expenseRequest.requester.username !== requesterUsername) {
+      throw new BadRequestException(
+        'You can only edit your own expense requests',
+      );
+    }
+
+    // Check if the expense request is in REJECTED state
+    if (expenseRequest.state !== 'REJECTED') {
+      throw new BadRequestException(
+        'Only rejected expense requests can be edited',
+      );
+    }
+
+    this.logger.log(
+      `User ${requesterUsername} updating rejected expense request ${input.id}`,
+    );
+
+    // Prepare update data, only including fields that are provided
+    const updateData: Prisma.ExpenseRequestUpdateInput = {};
+
+    if (input.amount !== undefined) {
+      updateData.amount = new Prisma.Decimal(input.amount);
+    }
+    if (input.attachmentId !== undefined) {
+      updateData.attachment = { connect: { id: input.attachmentId } };
+    }
+    if (input.accountId !== undefined) {
+      updateData.account = { connect: { id: input.accountId } };
+    }
+    if (input.categoryId !== undefined) {
+      updateData.category = { connect: { id: input.categoryId } };
+    }
+    if (input.description !== undefined) {
+      updateData.description = input.description;
+    }
+
+    // Update the expense request fields first
+    await this.prisma.expenseRequest.update({
+      where: { id: input.id },
+      data: updateData,
+    });
+
+    // Then transition from REJECTED to DRAFT
+    const draftExpense = await this.transitionState(input.id, { type: 'EDIT' });
+
+    return draftExpense;
   }
 }

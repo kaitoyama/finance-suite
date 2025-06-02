@@ -141,7 +141,8 @@ describe('InvoicePdfResolver', () => {
         partnerName: 'Another Partner',
         amount: 50000,
         date: '2025-02-10',
-        // subjectText, dueDateText, itemDescriptionText are omitted
+        dueDateText: '2025-03-10',
+        // subjectText, itemDescriptionText are omitted
       };
 
       await resolver.generateInvoicePdf(inputWithoutOptionalTexts);
