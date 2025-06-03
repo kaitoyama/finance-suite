@@ -22,11 +22,11 @@ export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
     <header className="h-16 border-b bg-white px-4 sm:px-6 flex items-center justify-between">
       {/* Adjusted px-4 for smaller screens, sm:px-6 for slightly larger */}
       <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted space-x-2 for smaller screens */}
-        {/* Sidebar Toggle Button - visible only on small screens */}
+        {/* Sidebar Toggle Button: visible only on small screens (hidden on md screens and up) */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden" {/* Hidden on md screens and up */}
+          className="md:hidden"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <Menu className="h-6 w-6" />
