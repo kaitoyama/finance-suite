@@ -40,7 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </div>
       
       {/* Main content */}
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out md:ml-64`}>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out`}>
         <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         
         <main className="flex-1 overflow-y-auto">
