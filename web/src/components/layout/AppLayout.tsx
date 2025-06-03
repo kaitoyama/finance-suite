@@ -44,7 +44,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         
         <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto p-6">
+          <div className="container p-6">
             {children}
           </div>
         </main>
