@@ -77,19 +77,27 @@ const ReportsPage = () => {
           <CardTitle>損益計算書</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex space-x-2 mb-4 items-center">
+          {/* Responsive Year Selection Controls */}
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 mb-4 items-stretch sm:items-center">
+            {/* Input for year: Full width on xs, max-w-xs on sm+ */}
             <Input
               type="number"
               placeholder="年度を入力"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
-              className="max-w-xs"
+              className="w-full sm:max-w-xs"
             />
-            <Button onClick={handleYearChange}>表示</Button>
+            {/* Display button: Full width on xs, auto on sm+ */}
+            <Button onClick={handleYearChange} className="w-full sm:w-auto">
+              表示
+            </Button>
             {profitLossStatement && (
-              <Button onClick={handleExportCSV} variant="outline">
-                CSVエクスポート
-              </Button>
+              <>
+                {/* CSV Export button: Full width on xs, auto on sm+ */}
+                <Button onClick={handleExportCSV} variant="outline" className="w-full sm:w-auto">
+                  CSVエクスポート
+                </Button>
+              </>
             )}
           </div>
           

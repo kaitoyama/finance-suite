@@ -83,18 +83,25 @@ const BudgetsDashboardPage = () => {
           <CardTitle>予算概要</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex space-x-2 mb-4 items-center">
+          {/* Responsive controls for year selection */}
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 mb-4 items-stretch sm:items-center">
+            {/* Input for year: Full width on xs, max-w-xs on sm+ */}
             <Input
               type="number"
               placeholder="年度を入力"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
-              className="max-w-xs"
+              className="w-full sm:max-w-xs"
             />
-            <Button onClick={handleYearChange}>予算を表示</Button>
+            {/* "Display Budget" button: Full width on xs, auto on sm+ */}
+            <Button onClick={handleYearChange} className="w-full sm:w-auto">
+              予算を表示
+            </Button>
+            {/* "Toggle Budget Form" button: Full width on xs, auto on sm+ */}
             <Button 
               onClick={() => setShowBudgetForm(!showBudgetForm)}
               variant="outline"
+              className="w-full sm:w-auto"
             >
               {showBudgetForm ? '予算設定を閉じる' : '予算を設定'}
             </Button>
@@ -151,12 +158,14 @@ const BudgetsDashboardPage = () => {
                         </FormItem>
                       )}
                     />
-                    <div className="flex space-x-2">
-                      <Button type="submit">予算を設定</Button>
+                    {/* Responsive form buttons */}
+                    <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                      <Button type="submit" className="w-full sm:w-auto">予算を設定</Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         onClick={() => setShowBudgetForm(false)}
+                        className="w-full sm:w-auto"
                       >
                         キャンセル
                       </Button>
@@ -176,7 +185,10 @@ const BudgetsDashboardPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>カテゴリ名</TableHead>
-                  <TableHead>説明</TableHead>
+                  {/* Description TableHead: Hidden on xs, visible sm+ */}
+                  <TableHead className="hidden sm:table-cell">
+                    説明
+                  </TableHead>
                   <TableHead className="text-right">予算</TableHead>
                   <TableHead className="text-right">実績</TableHead>
                   <TableHead className="text-right">残予算</TableHead>
@@ -190,7 +202,10 @@ const BudgetsDashboardPage = () => {
                   return (
                     <TableRow key={budget.categoryId}>
                       <TableCell>{budget.categoryName}</TableCell>
-                      <TableCell>{budget.categoryDescription || '-'}</TableCell>
+                      {/* Description TableCell: Hidden on xs, visible sm+ */}
+                      <TableCell className="hidden sm:table-cell">
+                        {budget.categoryDescription || '-'}
+                      </TableCell>
                       <TableCell className="text-right">¥{budget.planned.toLocaleString()}</TableCell>
                       <TableCell className="text-right">¥{budget.actual.toLocaleString()}</TableCell>
                       <TableCell
