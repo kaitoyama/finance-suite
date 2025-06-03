@@ -62,6 +62,11 @@ export function Sidebar() {
 
   return (
     <div className="flex h-full flex-col bg-gray-50 border-r">
+      {/* 
+        Note: This Sidebar component expects its width (e.g., w-64) 
+        to be managed by its parent container. In AppLayout, the wrapper 
+        div around the <Sidebar /> instance provides this. 
+      */}
       <div className="flex h-16 items-center justify-center border-b bg-white">
         <h1 className="text-xl font-bold text-gray-900">財務管理システム</h1>
       </div>

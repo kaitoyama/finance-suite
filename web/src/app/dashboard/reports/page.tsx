@@ -84,11 +84,11 @@ const ReportsPage = () => {
               placeholder="年度を入力"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
-              className="w-full sm:max-w-xs" // Full width on xs, max-w-xs on sm+
+              className="w-full sm:max-w-xs" {/* Full width on xs, max-w-xs on sm+ */}
             />
-            <Button onClick={handleYearChange} className="w-full sm:w-auto">表示</Button> {/* Full width on xs, auto on sm+ */}
+            <Button onClick={handleYearChange} className="w-full sm:w-auto">{/* Full width on xs, auto on sm+ */}表示</Button>
             {profitLossStatement && (
-              <Button onClick={handleExportCSV} variant="outline" className="w-full sm:w-auto"> {/* Full width on xs, auto on sm+ */}
+              <Button onClick={handleExportCSV} variant="outline" className="w-full sm:w-auto">{/* Full width on xs, auto on sm+ */}
                 CSVエクスポート
               </Button>
             )}

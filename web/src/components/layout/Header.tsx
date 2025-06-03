@@ -26,7 +26,7 @@ export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden" // Hidden on md screens and up
+          className="md:hidden" {/* Hidden on md screens and up */}
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <Menu className="h-6 w-6" />

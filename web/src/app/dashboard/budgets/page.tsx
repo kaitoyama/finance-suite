@@ -90,13 +90,13 @@ const BudgetsDashboardPage = () => {
               placeholder="年度を入力"
               value={yearInput}
               onChange={(e) => setYearInput(e.target.value)}
-              className="w-full sm:max-w-xs" // Full width on small screens, max-w-xs on sm+
+              className="w-full sm:max-w-xs" {/* Full width on xs, max-w-xs on sm+ */}
             />
-            <Button onClick={handleYearChange} className="w-full sm:w-auto">予算を表示</Button> {/* Full width on small screens */}
+            <Button onClick={handleYearChange} className="w-full sm:w-auto">{/* Full width on xs, auto on sm+ */}予算を表示</Button>
             <Button 
               onClick={() => setShowBudgetForm(!showBudgetForm)}
               variant="outline"
-              className="w-full sm:w-auto" // Full width on small screens
+              className="w-full sm:w-auto" {/* Full width on xs, auto on sm+ */}
             >
               {showBudgetForm ? '予算設定を閉じる' : '予算を設定'}
             </Button>
@@ -180,7 +180,7 @@ const BudgetsDashboardPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>カテゴリ名</TableHead>
-                  <TableHead className="hidden sm:table-cell">説明</TableHead> {/* Hidden on xs, visible sm+ */}
+                  <TableHead className="hidden sm:table-cell">{/* Hidden on xs, visible sm+ */}説明</TableHead>
                   <TableHead className="text-right">予算</TableHead>
                   <TableHead className="text-right">実績</TableHead>
                   <TableHead className="text-right">残予算</TableHead>
@@ -194,7 +194,7 @@ const BudgetsDashboardPage = () => {
                   return (
                     <TableRow key={budget.categoryId}>
                       <TableCell>{budget.categoryName}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{budget.categoryDescription || '-'}</TableCell> {/* Hidden on xs, visible sm+ */}
+                      <TableCell className="hidden sm:table-cell">{/* Hidden on xs, visible sm+ */}{budget.categoryDescription || '-'}</TableCell>
                       <TableCell className="text-right">¥{budget.planned.toLocaleString()}</TableCell>
                       <TableCell className="text-right">¥{budget.actual.toLocaleString()}</TableCell>
                       <TableCell
