@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Settings, User } from "lucide-react";
+import { Bell, Settings, User, Menu } from "lucide-react"; // Added Menu
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,14 +11,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Header() {
+// Define props interface
+interface HeaderProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
+}
+
+export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
   return (
-    <header className="h-16 border-b bg-white px-6 flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <h2 className="text-xl font-semibold text-gray-800">財務管理システム</h2>
+    <header className="h-16 border-b bg-white px-4 sm:px-6 flex items-center justify-between">
+      {/* Adjusted px-4 for smaller screens, sm:px-6 for slightly larger */}
+      <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted space-x-2 for smaller screens */}
+        {/* Sidebar Toggle Button - visible only on small screens */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden" // Hidden on md screens and up
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+
+        {/* Title - hidden on very small screens, visible from sm up */}
+        <h2 className="hidden sm:block text-lg sm:text-xl font-semibold text-gray-800">財務管理システム</h2>
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted space-x-2 for smaller screens */}
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

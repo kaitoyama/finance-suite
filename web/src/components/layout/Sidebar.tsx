@@ -61,7 +61,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col bg-gray-50 border-r">
+    <div className="flex h-full flex-col bg-gray-50 border-r">
       <div className="flex h-16 items-center justify-center border-b bg-white">
         <h1 className="text-xl font-bold text-gray-900">財務管理システム</h1>
       </div>
