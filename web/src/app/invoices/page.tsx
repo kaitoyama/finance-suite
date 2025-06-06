@@ -90,6 +90,7 @@ export default function InvoicesPage() {
               <TableHead>取引先</TableHead>
               <TableHead className="text-right">金額</TableHead>
               <TableHead>ステータス</TableHead>
+              <TableHead>発行日</TableHead>
               <TableHead>期日</TableHead>
               <TableHead>作成日</TableHead>
               <TableHead className="text-center">アクション</TableHead>
@@ -106,6 +107,7 @@ export default function InvoicesPage() {
                     {invoice.status}
                   </Badge>
                 </TableCell>
+                <TableCell>{formatDate(invoice.issueDate)}</TableCell>
                 <TableCell>{formatDate(invoice.dueDate)}</TableCell>
                 <TableCell>{formatDate(invoice.createdAt)}</TableCell>
                 <TableCell className="text-center">

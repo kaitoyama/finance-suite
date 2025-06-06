@@ -36,6 +36,7 @@ export class InvoiceResolver {
     // Transform the description field to match GraphQL type (string | undefined)
     return {
       ...invoiceFromService,
+      issueDate: invoiceFromService.issueDate,
       description: invoiceFromService.description ?? undefined,
     };
   }
@@ -46,6 +47,7 @@ export class InvoiceResolver {
     // Transform the description field for each invoice
     return invoicesFromService.map((invoice) => ({
       ...invoice,
+      issueDate: invoice.issueDate,
       description: invoice.description ?? undefined,
     }));
   }
@@ -107,6 +109,7 @@ export class InvoiceResolver {
       status: createdPrismaInvoice.status,
       pdfKey: createdPrismaInvoice.pdfKey,
       createdAt: createdPrismaInvoice.createdAt,
+      issueDate: createdPrismaInvoice.issueDate,
       dueDate: createdPrismaInvoice.dueDate,
       description: createdPrismaInvoice.description ?? undefined,
     };

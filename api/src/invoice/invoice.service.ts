@@ -106,7 +106,7 @@ export class InvoiceService {
   }
 
   async createInvoice(input: InvoiceInput, user: User): Promise<Invoice> {
-    const { partnerName, amount, dueDate, description } = input;
+    const { partnerName, amount, dueDate, issueDate, description } = input;
 
     if (amount <= 0) {
       throw new BadRequestException('Amount must be greater than 0.');
@@ -147,6 +147,7 @@ export class InvoiceService {
 
     // 2. Prepare data for PDF template
     const createdAt = new Date();
+    const issueDateObj = new Date(issueDate);
 
     // 3. Generate PDF
     const pdfTemplatePath = 'templates/invoice.html'; // Ensure this path is correct
@@ -159,7 +160,7 @@ export class InvoiceService {
         invoiceNo: invoiceNo,
         partnerName: partnerName,
         amount: amount, // raw amount for PdfService's internal formatting (e.g. AMOUNT_YEN)
-        date: createdAt, // for ISSUE_DATE or similar used by PdfService
+        date: issueDateObj, // invoice issue date
         dueDate: new Date(dueDate), // for DUE_DATE_TEXT
         subjectText: description || 'ご請求の件',
         itemDescriptionText: description || 'ご請求の件',
@@ -201,6 +202,7 @@ export class InvoiceService {
           status: InvoiceStatus.UNPAID,
           pdfKey,
           createdById: user.id,
+          issueDate: issueDateObj,
           dueDate: new Date(dueDate),
           description: description,
         },

@@ -26,6 +26,11 @@ export class InvoiceInput {
   @IsDateString()
   dueDate: string;
 
+  @Field()
+  @IsNotEmpty()
+  @IsDateString()
+  issueDate: string;
+
   @Field({ nullable: true })
   @IsOptional()
   @IsString()

@@ -117,6 +117,7 @@ export default function InvoicePaymentPage() {
               <div><strong>Description:</strong> {invoice.description}</div>
               <div><strong>Amount:</strong> ¥{invoice.amount?.toLocaleString()}</div>
               <div><strong>Status:</strong> {invoice.status}</div>
+              <div><strong>Issue Date:</strong> {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</div>
               <div><strong>Due Date:</strong> {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</div>
             </div>
           </CardContent>

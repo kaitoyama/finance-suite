@@ -89,6 +89,7 @@ type Invoice {
   status: InvoiceStatus!
   pdfKey: String!
   createdAt: DateTime!
+  issueDate: DateTime!
   dueDate: DateTime!
   description: String
 }
@@ -342,6 +343,7 @@ input GenerateInvoicePdfInput {
 input InvoiceInput {
   partnerName: String!
   amount: Float!
+  issueDate: String!
   dueDate: String!
   description: String
 }
