@@ -343,8 +343,8 @@ input GenerateInvoicePdfInput {
 input InvoiceInput {
   partnerName: String!
   amount: Float!
-  issueDate: String!
   dueDate: String!
+  issueDate: String!
   description: String
 }
 

@@ -180,7 +180,7 @@ model Invoice {
   createdById Int
   createdBy   User          @relation("UserInvoices", fields: [createdById], references: [id])
   dueDate     DateTime
-  issueDate   DateTime
+  issueDate   DateTime      @default(now())
   description String?
   // Relation to JournalEntry (optional, if an invoice can be linked to a journal entry)
   journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
