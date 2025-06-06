@@ -64,8 +64,9 @@ export default function CreateInvoicePage() {
         partnerName: values.partnerName,
         description: values.description,
         amount: values.amount,
-        issueDate: values.issueDate.toISOString(),
-        dueDate: values.dueDate.toISOString(),
+        // Use date-only strings to avoid timezone issues
+        issueDate: format(values.issueDate, 'yyyy-MM-dd'),
+        dueDate: format(values.dueDate, 'yyyy-MM-dd'),
       });
 
       if (result && result.id) {
