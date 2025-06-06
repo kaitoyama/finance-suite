@@ -34,9 +34,11 @@ const formSchema = z.object({
   partnerName: z.string().min(1, "取引先名は必須です"),
   description: z.string().min(1, "件名/摘要は必須です"),
   amount: z.coerce.number().positive("金額は0より大きい値を入力してください"),
-  issueDate: z.date({
-    required_error: "発行日は必須です",
-  }),
+  issueDate: z.date({ required_error: "発行日は必須です" }),
+  dueDate: z.date({ required_error: "支払期限は必須です" }),
+}).refine((data) => data.dueDate >= data.issueDate, {
+  message: "支払期限は発行日以降の日付を選択してください",
+  path: ["dueDate"],
 });
 
 type InvoiceFormValues = z.infer<typeof formSchema>;
@@ -52,6 +54,7 @@ export default function CreateInvoicePage() {
       description: "",
       amount: 0,
       issueDate: new Date(),
+      dueDate: new Date(),
     },
   });
 
@@ -61,7 +64,8 @@ export default function CreateInvoicePage() {
         partnerName: values.partnerName,
         description: values.description,
         amount: values.amount,
-        dueDate: values.issueDate.toISOString(),
+        issueDate: values.issueDate.toISOString(),
+        dueDate: values.dueDate.toISOString(),
       });
 
       if (result && result.id) {
@@ -176,6 +180,51 @@ export default function CreateInvoicePage() {
                       onSelect={field.onChange}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage role="alert" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dueDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel htmlFor="dueDate">支払期限</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        id="dueDate"
+                        className={cn(
+                          "w-[240px] pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        aria-label="支払期限"
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>日付を選択</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date < form.getValues("issueDate") ||
+                        date < new Date("1900-01-01")
                       }
                       initialFocus
                     />

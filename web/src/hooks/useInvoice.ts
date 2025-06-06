@@ -22,6 +22,7 @@ const GetInvoiceByIdQueryDocument = graphql(`
       amount
       partnerName
       description
+      issueDate
       dueDate
       invoiceNo
     }
@@ -36,6 +37,7 @@ const GetInvoicesQueryDocument = graphql(`
       partnerName
       amount
       status
+      issueDate
       dueDate
       createdAt
     }

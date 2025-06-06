@@ -85,7 +85,8 @@ export default function InvoicePreviewPage() {
           <div><strong>取引先名:</strong> {invoice.partnerName}</div>
           <div><strong>件名・摘要:</strong> {invoice.description}</div>
           <div><strong>金額:</strong> ¥{invoice.amount?.toLocaleString()}</div>
-          <div><strong>発行日 (期日):</strong> {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</div>
+          <div><strong>発行日:</strong> {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</div>
+          <div><strong>支払期限:</strong> {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</div>
           <div><strong>ステータス:</strong> {invoice.status}</div>
         </div>
       </div>

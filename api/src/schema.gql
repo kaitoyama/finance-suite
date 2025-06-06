@@ -89,6 +89,7 @@ type Invoice {
   status: InvoiceStatus!
   pdfKey: String!
   createdAt: DateTime!
+  issueDate: DateTime!
   dueDate: DateTime!
   description: String
 }
@@ -343,6 +344,7 @@ input InvoiceInput {
   partnerName: String!
   amount: Float!
   dueDate: String!
+  issueDate: String!
   description: String
 }
 

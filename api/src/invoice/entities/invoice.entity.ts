@@ -35,6 +35,9 @@ export class Invoice {
   @Field(() => Date) // Assuming Date scalar is configured globally for GraphQL
   createdAt: Date;
 
+  @Field(() => Date)
+  issueDate: Date;
+
   @Field(() => Date) // Assuming Date scalar is configured globally for GraphQL
   dueDate: Date;
 
