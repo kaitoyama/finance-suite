@@ -54,6 +54,7 @@ export class PdfService {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
+          timeZone: 'Asia/Tokyo',
         }),
         AMOUNT_YEN: this.formatYenCurrency(data.amount),
         AMOUNT_YEN_IN_TABLE: this.formatYenCurrency(data.amount),
@@ -65,6 +66,7 @@ export class PdfService {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
+            timeZone: 'Asia/Tokyo',
           }),
         ITEM_DESCRIPTION_TEXT: data.itemDescriptionText || '',
       };
