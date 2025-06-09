@@ -5,11 +5,24 @@ import { useParams } from 'next/navigation';
 import { useExpenseRequestDetailQuery } from '@/hooks/useExpenseRequestDetailQuery';
 import { useGetPresignedS3Url } from '@/hooks/useInvoice';
 import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
+import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseRequestMutation';
+import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
+import { useUpdateExpenseRequestMutation } from '@/hooks/useUpdateExpenseRequestMutation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { PaymentAttachmentLinkRenderer } from '@/components/PaymentAttachmentLinkRenderer';
 import toast, { Toaster } from 'react-hot-toast';
@@ -19,11 +32,16 @@ export default function ExpenseDetailPage() {
   const idParam = params?.id as string;
   const id = idParam ? parseInt(idParam, 10) : 0;
   const [isResubmitting, setIsResubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState<'approve' | 'reject' | 'submit' | 'resubmit' | null>(null);
 
-  const { data: expenseData, fetching: loading, error } = useExpenseRequestDetailQuery(id);
+  const { data: expenseData, fetching: loading, error, refetch } = useExpenseRequestDetailQuery(id);
   const expenseRequest = expenseData;
 
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
+  const { approveExpenseRequest } = useApproveExpenseRequestMutation();
+  const { rejectExpenseRequest } = useRejectExpenseRequestMutation();
+  const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
 
   const {
     presignedUrlData,
@@ -32,24 +50,58 @@ export default function ExpenseDetailPage() {
     retryFetchUrl: refetchPresignedUrl,
   } = useGetPresignedS3Url(expenseRequest?.attachment?.s3Key);
 
-  const handleResubmit = async () => {
-    if (!id) return;
-    
-    setIsResubmitting(true);
-    try {
-      const result = await resubmitExpenseRequest({ id });
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-      toast.success('Expense request resubmitted successfully!');
-      // Refresh the expense data to show updated state
-      window.location.reload();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resubmit expense request';
-      toast.error(errorMessage);
-    } finally {
-      setIsResubmitting(false);
+  // Generic confirmation dialog handler
+
+  const handleActionClick = (action: 'approve' | 'reject' | 'submit' | 'resubmit') => {
+    setDialogAction(action);
+    setIsDialogOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!id || !dialogAction) return;
+
+    let actionPromise;
+    let successMessage = '';
+
+    switch (dialogAction) {
+      case 'approve':
+        actionPromise = approveExpenseRequest({ id });
+        successMessage = '承認';
+        break;
+      case 'reject':
+        actionPromise = rejectExpenseRequest({ id });
+        successMessage = '差戻し';
+        break;
+      case 'submit':
+        actionPromise = updateExpenseRequest({ id, input: { state: 'PENDING' } });
+        successMessage = '申請';
+        break;
+      case 'resubmit':
+        setIsResubmitting(true);
+        actionPromise = resubmitExpenseRequest({ id });
+        successMessage = '再申請';
+        break;
+      default:
+        return;
     }
+
+    const execPromise = actionPromise.then((res) => {
+      if (res.error) {
+        throw new Error(res.error.message || `Failed to ${dialogAction}`);
+      }
+      refetch({ requestPolicy: 'network-only' });
+      setIsDialogOpen(false);
+      setDialogAction(null);
+      return `${successMessage}しました。`;
+    });
+
+    toast.promise(execPromise, {
+      loading: `${successMessage}中...`,
+      success: (message: string) => message,
+      error: (err: Error) => `${successMessage}に失敗しました: ${err.message}`,
+    }).finally(() => {
+      if (dialogAction === 'resubmit') setIsResubmitting(false);
+    });
   };
 
   const getStateBadgeVariant = (state: string) => {
@@ -256,7 +308,7 @@ export default function ExpenseDetailPage() {
         <div className="flex gap-3">
           {/* DRAFT状態: 申請提出ボタン */}
           {state === 'DRAFT' && (
-            <Button variant="default">
+            <Button variant="default" onClick={() => handleActionClick('submit')}>
               申請提出
             </Button>
           )}
@@ -264,10 +316,10 @@ export default function ExpenseDetailPage() {
           {/* PENDING状態: 承認・却下ボタン（管理者向け） */}
           {state === 'PENDING' && (
             <>
-              <Button variant="default">
+              <Button variant="default" onClick={() => handleActionClick('approve')}>
                 承認
               </Button>
-              <Button variant="destructive">
+              <Button variant="destructive" onClick={() => handleActionClick('reject')}>
                 差戻し
               </Button>
             </>
@@ -293,8 +345,8 @@ export default function ExpenseDetailPage() {
               <Button asChild variant="default">
                 <Link href={`/expenses/${id}/edit`}>経費を編集</Link>
               </Button>
-              <Button 
-                onClick={handleResubmit} 
+              <Button
+                onClick={() => handleActionClick('resubmit')}
                 disabled={isResubmitting}
                 variant="outline"
               >
@@ -309,6 +361,30 @@ export default function ExpenseDetailPage() {
           <Link href="/expenses">一覧へ戻る</Link>
         </Button>
       </div>
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`ID: ${id} の経費申請を${
+                dialogAction === 'approve' ? '承認' :
+                dialogAction === 'reject' ? '差戻し' :
+                dialogAction === 'submit' ? '申請' :
+                dialogAction === 'resubmit' ? '再申請' : ''
+              }しますか？`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction} disabled={dialogAction === 'resubmit' && isResubmitting}>
+              {dialogAction === 'approve' ? '承認' :
+               dialogAction === 'reject' ? '差戻し' :
+               dialogAction === 'submit' ? '申請' :
+               dialogAction === 'resubmit' ? (isResubmitting ? '再申請中...' : '再申請') : '実行'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Toaster />
     </div>
   );
