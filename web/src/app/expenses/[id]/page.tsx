@@ -8,6 +8,7 @@ import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseReq
 import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseRequestMutation';
 import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
 import { useUpdateExpenseRequestMutation } from '@/hooks/useUpdateExpenseRequestMutation';
+import { useMeQuery } from '@/hooks/useMeQuery';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,8 @@ export default function ExpenseDetailPage() {
   const { approveExpenseRequest } = useApproveExpenseRequestMutation();
   const { rejectExpenseRequest } = useRejectExpenseRequestMutation();
   const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
+  const { user } = useMeQuery();
+  const isAdmin = user?.isAdmin ?? false;
 
   const {
     presignedUrlData,
@@ -314,7 +317,7 @@ export default function ExpenseDetailPage() {
           )}
           
           {/* PENDING状態: 承認・却下ボタン（管理者向け） */}
-          {state === 'PENDING' && (
+          {state === 'PENDING' && isAdmin && (
             <>
               <Button variant="default" onClick={() => handleActionClick('approve')}>
                 承認

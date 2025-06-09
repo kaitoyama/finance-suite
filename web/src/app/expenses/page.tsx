@@ -7,6 +7,7 @@ import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseReque
 import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
 import { useUpdateExpenseRequestMutation } from '@/hooks/useUpdateExpenseRequestMutation';
 import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
+import { useMeQuery } from '@/hooks/useMeQuery';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table'; 
 import { ColumnDef } from "@tanstack/react-table"
@@ -44,6 +45,8 @@ const AdminExpensesPage = () => {
   const { rejectExpenseRequest } = useRejectExpenseRequestMutation();
   const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
+  const { user } = useMeQuery();
+  const isAdmin = user?.isAdmin ?? false;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
@@ -160,23 +163,24 @@ const AdminExpensesPage = () => {
                             </Button>
                         );
                     
-                    case 'PENDING':
+                   case 'PENDING':
+                        if (!isAdmin) return null;
                         return (
                             <>
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         handleActionClick(id, 'approve');
                                     }}
                                 >
                                     承認
                                 </Button>
-                                <Button 
-                                    variant="destructive" 
-                                    size="sm" 
-                                    onClick={(e) => { 
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={(e) => {
                                         e.stopPropagation();
                                         handleActionClick(id, 'reject');
                                     }}
@@ -236,7 +240,7 @@ const AdminExpensesPage = () => {
             );
         },
     },
-  ], [router]);
+  ], [router, isAdmin]);
 
   if (fetching && !data) {
     return (
