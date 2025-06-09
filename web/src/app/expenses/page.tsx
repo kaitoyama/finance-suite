@@ -51,7 +51,7 @@ const AdminExpensesPage = () => {
 
   useEffect(() => {
     if (error) {
-      toast.error(`Error fetching expenses: ${error.message}`);
+      toast.error(`経費データの取得に失敗しました: ${error.message}`);
     }
   }, [error]);
 

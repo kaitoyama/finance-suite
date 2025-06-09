@@ -125,9 +125,9 @@ export default function PayExpensePage() {
     }
   }, [paymentErrorState]);
 
-  if (expenseLoading || !numericId) return <div className="container mx-auto p-4">Loading...</div>;
-  if (expenseError) return <div className="container mx-auto p-4">Error loading expense: {expenseError.message}</div>;
-  if (!expenseData) return <div className="container mx-auto p-4">Expense not found.</div>;
+  if (expenseLoading || !numericId) return <div className="container mx-auto p-4">読み込み中...</div>;
+  if (expenseError) return <div className="container mx-auto p-4">経費情報の読み込みエラー: {expenseError.message}</div>;
+  if (!expenseData) return <div className="container mx-auto p-4">経費申請が見つかりません。</div>;
 
   // Prevent payment if not APPROVED, with specific messages for other states
   if (expenseData.state !== 'APPROVED') {
