@@ -196,7 +196,7 @@ const AdminExpensesPage = () => {
                                     router.push(`/expenses/${id}/pay`);
                                 }}
                             >
-                                支払済み
+                                承認済み
                             </Button>
                         );
                     
