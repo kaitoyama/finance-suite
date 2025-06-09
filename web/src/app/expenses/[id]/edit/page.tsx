@@ -268,24 +268,24 @@ export default function EditExpenseRequestPage() {
   } else if (loadError) {
     content = (
       <Alert variant="destructive">
-        <AlertTitle>Error Loading Expense</AlertTitle>
+        <AlertTitle>経費情報の読み込みエラー</AlertTitle>
         <AlertDescription>{loadError.message}</AlertDescription>
       </Alert>
     );
   } else if (notFound) {
     content = (
       <Alert>
-        <AlertTitle>Not Found</AlertTitle>
-        <AlertDescription>Expense request not found.</AlertDescription>
+        <AlertTitle>見つかりません</AlertTitle>
+        <AlertDescription>経費申請が見つかりません。</AlertDescription>
       </Alert>
     );
   } else if (notRejected) {
     content = (
       <>
         <Alert>
-          <AlertTitle>Cannot Edit</AlertTitle>
+          <AlertTitle>編集できません</AlertTitle>
           <AlertDescription>
-            Only rejected expense requests can be edited. Current status: {expenseData!.state}
+            差戻し状態の経費申請のみ編集可能です。現在のステータス: {expenseData!.state}
           </AlertDescription>
         </Alert>
         <Button onClick={() => router.back()} className="mt-4">戻る</Button>

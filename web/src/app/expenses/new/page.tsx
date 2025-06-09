@@ -104,12 +104,12 @@ export default function NewExpenseRequestPage() {
               const errorText = await s3Response.text();
               throw new Error(`S3 Upload Failed: ${s3Response.status} ${errorText}`);
             }
-            return "File uploaded to S3!";
+            return "S3へのアップロード完了";
           }),
           {
-            loading: 'Uploading attachment to S3...',
+            loading: '添付ファイルをS3にアップロード中...',
             success: (message) => message,
-            error: (err) => `Attachment S3 upload failed: ${err.message}`,
+            error: (err) => `S3アップロード失敗: ${err.message}`,
           }
         );
 
@@ -128,12 +128,12 @@ export default function NewExpenseRequestPage() {
               throw new Error('Attachment ID not found after DB save.');
             }
             finalAttachmentId = dbRes.id;
-            return "Attachment metadata saved!";
+            return "添付情報を保存しました";
           }),
           {
-            loading: 'Saving attachment details...',
+            loading: '添付情報を保存中...',
             success: (message) => message,
-            error: (err) => `Saving attachment failed: ${err.message}`,
+            error: (err) => `添付情報の保存に失敗: ${err.message}`,
           }
         );
       }
@@ -160,12 +160,12 @@ export default function NewExpenseRequestPage() {
           setSelectedFile(null);
           // router.push('/expenses'); // Or to the detail page: /expenses/${res.data.submitExpenseRequest.id}
           router.push('/expenses'); // Placeholder redirect
-          return 'Expense request created successfully!';
+          return '経費申請が作成されました';
         }),
         {
-          loading: 'Submitting expense request...',
+          loading: '経費申請を送信中...',
           success: (message) => message,
-          error: (err) => `Submission failed: ${err.message}`,
+          error: (err) => `送信に失敗しました: ${err.message}`,
         }
       );
 
@@ -290,12 +290,12 @@ export default function NewExpenseRequestPage() {
             <FormControl>
               <Input type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
             </FormControl>
-            {selectedFile && <FormDescription>Selected file: {selectedFile.name}</FormDescription>}
+            {selectedFile && <FormDescription>選択されたファイル: {selectedFile.name}</FormDescription>}
             <FormMessage />
           </FormItem>
 
           <Button type="submit" disabled={isSubmitting || accountsLoading} className="w-full md:w-auto">
-            {isSubmitting ? 'Submitting...' : 'Submit Expense Request'}
+            {isSubmitting ? '送信中...' : '経費申請を送信'}
           </Button>
         </form>
       </Form>

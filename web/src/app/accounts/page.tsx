@@ -33,8 +33,8 @@ const displayAccountCategory = (category: AccountCategory) => {
 export default function AccountsPage() {
   const { accounts, loading, error } = useGetAccounts();
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading accounts: {error.message}</p>;
+  if (loading) return <p>読み込み中...</p>;
+  if (error) return <p>勘定科目の読み込みエラー: {error.message}</p>;
 
   return (
     <div className="container mx-auto py-10">

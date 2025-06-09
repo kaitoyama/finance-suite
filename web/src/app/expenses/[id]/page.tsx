@@ -78,12 +78,12 @@ export default function ExpenseDetailPage() {
     );
   }
 
-  if (loading) return <div className="container mx-auto p-4">Loading expense details...</div>;
+  if (loading) return <div className="container mx-auto p-4">経費詳細を読み込み中...</div>;
   if (error) {
     return (
       <div className="container mx-auto p-4">
         <Alert variant="destructive">
-          <AlertTitle>Error Loading Expense</AlertTitle>
+          <AlertTitle>経費情報の読み込みエラー</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       </div>
@@ -94,8 +94,8 @@ export default function ExpenseDetailPage() {
     return (
       <div className="container mx-auto p-4">
         <Alert>
-          <AlertTitle>Not Found</AlertTitle>
-          <AlertDescription>Expense request not found.</AlertDescription>
+          <AlertTitle>見つかりません</AlertTitle>
+          <AlertDescription>経費申請が見つかりません。</AlertDescription>
         </Alert>
       </div>
     );
@@ -108,18 +108,18 @@ export default function ExpenseDetailPage() {
       <Toaster position="top-center" />
       <Card>
         <CardHeader>
-          <CardTitle>Expense Request Details</CardTitle>
-          <CardDescription>Viewing expense ID: {id}</CardDescription>
+          <CardTitle>経費申請詳細</CardTitle>
+          <CardDescription>申請ID: {id} の内容</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium">Amount</TableCell>
+                <TableCell className="font-medium">金額</TableCell>
                 <TableCell>{amount.toLocaleString()}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">State</TableCell>
+                <TableCell className="font-medium">状態</TableCell>
                 <TableCell>
                   <Badge variant={getStateBadgeVariant(state)}>
                     {state}
@@ -127,22 +127,22 @@ export default function ExpenseDetailPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Created At</TableCell>
+                <TableCell className="font-medium">申請日</TableCell>
                 <TableCell>{new Date(createdAt).toLocaleString()}</TableCell>
               </TableRow>
               {approvedAt && (
                 <TableRow>
-                  <TableCell className="font-medium">Approved At</TableCell>
+                  <TableCell className="font-medium">承認日</TableCell>
                   <TableCell>{new Date(approvedAt).toLocaleString()}</TableCell>
                 </TableRow>
               )}
               <TableRow>
-                <TableCell className="font-medium">Requester</TableCell>
+                <TableCell className="font-medium">申請者</TableCell>
                 <TableCell>{requester.username} (ID: {requester.id})</TableCell>
               </TableRow>
               {approver && (
                 <TableRow>
-                  <TableCell className="font-medium">Approver</TableCell>
+                  <TableCell className="font-medium">承認者</TableCell>
                   <TableCell>{approver.username} (ID: {approver.id})</TableCell>
                 </TableRow>
               )}
@@ -154,38 +154,38 @@ export default function ExpenseDetailPage() {
       {attachment && (
         <Card>
           <CardHeader>
-            <CardTitle>Attachment Details</CardTitle>
+            <CardTitle>添付ファイル詳細</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableBody>
                 <TableRow>
-                  <TableCell className="font-medium">Title</TableCell>
+                  <TableCell className="font-medium">タイトル</TableCell>
                   <TableCell>{attachment.title}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">S3 Key</TableCell>
+                  <TableCell className="font-medium">S3キー</TableCell>
                   <TableCell>{attachment.s3Key}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">Attachment Amount</TableCell>
+                  <TableCell className="font-medium">添付金額</TableCell>
                   <TableCell>{attachment.amount.toLocaleString()}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">File</TableCell>
+                  <TableCell className="font-medium">ファイル</TableCell>
                   <TableCell>
-                    {fetchingPresignedUrl && <p>Loading link...</p>}
-                    {presignedUrlError && <p className="text-red-500">Error: {presignedUrlError.message}</p>}
+                    {fetchingPresignedUrl && <p>リンクを生成中...</p>}
+                    {presignedUrlError && <p className="text-red-500">エラー: {presignedUrlError.message}</p>}
                     {presignedUrlData?.url && (
                       <Button asChild variant="link">
                         <Link href={presignedUrlData.url} target="_blank" rel="noopener noreferrer">
-                          View/Download Attachment
+                          添付を表示/ダウンロード
                         </Link>
                       </Button>
                     )}
                     {!presignedUrlData?.url && !fetchingPresignedUrl && (
                       <Button onClick={refetchPresignedUrl} variant="outline" size="sm">
-                        Generate Link
+                        リンクを生成
                       </Button>
                     )}
                   </TableCell>
@@ -198,40 +198,40 @@ export default function ExpenseDetailPage() {
 
       {payment && (
         <Card>
-          <CardHeader><CardTitle>Payment Details</CardTitle></CardHeader>
+          <CardHeader><CardTitle>支払詳細</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableBody>
                 <TableRow>
-                  <TableCell className="font-medium">Payment ID</TableCell>
+                  <TableCell className="font-medium">支払ID</TableCell>
                   <TableCell>{payment.id}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">Payment Amount</TableCell>
+                  <TableCell className="font-medium">支払金額</TableCell>
                   <TableCell>{payment.amount.toLocaleString()}</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">Paid At</TableCell>
+                  <TableCell className="font-medium">支払日</TableCell>
                   <TableCell>{new Date(payment.paidAt).toLocaleString()}</TableCell>
                 </TableRow>
                 {payment.direction && (
                     <TableRow>
-                        <TableCell className="font-medium">Direction</TableCell>
+                        <TableCell className="font-medium">区分</TableCell>
                         <TableCell>{payment.direction}</TableCell>
                     </TableRow>
                 )}
                 {payment.method && (
                     <TableRow>
-                        <TableCell className="font-medium">Method</TableCell>
+                        <TableCell className="font-medium">方法</TableCell>
                         <TableCell>{payment.method}</TableCell>
                     </TableRow>
                 )}
               </TableBody>
             </Table>
-            {/* Display Payment Attachments if any */}
+            {/* 支払添付ファイル */}
             {payment.attachments && payment.attachments.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-lg font-semibold mb-3">Payment Attachments:</h4>
+                <h4 className="text-lg font-semibold mb-3">支払添付ファイル:</h4>
                 <div className="space-y-4">
                   {payment.attachments.map((actualAttachment) => {
                     if (!actualAttachment) return null;
@@ -239,7 +239,7 @@ export default function ExpenseDetailPage() {
                       <Card key={actualAttachment.id} className="p-4">
                         <p className="font-medium text-base">{actualAttachment.title}</p>
                         {actualAttachment.amount != null && (
-                            <p className="text-sm text-muted-foreground">Amount: {actualAttachment.amount.toLocaleString()}</p>
+                            <p className="text-sm text-muted-foreground">金額: {actualAttachment.amount.toLocaleString()}</p>
                         )}
                         <PaymentAttachmentLinkRenderer s3Key={actualAttachment.s3Key} title={actualAttachment.title} />
                       </Card>
@@ -257,7 +257,7 @@ export default function ExpenseDetailPage() {
           {/* DRAFT状態: 申請提出ボタン */}
           {state === 'DRAFT' && (
             <Button variant="default">
-              Submit Request
+              申請提出
             </Button>
           )}
           
@@ -265,10 +265,10 @@ export default function ExpenseDetailPage() {
           {state === 'PENDING' && (
             <>
               <Button variant="default">
-                Approve
+                承認
               </Button>
               <Button variant="destructive">
-                Reject
+                差戻し
               </Button>
             </>
           )}
@@ -276,14 +276,14 @@ export default function ExpenseDetailPage() {
           {/* APPROVED状態: 支払いボタン */}
           {state === 'APPROVED' && (
             <Button asChild variant="default">
-              <Link href={`/expenses/${id}/pay`}>Pay Expense</Link>
+              <Link href={`/expenses/${id}/pay`}>支払処理</Link>
             </Button>
           )}
           
           {/* PAID状態: クローズボタン */}
           {state === 'PAID' && (
             <Button variant="outline">
-              Close Request
+              完了にする
             </Button>
           )}
           
@@ -291,14 +291,14 @@ export default function ExpenseDetailPage() {
           {state === 'REJECTED' && (
             <>
               <Button asChild variant="default">
-                <Link href={`/expenses/${id}/edit`}>Edit Expense</Link>
+                <Link href={`/expenses/${id}/edit`}>経費を編集</Link>
               </Button>
               <Button 
                 onClick={handleResubmit} 
                 disabled={isResubmitting}
                 variant="outline"
               >
-                {isResubmitting ? 'Resubmitting...' : 'Resubmit'}
+                {isResubmitting ? '再申請中...' : '再申請'}
               </Button>
             </>
           )}
@@ -306,7 +306,7 @@ export default function ExpenseDetailPage() {
           {/* CLOSED状態: アクションなし（最終状態） */}
         </div>
         <Button variant="outline" asChild>
-          <Link href="/expenses">Back to Expenses List</Link>
+          <Link href="/expenses">一覧へ戻る</Link>
         </Button>
       </div>
       <Toaster />

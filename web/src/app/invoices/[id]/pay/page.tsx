@@ -59,32 +59,32 @@ export default function InvoicePaymentPage() {
         direction: data.direction,
         method: data.method,
       });
-      
-      toast.success("Payment recorded successfully!");
+
+      toast.success("入金が正常に登録されました！");
       router.push(`/invoices/${id}`);
     } catch (error) {
       console.error("Failed to create payment:", error);
-      toast.error("Failed to record payment. Please try again.");
+      toast.error("入金登録に失敗しました。再度お試しください。");
     }
   };
 
   if (fetchingInvoice) {
     return (
-      <div className="text-center">Loading invoice information...</div>
+      <div className="text-center">請求書情報を読み込み中...</div>
     );
   }
 
   if (invoiceError) {
     return (
       <div className="text-center text-red-500">
-        Error loading invoice: {invoiceError.message}
+        請求書の読み込みエラー: {invoiceError.message}
       </div>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="text-center">Invoice not found.</div>
+      <div className="text-center">請求書が見つかりません。</div>
     );
   }
 
@@ -107,18 +107,18 @@ export default function InvoicePaymentPage() {
         {/* Invoice Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Details</CardTitle>
-            <CardDescription>Information about the invoice being paid</CardDescription>
+            <CardTitle>請求書詳細</CardTitle>
+            <CardDescription>支払い対象の請求書情報</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-2">
-              <div><strong>Invoice Number:</strong> {invoice.invoiceNo || invoice.id}</div>
-              <div><strong>Partner:</strong> {invoice.partnerName}</div>
-              <div><strong>Description:</strong> {invoice.description}</div>
-              <div><strong>Amount:</strong> ¥{invoice.amount?.toLocaleString()}</div>
-              <div><strong>Status:</strong> {invoice.status}</div>
-              <div><strong>Issue Date:</strong> {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</div>
-              <div><strong>Due Date:</strong> {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</div>
+              <div><strong>請求書番号:</strong> {invoice.invoiceNo || invoice.id}</div>
+              <div><strong>取引先:</strong> {invoice.partnerName}</div>
+              <div><strong>件名・摘要:</strong> {invoice.description}</div>
+              <div><strong>金額:</strong> ¥{invoice.amount?.toLocaleString()}</div>
+              <div><strong>ステータス:</strong> {invoice.status}</div>
+              <div><strong>発行日:</strong> {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</div>
+              <div><strong>支払期限:</strong> {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</div>
             </div>
           </CardContent>
         </Card>
@@ -128,9 +128,9 @@ export default function InvoicePaymentPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <CreditCard className="mr-2 h-5 w-5" />
-              Payment Information
+              支払情報
             </CardTitle>
-            <CardDescription>Enter the payment details</CardDescription>
+            <CardDescription>支払内容を入力してください</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -140,7 +140,7 @@ export default function InvoicePaymentPage() {
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Amount</FormLabel>
+                      <FormLabel>支払金額</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -151,7 +151,7 @@ export default function InvoicePaymentPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Amount being paid (can be partial or full payment)
+                        支払額（部分支払も可能）
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -163,12 +163,12 @@ export default function InvoicePaymentPage() {
                   name="paidAt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Date</FormLabel>
+                      <FormLabel>支払日</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
                       <FormDescription>
-                        The date when the payment was made
+                        支払を行った日付
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -180,20 +180,20 @@ export default function InvoicePaymentPage() {
                   name="direction"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Direction</FormLabel>
+                      <FormLabel>入出金区分</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select payment direction" />
+                            <SelectValue placeholder="区分を選択" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="IN">Incoming (Received)</SelectItem>
-                          <SelectItem value="OUT">Outgoing (Paid)</SelectItem>
+                          <SelectItem value="IN">入金</SelectItem>
+                          <SelectItem value="OUT">出金</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        For invoices, this is typically &ldquo;Incoming&rdquo;
+                        請求書の場合は通常「入金」を選択します
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -205,21 +205,21 @@ export default function InvoicePaymentPage() {
                   name="method"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Method</FormLabel>
+                      <FormLabel>支払方法</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select payment method" />
+                            <SelectValue placeholder="支払方法を選択" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="BANK">Bank Transfer</SelectItem>
-                          <SelectItem value="CASH">Cash</SelectItem>
-                          <SelectItem value="OTHER">Other</SelectItem>
+                          <SelectItem value="BANK">銀行振込</SelectItem>
+                          <SelectItem value="CASH">現金</SelectItem>
+                          <SelectItem value="OTHER">その他</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        How the payment was made
+                        支払を行った方法
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -228,14 +228,14 @@ export default function InvoicePaymentPage() {
 
                 <div className="flex gap-4">
                   <Button type="submit" className="flex-1" disabled={loading}>
-                    {loading ? "Recording..." : "Record Payment"}
+                    {loading ? "登録中..." : "支払を登録"}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.push(`/invoices/${id}`)}
                   >
-                    Cancel
+                    キャンセル
                   </Button>
                 </div>
               </form>
