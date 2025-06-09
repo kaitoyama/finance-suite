@@ -41,6 +41,7 @@ type Documents = {
     "\n  mutation CreateJournalEntry($createJournalEntryInput: CreateJournalEntryInput!) {\n    createJournalEntry(createJournalEntryInput: $createJournalEntryInput) {\n      id\n      datetime\n      description\n      lines {\n        id\n        accountId\n        debit\n        credit\n      }\n    }\n  }\n": typeof types.CreateJournalEntryDocument,
     "\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n": typeof types.GetJournalEntriesDocument,
     "\n  mutation MarkExpensePaid($input: MarkExpensePaidInput!) {\n    markExpensePaid(input: $input) {\n      id\n      state\n    }\n  }\n": typeof types.MarkExpensePaidDocument,
+    "\n  query Me {\n    me {\n      username\n      isAdmin\n    }\n  }\n": typeof types.MeDocument,
     "\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n": typeof types.GetProfitLossStatementDocument,
     "\n  mutation RejectExpenseRequest($id: Int!) {\n    rejectExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": typeof types.RejectExpenseRequestDocument,
     "\n  mutation ResubmitExpenseRequest($id: Int!) {\n    resubmitExpenseRequest(id: $id) {\n      id\n      state\n      amount\n      createdAt\n      description\n      requester {\n        id\n        username\n      }\n      attachment {\n        id\n        title\n        amount\n      }\n      account {\n        id\n        name\n        code\n      }\n      category {\n        id\n        name\n      }\n    }\n  }\n": typeof types.ResubmitExpenseRequestDocument,
@@ -74,6 +75,7 @@ const documents: Documents = {
     "\n  mutation CreateJournalEntry($createJournalEntryInput: CreateJournalEntryInput!) {\n    createJournalEntry(createJournalEntryInput: $createJournalEntryInput) {\n      id\n      datetime\n      description\n      lines {\n        id\n        accountId\n        debit\n        credit\n      }\n    }\n  }\n": types.CreateJournalEntryDocument,
     "\n  query GetJournalEntries {\n    journalEntries {\n      id\n      datetime\n      description\n      createdById\n      lines {\n        id\n        accountId\n        debit\n        credit\n        account {\n          id\n          name\n          code\n          category\n        }\n      }\n    }\n  }\n": types.GetJournalEntriesDocument,
     "\n  mutation MarkExpensePaid($input: MarkExpensePaidInput!) {\n    markExpensePaid(input: $input) {\n      id\n      state\n    }\n  }\n": types.MarkExpensePaidDocument,
+    "\n  query Me {\n    me {\n      username\n      isAdmin\n    }\n  }\n": types.MeDocument,
     "\n  query GetProfitLossStatement($fiscalYear: Int!) {\n    profitLossStatement(fiscalYear: $fiscalYear) {\n      fiscalYear\n      startDate\n      endDate\n      revenues {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      expenses {\n        accountId\n        accountCode\n        accountName\n        balance\n      }\n      totalRevenue\n      totalExpense\n      netIncome\n    }\n  }\n": types.GetProfitLossStatementDocument,
     "\n  mutation RejectExpenseRequest($id: Int!) {\n    rejectExpenseRequest(id: $id) {\n      id\n      state\n    }\n  }\n": types.RejectExpenseRequestDocument,
     "\n  mutation ResubmitExpenseRequest($id: Int!) {\n    resubmitExpenseRequest(id: $id) {\n      id\n      state\n      amount\n      createdAt\n      description\n      requester {\n        id\n        username\n      }\n      attachment {\n        id\n        title\n        amount\n      }\n      account {\n        id\n        name\n        code\n      }\n      category {\n        id\n        name\n      }\n    }\n  }\n": types.ResubmitExpenseRequestDocument,
@@ -202,6 +204,10 @@ export function graphql(source: "\n  query GetJournalEntries {\n    journalEntri
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation MarkExpensePaid($input: MarkExpensePaidInput!) {\n    markExpensePaid(input: $input) {\n      id\n      state\n    }\n  }\n"): (typeof documents)["\n  mutation MarkExpensePaid($input: MarkExpensePaidInput!) {\n    markExpensePaid(input: $input) {\n      id\n      state\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Me {\n    me {\n      username\n      isAdmin\n    }\n  }\n"): (typeof documents)["\n  query Me {\n    me {\n      username\n      isAdmin\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
