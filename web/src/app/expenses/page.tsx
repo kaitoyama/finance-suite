@@ -45,7 +45,11 @@ const AdminExpensesPage = () => {
   const { rejectExpenseRequest } = useRejectExpenseRequestMutation();
   const { updateExpenseRequest } = useUpdateExpenseRequestMutation();
   const { resubmitExpenseRequest } = useResubmitExpenseRequestMutation();
-  const { user } = useMeQuery();
+  const {
+    user,
+    fetching: userLoading,
+    error: userError,
+  } = useMeQuery();
   const isAdmin = user?.isAdmin ?? false;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -164,10 +168,10 @@ const AdminExpensesPage = () => {
                         );
                     
                    case 'PENDING':
-                        if (isLoading) {
+                        if (userLoading) {
                             return <Skeleton className="h-8 w-24" />;
                         }
-                        if (error) {
+                        if (userError) {
                             return <div className="text-red-500">Error loading admin status</div>;
                         }
                         if (!isAdmin) return null;
@@ -246,7 +250,7 @@ const AdminExpensesPage = () => {
             );
         },
     },
-  ], [router, isAdmin]);
+  ], [router, isAdmin, userLoading, userError]);
 
   if (fetching && !data) {
     return (
