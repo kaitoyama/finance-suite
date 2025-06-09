@@ -164,6 +164,12 @@ const AdminExpensesPage = () => {
                         );
                     
                    case 'PENDING':
+                        if (isLoading) {
+                            return <Skeleton className="h-8 w-24" />;
+                        }
+                        if (error) {
+                            return <div className="text-red-500">Error loading admin status</div>;
+                        }
                         if (!isAdmin) return null;
                         return (
                             <>
