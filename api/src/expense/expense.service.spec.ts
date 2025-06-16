@@ -40,7 +40,7 @@ const createMockExpenseRequest = (
   state,
   createdAt: new Date(),
   approvedAt: null,
-  attachmentId: 1,
+  attachments: [],
   requesterId,
   requester: {
     id: requesterId,
@@ -83,7 +83,7 @@ describe('ExpenseService', () => {
     const mockApprover = createMockUser(2, 'testapprover');
     const createInput: CreateExpenseRequestInput = {
       amount: 100,
-      attachmentId: 1,
+      attachmentIds: [1],
     };
     let expenseId: number;
 
@@ -237,14 +237,17 @@ describe('ExpenseService', () => {
   describe('createDraftExpenseRequest', () => {
     it('should create and return a draft expense request', async () => {
       const mockUser = createMockUser(1, 'testuser');
-      const input: CreateExpenseRequestInput = { amount: 50, attachmentId: 2 };
+      const input: CreateExpenseRequestInput = {
+        amount: 50,
+        attachmentIds: [2],
+      };
       const expectedResult = createMockExpenseRequest(
         1,
         'DRAFT',
         mockUser.id,
         50,
       );
-      expectedResult.attachmentId = 2;
+      expectedResult.attachments = [];
 
       mockPrismaService.expenseRequest.create.mockResolvedValue(expectedResult);
 
@@ -256,9 +259,9 @@ describe('ExpenseService', () => {
       expect(mockPrismaService.expenseRequest.create).toHaveBeenCalledWith({
         data: {
           amount: new Prisma.Decimal(input.amount),
-          attachmentId: input.attachmentId,
           requesterId: mockUser.id,
           state: 'DRAFT',
+          attachments: { connect: [{ id: 2 }] },
         },
         include: {
           requester: true,

@@ -39,8 +39,8 @@ export class ExpenseRequest {
   approvedAt?: Date;
 
   // Relations
-  @Field(() => Attachment)
-  attachment: Attachment; // Temporarily commented out
+  @Field(() => [Attachment])
+  attachments: Attachment[];
 
   @Field(() => User)
   requester: User;

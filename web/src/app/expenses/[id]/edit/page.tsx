@@ -172,9 +172,9 @@ export default function EditExpenseRequestPage() {
         description: values.description || undefined,
       };
 
-      // Add attachmentId only if finalAttachmentId is defined
+      // Add new attachment ID if a file was uploaded
       if (finalAttachmentId) {
-        updateInput.attachmentId = finalAttachmentId;
+        updateInput.attachmentIds = [finalAttachmentId];
       }
 
       await toast.promise(
@@ -306,8 +306,15 @@ export default function EditExpenseRequestPage() {
               <p><span className="font-medium">申請ID:</span> {expense.id}</p>
               <p><span className="font-medium">現在のステータス:</span> <span className="text-red-600">差し戻し</span></p>
               <p><span className="font-medium">申請日:</span> {new Date(expense.createdAt).toLocaleDateString()}</p>
-              {expense.attachment && (
-                <p><span className="font-medium">現在の添付ファイル:</span> {expense.attachment.title}</p>
+              {expense.attachments && expense.attachments.length > 0 && (
+                <div>
+                  <p className="font-medium">現在の添付ファイル:</p>
+                  <ul className="list-disc ml-4">
+                    {expense.attachments.map((att) => (
+                      <li key={att.id}>{att.title}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           </CardContent>

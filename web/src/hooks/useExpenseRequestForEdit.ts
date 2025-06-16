@@ -19,7 +19,7 @@ export const expenseRequestForEditQueryDocument = graphql(`
         name
         description
       }
-      attachment {
+      attachments {
         id
         s3Key
         title

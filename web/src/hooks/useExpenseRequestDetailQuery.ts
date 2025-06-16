@@ -18,7 +18,7 @@ export const expenseRequestDetailQueryDocument = graphql(`
         id
         username
       }
-      attachment {
+      attachments {
         id
         title
         amount

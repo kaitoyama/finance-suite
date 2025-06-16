@@ -13,7 +13,7 @@ export const resubmitExpenseRequestMutationDocument = gql`
         id
         username
       }
-      attachment {
+      attachments {
         id
         title
         amount

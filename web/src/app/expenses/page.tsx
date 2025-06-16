@@ -30,12 +30,11 @@ interface RequesterInfo {
 interface ExpenseRequestForTable {
   __typename?: 'ExpenseRequest';
   id: number;
-  requester?: RequesterInfo | null; // Make requester optional to handle potential nulls from GQL
+  requester?: RequesterInfo | null;
   amount: number;
-  createdAt: string; // GQL DateTime usually comes as ISO string
-  state: string; // Assuming state is always a string e.g. PENDING, APPROVED
-  attachmentId?: number | null; // ID of the attachment, GraphQL schema shows this as number
-  // attachmentCount?: number; // If you have a specific field for this
+  createdAt: string;
+  state: string;
+  attachmentCount: number;
 }
 
 const AdminExpensesPage = () => {
@@ -131,9 +130,9 @@ const AdminExpensesPage = () => {
         cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => `¥${row.original.amount.toLocaleString()}`,
     },
     {
-        accessorKey: 'attachmentId',
+        accessorKey: 'attachmentCount',
         header: '添付ファイル数',
-        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => (row.original.attachmentId ? '1' : '0'),
+        cell: ({ row }: { row: { original: ExpenseRequestForTable } }) => row.original.attachmentCount.toString(),
     },
     {
         accessorKey: 'createdAt',
@@ -279,7 +278,7 @@ const AdminExpensesPage = () => {
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachment.id
+      attachmentCount: req.attachments ? req.attachments.length : 0
     }));
 
   // Data for ALL expenses table (new logic)
@@ -298,7 +297,7 @@ const AdminExpensesPage = () => {
       amount: req.amount,
       createdAt: req.createdAt,
       state: req.state as string,
-      attachmentId: req.attachment.id
+      attachmentCount: req.attachments ? req.attachments.length : 0
     }));
 
   return (

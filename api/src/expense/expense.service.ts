@@ -34,7 +34,7 @@ import { PubSub } from 'graphql-subscriptions';
 
 export interface CreateExpenseRequestInput {
   amount: number;
-  attachmentId: number;
+  attachmentIds: number[];
   accountId?: number;
   categoryId?: number;
   description?: string;
@@ -43,7 +43,7 @@ export interface CreateExpenseRequestInput {
 export interface UpdateExpenseRequestInput {
   id: number;
   amount?: number;
-  attachmentId?: number;
+  attachmentIds?: number[];
   accountId?: number;
   categoryId?: number;
   description?: string;
@@ -65,7 +65,7 @@ const expenseRequestIncludeRelations: Prisma.ExpenseRequestInclude = {
       },
     },
   },
-  attachment: {
+  attachments: {
     include: {
       uploader: {
         select: {
@@ -178,12 +178,14 @@ export class ExpenseService {
     return this.prisma.expenseRequest.create({
       data: {
         amount: new Prisma.Decimal(input.amount),
-        attachmentId: input.attachmentId,
         requesterId: requester.id,
         accountId: input.accountId,
         categoryId: input.categoryId,
         description: input.description,
         state: 'DRAFT',
+        attachments: {
+          connect: input.attachmentIds.map((id) => ({ id })),
+        },
       },
       include: expenseRequestIncludeRelations,
     });
@@ -349,8 +351,11 @@ export class ExpenseService {
     if (input.amount !== undefined) {
       updateData.amount = new Prisma.Decimal(input.amount);
     }
-    if (input.attachmentId !== undefined) {
-      updateData.attachment = { connect: { id: input.attachmentId } };
+    if (input.attachmentIds !== undefined) {
+      updateData.attachments = {
+        set: [],
+        connect: input.attachmentIds.map((id) => ({ id })),
+      };
     }
     if (input.accountId !== undefined) {
       updateData.account = { connect: { id: input.accountId } };
