@@ -65,7 +65,10 @@ function mapPrismaExpenseToGql(
   }
 
   // Cast prismaExpense.payment to our more specific type if it exists
-  const paymentWithIncludedAttachments = prismaExpense.payment;
+   const paymentWithIncludedAttachments = prismaExpense.payment as
+    | PaymentWithAttachments
+    | null
+    | undefined;
 
   const mappedPayment = paymentWithIncludedAttachments
     ? {
