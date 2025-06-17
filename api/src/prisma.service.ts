@@ -6,10 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { DatabaseConfigService } from './config/database.config';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 @Injectable()
 export class PrismaService
@@ -29,22 +25,22 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    if (process.env.NODE_ENV === 'production') {
-      this.logger.log('Running database migrations in production...');
-      try {
-        const databaseUrl = this.databaseConfig.getDatabaseUrl();
-        await execAsync('npx prisma migrate deploy', {
-          env: {
-            ...process.env,
-            DATABASE_URL: databaseUrl,
-          },
-        });
-        this.logger.log('Database migrations completed successfully');
-      } catch (error) {
-        this.logger.error('Failed to run database migrations:', error);
-        throw error;
-      }
-    }
+    // if (process.env.NODE_ENV === 'production') {
+    //   this.logger.log('Running database migrations in production...');
+    //   try {
+    //     const databaseUrl = this.databaseConfig.getDatabaseUrl();
+    //     await execAsync('npx prisma migrate deploy', {
+    //       env: {
+    //         ...process.env,
+    //         DATABASE_URL: databaseUrl,
+    //       },
+    //     });
+    //     this.logger.log('Database migrations completed successfully');
+    //   } catch (error) {
+    //     this.logger.error('Failed to run database migrations:', error);
+    //     throw error;
+    //   }
+    // }
     await this.$connect();
   }
 
