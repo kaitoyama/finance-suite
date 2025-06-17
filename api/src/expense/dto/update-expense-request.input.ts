@@ -21,10 +21,10 @@ export class UpdateExpenseRequestInput {
   @IsOptional()
   amount?: number;
 
-  @Field(() => Int, { nullable: true })
-  @IsInt()
+  @Field(() => [Int], { nullable: true })
+  @IsInt({ each: true })
   @IsOptional()
-  attachmentId?: number;
+  attachmentIds?: number[];
 
   @Field(() => Int, { nullable: true })
   @IsInt()

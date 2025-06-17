@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useExpenseRequestDetailQuery } from '@/hooks/useExpenseRequestDetailQuery';
-import { useGetPresignedS3Url } from '@/hooks/useInvoice';
 import { useResubmitExpenseRequestMutation } from '@/hooks/useResubmitExpenseRequestMutation';
 import { useApproveExpenseRequestMutation } from '@/hooks/useApproveExpenseRequestMutation';
 import { useRejectExpenseRequestMutation } from '@/hooks/useRejectExpenseRequestMutation';
@@ -46,12 +45,6 @@ export default function ExpenseDetailPage() {
   const { user } = useMeQuery();
   const isAdmin = user?.isAdmin ?? false;
 
-  const {
-    presignedUrlData,
-    fetchingUrl: fetchingPresignedUrl,
-    fetchUrlError: presignedUrlError,
-    retryFetchUrl: refetchPresignedUrl,
-  } = useGetPresignedS3Url(expenseRequest?.attachment?.s3Key);
 
   // Generic confirmation dialog handler
 
@@ -156,7 +149,7 @@ export default function ExpenseDetailPage() {
     );
   }
 
-  const { amount, state, createdAt, approvedAt, requester, approver, payment, attachment } = expenseRequest;
+  const { amount, state, createdAt, approvedAt, requester, approver, payment, attachments } = expenseRequest;
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -206,47 +199,22 @@ export default function ExpenseDetailPage() {
         </CardContent>
       </Card>
 
-      {attachment && (
+      {attachments && attachments.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>添付ファイル詳細</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">タイトル</TableCell>
-                  <TableCell>{attachment.title}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">S3キー</TableCell>
-                  <TableCell>{attachment.s3Key}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">添付金額</TableCell>
-                  <TableCell>{attachment.amount.toLocaleString()}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">ファイル</TableCell>
-                  <TableCell>
-                    {fetchingPresignedUrl && <p>リンクを生成中...</p>}
-                    {presignedUrlError && <p className="text-red-500">エラー: {presignedUrlError.message}</p>}
-                    {presignedUrlData?.url && (
-                      <Button asChild variant="link">
-                        <Link href={presignedUrlData.url} target="_blank" rel="noopener noreferrer">
-                          添付を表示/ダウンロード
-                        </Link>
-                      </Button>
-                    )}
-                    {!presignedUrlData?.url && !fetchingPresignedUrl && (
-                      <Button onClick={refetchPresignedUrl} variant="outline" size="sm">
-                        リンクを生成
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div className="space-y-4">
+              {attachments.map((att) => (
+                <Card key={att.id} className="p-4">
+                  <p className="font-medium text-base">{att.title}</p>
+                  <p className="text-sm text-muted-foreground">キー: {att.s3Key}</p>
+                  <p className="text-sm text-muted-foreground">金額: {att.amount.toLocaleString()}</p>
+                  <PaymentAttachmentLinkRenderer s3Key={att.s3Key} title={att.title} />
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

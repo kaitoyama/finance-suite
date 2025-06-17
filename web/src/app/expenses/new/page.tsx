@@ -39,7 +39,7 @@ const expenseFormSchema = z.object({
   accountId: z.string().min(1, { message: '勘定科目の選択は必須です' }),
   categoryId: z.string().min(1, { message: 'カテゴリの選択は必須です' }),
   description: z.string().optional(),
-  attachment: z.instanceof(File).optional(),
+  attachments: z.array(z.instanceof(File)).min(1, { message: '少なくとも1つの証憑ファイルを選択してください' }),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
@@ -53,6 +53,7 @@ export default function NewExpenseRequestPage() {
       accountId: '',
       categoryId: '',
       description: '',
+      attachments: [],
     },
   });
 
@@ -63,22 +64,23 @@ export default function NewExpenseRequestPage() {
   const { presignedPost, error: presignedPostError } = useCreatePresignedPost();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-      form.setValue('attachment', event.target.files[0]);
+    if (event.target.files && event.target.files.length > 0) {
+      const files = Array.from(event.target.files);
+      setSelectedFiles(files);
+      form.setValue('attachments', files);
     }
   };
 
   const onSubmit = async (values: ExpenseFormValues) => {
     setIsSubmitting(true);
-    let finalAttachmentId: number | null = null;
+    const attachmentIds: number[] = [];
 
     try {
-      if (selectedFile) {
-        const s3Key = `${self.crypto.randomUUID()}-${selectedFile.name}`;
+      for (const file of selectedFiles) {
+        const s3Key = `${self.crypto.randomUUID()}-${file.name}`;
 
         // 1. Get presigned URL for S3 upload
         const presignedPostResult = await presignedPost(s3Key);
@@ -92,9 +94,9 @@ export default function NewExpenseRequestPage() {
         // 2. Upload file directly to R2 using presigned PUT
         const s3UploadPromise = fetch(url, {
           method: 'PUT',
-          body: selectedFile,
+          body: file,
           headers: {
-            'Content-Type': selectedFile.type || 'application/octet-stream'
+            'Content-Type': file.type || 'application/octet-stream'
           }
         });
 
@@ -117,8 +119,8 @@ export default function NewExpenseRequestPage() {
         // Ensure the createAttachment mutation input matches your backend schema
         const attachmentInput: CreateAttachmentInput = {
           s3Key,
-          title: selectedFile.name,
-          amount: values.amount, // Consider if amount is correct here or part of expense only
+          title: file.name,
+          amount: values.amount,
         };
         const createAttachmentPromise = createAttachment(attachmentInput);
 
@@ -127,7 +129,7 @@ export default function NewExpenseRequestPage() {
             if (!dbRes || !dbRes.id) { 
               throw new Error('Attachment ID not found after DB save.');
             }
-            finalAttachmentId = dbRes.id;
+            attachmentIds.push(dbRes.id);
             return "添付情報を保存しました";
           }),
           {
@@ -138,14 +140,14 @@ export default function NewExpenseRequestPage() {
         );
       }
 
-      if (finalAttachmentId===null) {
-        throw new Error('Attachment ID not found after DB save.');
+      if (attachmentIds.length === 0) {
+        throw new Error('Attachment upload failed');
       }
 
       // 4. Submit expense request
       const expenseInput: CreateExpenseRequestInput = {
         amount: values.amount,
-        attachmentId: finalAttachmentId,
+        attachmentIds,
         accountId: values.accountId ? parseInt(values.accountId, 10) : undefined,
         categoryId: values.categoryId ? parseInt(values.categoryId, 10) : undefined,
         description: values.description || undefined,
@@ -157,7 +159,7 @@ export default function NewExpenseRequestPage() {
           if (res.error) throw new Error(res.error.message);
           if (!res.data?.submitExpenseRequest?.id) throw new Error('Failed to create expense request.');
           form.reset();
-          setSelectedFile(null);
+          setSelectedFiles([]);
           // router.push('/expenses'); // Or to the detail page: /expenses/${res.data.submitExpenseRequest.id}
           router.push('/expenses'); // Placeholder redirect
           return '経費申請が作成されました';
@@ -288,9 +290,13 @@ export default function NewExpenseRequestPage() {
           <FormItem>
             <FormLabel>Attachment (証憑)</FormLabel>
             <FormControl>
-              <Input type="file" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
+              <Input type="file" multiple onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
             </FormControl>
-            {selectedFile && <FormDescription>選択されたファイル: {selectedFile.name}</FormDescription>}
+            {selectedFiles.length > 0 && (
+              <FormDescription>
+                選択されたファイル: {selectedFiles.map(f => f.name).join(', ')}
+              </FormDescription>
+            )}
             <FormMessage />
           </FormItem>
 

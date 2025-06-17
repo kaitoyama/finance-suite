@@ -65,10 +65,7 @@ function mapPrismaExpenseToGql(
   }
 
   // Cast prismaExpense.payment to our more specific type if it exists
-  const paymentWithIncludedAttachments = prismaExpense.payment as
-    | PaymentWithAttachments
-    | null
-    | undefined;
+  const paymentWithIncludedAttachments = prismaExpense.payment;
 
   const mappedPayment = paymentWithIncludedAttachments
     ? {
@@ -96,12 +93,12 @@ function mapPrismaExpenseToGql(
       }
     : undefined;
 
-  const mappedExpenseAttachment = {
-    ...prismaExpense.attachment,
-    amount: prismaExpense.attachment.amount.toNumber(),
-    expenseRequestId: prismaExpense.attachment.expenseRequestId || undefined,
-    uploader: (prismaExpense.attachment as AttachmentWithUploader).uploader,
-  };
+  const mappedExpenseAttachments = prismaExpense.attachments.map((att) => ({
+    ...att,
+    amount: att.amount.toNumber(),
+    expenseRequestId: att.expenseRequestId || undefined,
+    uploader: (att as AttachmentWithUploader).uploader,
+  }));
 
   return {
     ...prismaExpense,
@@ -111,7 +108,7 @@ function mapPrismaExpenseToGql(
     requester: prismaExpense.requester,
     approver: prismaExpense.approver || undefined,
     payment: mappedPayment,
-    attachment: mappedExpenseAttachment,
+    attachments: mappedExpenseAttachments,
   };
 }
 

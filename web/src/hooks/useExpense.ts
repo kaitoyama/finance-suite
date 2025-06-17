@@ -45,7 +45,7 @@ export const GET_EXPENSE_REQUEST_BY_ID_DOCUMENT = gql`
             amount
         }
       }
-      attachment {
+      attachments {
         id
         s3Key
         title

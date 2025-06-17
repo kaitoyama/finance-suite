@@ -8,7 +8,7 @@ export const expenseRequestsListQueryDocument = graphql(`
       amount
       state
       createdAt
-      attachment {
+      attachments {
         id
         title
       }

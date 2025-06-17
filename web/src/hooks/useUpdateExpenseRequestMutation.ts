@@ -13,7 +13,7 @@ export const updateExpenseRequestMutationDocument = gql`
         id
         username
       }
-      attachment {
+      attachments {
         id
         title
         amount

@@ -98,8 +98,8 @@ model Attachment {
   uploaderId Int
 
   /// （後続実装予定）申請レコードに 1:1 紐づく
-  expenseRequest   ExpenseRequest? @relation("ExpenseAttachment")
-  expenseRequestId Int?            @unique
+  expenseRequest   ExpenseRequest? @relation("ExpenseAttachment", fields: [expenseRequestId], references: [id])
+  expenseRequestId Int?
 
   payments PaymentAttachment[]
 }
@@ -138,8 +138,7 @@ model ExpenseRequest {
   approvedAt   DateTime?
   description  String?      // 支出の説明
   // relations
-  attachment   Attachment   @relation("ExpenseAttachment", fields: [attachmentId], references: [id])
-  attachmentId Int          @unique
+  attachments  Attachment[] @relation("ExpenseAttachment")
   requester    User         @relation("requester", fields:[requesterId], references:[id])
   requesterId  Int
   approver     User?        @relation("approver",  fields:[approverId], references:[id])

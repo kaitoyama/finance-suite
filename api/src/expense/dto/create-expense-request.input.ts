@@ -15,10 +15,10 @@ export class CreateExpenseRequestInput {
   @Min(0.01) // Assuming amount must be positive
   amount: number;
 
-  @Field(() => Int)
-  @IsInt()
-  @IsNotEmpty()
-  attachmentId: number;
+  @Field(() => [Int])
+  @IsInt({ each: true })
+  @IsNotEmpty({ each: true })
+  attachmentIds: number[];
 
   @Field(() => Int, { nullable: true })
   @IsInt()
