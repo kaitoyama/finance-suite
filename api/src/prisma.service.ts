@@ -25,22 +25,22 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    // if (process.env.NODE_ENV === 'production') {
-    //   this.logger.log('Running database migrations in production...');
-    //   try {
-    //     const databaseUrl = this.databaseConfig.getDatabaseUrl();
-    //     await execAsync('npx prisma migrate deploy', {
-    //       env: {
-    //         ...process.env,
-    //         DATABASE_URL: databaseUrl,
-    //       },
-    //     });
-    //     this.logger.log('Database migrations completed successfully');
-    //   } catch (error) {
-    //     this.logger.error('Failed to run database migrations:', error);
-    //     throw error;
-    //   }
-    // }
+    if (process.env.NODE_ENV === 'production') {
+      this.logger.log('Running database migrations in production...');
+      try {
+        const databaseUrl = this.databaseConfig.getDatabaseUrl();
+        await execAsync('npx prisma migrate deploy', {
+          env: {
+            ...process.env,
+            DATABASE_URL: databaseUrl,
+          },
+        });
+        this.logger.log('Database migrations completed successfully');
+      } catch (error) {
+        this.logger.error('Failed to run database migrations:', error);
+        throw error;
+      }
+    }
     await this.$connect();
   }
 
