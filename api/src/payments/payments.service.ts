@@ -67,14 +67,14 @@ export class PaymentsService {
     const bankAccount = await this.prisma.account.findFirst({
       where: { code: '102' }, // 普通預金
     });
-    const receivableAccount = await this.prisma.account.findFirst({
-      where: { code: '120' }, // 売掛金
+    const sponsorshipAccount = await this.prisma.account.findFirst({
+      where: { code: '401' }, // 協賛金
     });
     const expenseAccount = await this.prisma.account.findFirst({
-      where: { code: '501' }, // 仕入高 (general expense account)
+      where: { code: '501' }, // 一般経費
     });
 
-    if (!cashAccount || !bankAccount || !receivableAccount || !expenseAccount) {
+    if (!cashAccount || !bankAccount || !sponsorshipAccount || !expenseAccount) {
       console.error(
         'Required accounts not found for automatic journal entry creation',
       );
@@ -85,9 +85,9 @@ export class PaymentsService {
         bankAccount: bankAccount
           ? `${bankAccount.code} - ${bankAccount.name}`
           : 'MISSING (code: 102)',
-        receivableAccount: receivableAccount
-          ? `${receivableAccount.code} - ${receivableAccount.name}`
-          : 'MISSING (code: 120)',
+        sponsorshipAccount: sponsorshipAccount
+          ? `${sponsorshipAccount.code} - ${sponsorshipAccount.name}`
+          : 'MISSING (code: 401)',
         expenseAccount: expenseAccount
           ? `${expenseAccount.code} - ${expenseAccount.name}`
           : 'MISSING (code: 501)',
@@ -109,22 +109,21 @@ export class PaymentsService {
 
     try {
       if (invoice) {
-        // For invoice payments: Debit Cash/Bank, Credit Receivables
-        const paymentAccount =
-          payment.method === PaymentMethod.CASH ? cashAccount : bankAccount;
+        // For invoice payments: Debit Bank (income), Credit Sponsorship Revenue
+        // 振込のみなので常に普通預金への入金として処理
 
         await this.journalService.create(
           {
             datetime: payment.paidAt,
-            description: `Invoice payment received - ${invoice.invoiceNo}`,
+            description: `Sponsorship income received - ${invoice.invoiceNo}`,
             lines: [
               {
-                accountId: paymentAccount.id,
+                accountId: bankAccount.id,
                 debit: amount,
                 credit: undefined,
               },
               {
-                accountId: receivableAccount.id,
+                accountId: sponsorshipAccount.id,
                 debit: undefined,
                 credit: amount,
               },

@@ -23,9 +23,8 @@ export class AccountBootstrapService implements OnModuleInit {
     const requiredAccounts: RequiredAccount[] = [
       { code: '101', name: '現金', category: 'ASSET' },
       { code: '102', name: '普通預金', category: 'ASSET' },
-      { code: '120', name: '売掛金', category: 'ASSET' },
-      { code: '401', name: '売上高', category: 'REVENUE' },
-      { code: '501', name: '仕入高', category: 'EXPENSE' },
+      { code: '401', name: '協賛金', category: 'REVENUE' },
+      { code: '501', name: '一般経費', category: 'EXPENSE' },
     ];
 
     this.logger.log('Checking required accounts...');
@@ -64,6 +63,6 @@ export class AccountBootstrapService implements OnModuleInit {
    * Get all required account codes for validation purposes
    */
   getRequiredAccountCodes(): string[] {
-    return ['101', '102', '120', '401', '501'];
+    return ['101', '102', '401', '501'];
   }
 }

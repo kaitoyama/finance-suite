@@ -20,33 +20,24 @@ async function main() {
 
   // --- 2. Chart of Accounts ---------------------------------------------
   const accounts: Prisma.AccountCreateManyInput[] = [
-    // 資産
-    { code: '101', name: '現金',       category: 'ASSET'    },
-    { code: '102', name: '普通預金',   category: 'ASSET'    },
-    { code: '120', name: '売掛金',     category: 'ASSET'    },
-    // 負債
-    { code: '201', name: '買掛金',     category: 'LIABILITY'},
-    // 純資産
-    { code: '301', name: '資本金',     category: 'EQUITY'   },
+    // 資産（お金の管理）
+    { code: '101', name: '現金',       category: 'ASSET'    },  // 現金で支払ったお金
+    { code: '102', name: '普通預金',   category: 'ASSET'    },  // 口座にあるお金、振込
+    
     // 収益
-    { code: '401', name: '売上高',     category: 'REVENUE'  },
+    { code: '401', name: '協賛金',     category: 'REVENUE'  },  // 請求書による協賛金収入
+    
     // 費用
-    { code: '501', name: '仕入高',     category: 'EXPENSE'  },
-    { code: '511', name: '給料賃金',   category: 'EXPENSE'  },
-    { code: '521', name: '支払家賃',   category: 'EXPENSE'  },
-    { code: '531', name: '通信費',     category: 'EXPENSE'  },
+    { code: '501', name: '一般経費',   category: 'EXPENSE'  },  // すべての経費
   ];
 
   await prisma.account.createMany({ data: accounts, skipDuplicates: true });
 
   // --- 3. Initial Categories --------------------------------------------
   const categories: Prisma.CategoryCreateManyInput[] = [
-    { name: '事務用品', description: '文房具、事務機器など' },
+    { name: '一般経費', description: '事務用品、消耗品、その他一般的な経費' },
     { name: '交通費', description: '出張、移動にかかる費用' },
-    { name: '接待交際費', description: '会議、懇親会などの費用' },
-    { name: '研修費', description: '社員研修、セミナー参加費' },
-    { name: '広告宣伝費', description: 'マーケティング、広告にかかる費用' },
-    { name: '消耗品費', description: '短期間で消費される物品' },
+    { name: '会議・懇親費', description: '会議、懇親会、研修などの費用' },
   ];
 
   await prisma.category.createMany({ data: categories, skipDuplicates: true });

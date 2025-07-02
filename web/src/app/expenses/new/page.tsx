@@ -36,7 +36,6 @@ import { CreateAttachmentInput, CreateExpenseRequestInput } from '@/gql/graphql'
 
 const expenseFormSchema = z.object({
   amount: z.coerce.number().int().positive({ message: 'Amount must be an integer and positive' }),
-  accountId: z.string().min(1, { message: '勘定科目の選択は必須です' }),
   categoryId: z.string().min(1, { message: 'カテゴリの選択は必須です' }),
   description: z.string().optional(),
   attachments: z.array(z.instanceof(File)).min(1, { message: '少なくとも1つの証憑ファイルを選択してください' }),
@@ -50,7 +49,6 @@ export default function NewExpenseRequestPage() {
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       amount: 0,
-      accountId: '',
       categoryId: '',
       description: '',
       attachments: [],
@@ -59,7 +57,7 @@ export default function NewExpenseRequestPage() {
 
   const { executeMutation: createExpenseRequest } = useCreateExpenseRequestMutation();
   const { categories, loading: categoriesLoading, error: categoriesError } = useGetCategories();
-  const { accounts, loading: accountsLoading, error: accountsError } = useGetAccounts();
+  const { accounts } = useGetAccounts();
   const { createAttachment } = useCreateAttachment();
   const { presignedPost, error: presignedPostError } = useCreatePresignedPost();
 
@@ -145,10 +143,12 @@ export default function NewExpenseRequestPage() {
       }
 
       // 4. Submit expense request
+      // 一般経費の勘定科目IDを取得（501番の勘定科目）
+      const generalExpenseAccount = accounts?.find(account => account.code === '501');
       const expenseInput: CreateExpenseRequestInput = {
         amount: values.amount,
         attachmentIds,
-        accountId: values.accountId ? parseInt(values.accountId, 10) : undefined,
+        accountId: generalExpenseAccount?.id ? parseInt(generalExpenseAccount.id.toString(), 10) : undefined,
         categoryId: values.categoryId ? parseInt(values.categoryId, 10) : undefined,
         description: values.description || undefined,
       };
@@ -183,10 +183,7 @@ export default function NewExpenseRequestPage() {
     if (categoriesError) {
       toast.error(`カテゴリの読み込みに失敗しました: ${categoriesError.message}`);
     }
-    if (accountsError) {
-      toast.error(`勘定科目の読み込みに失敗しました: ${accountsError.message}`);
-    }
-  }, [categoriesError, accountsError]);
+  }, [categoriesError]);
 
   return (
     <div className="container mx-auto py-10">
@@ -214,34 +211,15 @@ export default function NewExpenseRequestPage() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="accountId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>勘定科目 *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={accountsLoading}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="勘定科目を選択" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {accountsLoading ? (
-                      <Skeleton className="h-8 w-full" />
-                    ) : (
-                      accounts?.map((account) => (
-                        <SelectItem key={account.id} value={account.id.toString()}>
-                          {account.code} - {account.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-700">
+              <strong>勘定科目:</strong> 一般経費（自動選択）
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              すべての経費は自動的に「501 - 一般経費」として処理されます
+            </p>
+          </div>
 
           <FormField
             control={form.control}
@@ -300,7 +278,7 @@ export default function NewExpenseRequestPage() {
             <FormMessage />
           </FormItem>
 
-          <Button type="submit" disabled={isSubmitting || accountsLoading} className="w-full md:w-auto">
+          <Button type="submit" disabled={isSubmitting || categoriesLoading} className="w-full md:w-auto">
             {isSubmitting ? '送信中...' : '経費申請を送信'}
           </Button>
         </form>
