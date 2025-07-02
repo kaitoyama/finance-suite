@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { DatabaseConfigService } from './config/database.config';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 @Injectable()
 export class PrismaService
