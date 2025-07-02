@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 // Assuming PaymentFormValues will be a simpler type provided by PaymentForm or defined manually
 interface PaymentFormSubmitValues {
   paidAt: Date;
+  amount: number; // 実際の支払額
   method: GqlPaymentMethod;
   attachments?: File[]; // Assuming PaymentForm will provide this
 }
@@ -82,7 +83,7 @@ export default function PayExpensePage() {
           const attachmentInput: CreateAttachmentInput = {
             s3Key,
             title: file.name,
-            amount: expenseData.amount,
+            amount: values.amount, // 実際の支払額を添付ファイルの金額として使用
           };
           const dbAttachment = await createAttachment(attachmentInput);
           if (!dbAttachment || !dbAttachment.id) throw new Error('Failed to save attachment to DB.');
@@ -99,7 +100,7 @@ export default function PayExpensePage() {
 
     const paymentInput: CreatePaymentInput = {
       paidAt: values.paidAt.toISOString(),
-      amount: expenseData.amount,
+      amount: values.amount, // 修正: 実際の支払額を使用
       direction: 'OUT', 
       method: values.method, 
       expenseRequestId: numericId,
@@ -111,7 +112,12 @@ export default function PayExpensePage() {
       const result = await executeCreatePayment(paymentInput);
       if (result.error) throw result.error;
       if (!result?.id) throw new Error('Failed to register payment.');
-      toast.success('支払いが正常に登録されました。');
+      
+      // 差額がある場合の追加メッセージ
+      const differenceMessage = values.amount !== expenseData.amount ? 
+        ` (申請額: ${expenseData.amount.toLocaleString()}円, 支払額: ${values.amount.toLocaleString()}円)` : '';
+      
+      toast.success(`支払いが正常に登録されました。${differenceMessage}`);
       router.push(`/expenses/${expenseData.id}`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -177,7 +183,7 @@ export default function PayExpensePage() {
         <h2 className="text-lg font-semibold mb-2">経費情報</h2>
         <p>ID: {expenseData.id}</p>
         <p>申請者: {expenseData.requester.username}</p>
-        <p>金額: {expenseData.amount.toLocaleString()} 円</p>
+        <p>申請金額: {expenseData.amount.toLocaleString()} 円</p>
         <p>ステータス: {expenseData.state}</p>
       </div>
 

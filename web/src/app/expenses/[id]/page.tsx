@@ -302,13 +302,7 @@ export default function ExpenseDetailPage() {
               <Link href={`/expenses/${id}/pay`}>支払処理</Link>
             </Button>
           )}
-          
-          {/* PAID状態: クローズボタン */}
-          {state === 'PAID' && (
-            <Button variant="outline">
-              完了にする
-            </Button>
-          )}
+      
           
           {/* REJECTED状態: 編集・再申請ボタン */}
           {state === 'REJECTED' && (

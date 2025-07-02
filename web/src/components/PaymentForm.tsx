@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -26,6 +27,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 // Assume AttachmentUploader exists and can handle multiple files.
 // import AttachmentUploader from './AttachmentUploader'; // Path might need adjustment
 
@@ -59,7 +70,7 @@ type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 interface PaymentFormProps {
   expenseAmount: number; // Needed for label calculation and display
   expenseId: string; // Assuming ID is a string, adjust if number
-  onSubmit: (values: PaymentFormValues, label: 'PARTIAL' | 'OVERPAY' | null) => Promise<void>;
+  onSubmit: (values: PaymentFormValues) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -71,6 +82,9 @@ export function PaymentForm({
   onCancel,
   isLoading,
 }: PaymentFormProps) {
+  const [showDifferenceDialog, setShowDifferenceDialog] = useState(false);
+  const [pendingValues, setPendingValues] = useState<PaymentFormValues | null>(null);
+
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
@@ -81,132 +95,224 @@ export function PaymentForm({
     },
   });
 
-  // const { calcPaymentLabel } = usePaymentLabel(); // Placeholder for hook or direct import
+  // Calculate difference percentage
+  const currentAmount = form.watch('amount');
+  const calculateDifferencePercentage = (paymentAmount: number, expenseAmount: number) => {
+    const difference = Math.abs(paymentAmount - expenseAmount);
+    return (difference / expenseAmount) * 100;
+  };
+
+  const getDifferenceInfo = (paymentAmount: number, expenseAmount: number) => {
+    const difference = paymentAmount - expenseAmount;
+    const percentage = calculateDifferencePercentage(paymentAmount, expenseAmount);
+    
+    return {
+      difference,
+      percentage,
+      isSignificant: percentage > 5,
+      label: difference > 0 ? 'OVERPAY' as const : difference < 0 ? 'PARTIAL' as const : null
+    };
+  };
 
   const handleSubmit = async (values: PaymentFormValues) => {
-    // const label = calcPaymentLabel(values.amount, expenseAmount);
-    // For now, label calculation will be done in the page component before calling the mutation
-    // This form only collects data
-    await onSubmit(values, null); // Pass null for label for now
+    const diffInfo = getDifferenceInfo(values.amount, expenseAmount);
+    
+    // Check if difference is significant (>5%)
+    if (diffInfo.isSignificant) {
+      setPendingValues(values);
+      setShowDifferenceDialog(true);
+      return;
+    }
+
+    // Proceed with submission
+    await onSubmit(values);
+  };
+
+  const handleConfirmDifference = async () => {
+    if (!pendingValues) return;
+    
+    setShowDifferenceDialog(false);
+    setPendingValues(null);
+    await onSubmit(pendingValues);
+  };
+
+  const renderDifferenceInfo = () => {
+    if (!currentAmount || currentAmount === expenseAmount) return null;
+    
+    const diffInfo = getDifferenceInfo(currentAmount, expenseAmount);
+    const diffDisplay = diffInfo.difference > 0 ? `+${diffInfo.difference.toLocaleString()}` : diffInfo.difference.toLocaleString();
+    const color = diffInfo.difference > 0 ? 'text-orange-600' : 'text-blue-600';
+    const warningColor = diffInfo.isSignificant ? 'text-red-600 font-semibold' : color;
+    
+    return (
+      <div className={cn("text-sm mt-1", warningColor)}>
+        差額: {diffDisplay}円 ({diffInfo.percentage.toFixed(1)}%)
+        {diffInfo.isSignificant && (
+          <span className="block text-red-600 font-semibold">
+            ⚠️ 差額が5%を超えています。staffに確認済みですか？
+          </span>
+        )}
+      </div>
+    );
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="paidAt"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>支払日</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-[240px] pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'yyyy-MM-dd')
-                      ) : (
-                        <span>日付を選択</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date('1900-01-01')
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="paidAt"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>支払日</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-[240px] pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'yyyy-MM-dd')
+                        ) : (
+                          <span>日付を選択</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date('1900-01-01')
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>金額</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="50000" {...field} onChange={event => field.onChange(+event.target.value)}/>
-              </FormControl>
-              <FormDescription>
-                経費申請額: {expenseAmount.toLocaleString()} 円
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="method"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>支払方法</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>支払金額</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="支払方法を選択" />
-                  </SelectTrigger>
+                  <Input type="number" placeholder="50000" {...field} onChange={event => field.onChange(+event.target.value)}/>
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value={PaymentMethod.BANK}>銀行振込</SelectItem>
-                  <SelectItem value={PaymentMethod.CASH}>現金</SelectItem>
-                  <SelectItem value={PaymentMethod.OTHER}>その他</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="attachments"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>証憑ファイル</FormLabel>
-              <FormControl>
-                {/* Placeholder for AttachmentUploader */}
-                <Input 
-                  type="file" 
-                  multiple 
-                  onChange={(e) => field.onChange(e.target.files ? Array.from(e.target.files) : [])} 
-                  // Pass inputRef to field.ref if needed by react-hook-form for file inputs
-                />
-              </FormControl>
-              <FormDescription>
-                振込控えや領収書PDFなどを添付してください。
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormDescription>
+                  経費申請額: {expenseAmount.toLocaleString()} 円
+                </FormDescription>
+                {renderDifferenceInfo()}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-            キャンセル
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? '処理中...' : '支払を登録'}
-          </Button>
-        </div>
-      </form>
-    </Form>
+          <FormField
+            control={form.control}
+            name="method"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>支払方法</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="支払方法を選択" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={PaymentMethod.BANK}>銀行振込</SelectItem>
+                    <SelectItem value={PaymentMethod.CASH}>現金</SelectItem>
+                    <SelectItem value={PaymentMethod.OTHER}>その他</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="attachments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>証憑ファイル</FormLabel>
+                <FormControl>
+                  {/* Placeholder for AttachmentUploader */}
+                  <Input 
+                    type="file" 
+                    multiple 
+                    onChange={(e) => field.onChange(e.target.files ? Array.from(e.target.files) : [])} 
+                    // Pass inputRef to field.ref if needed by react-hook-form for file inputs
+                  />
+                </FormControl>
+                <FormDescription>
+                  振込控えや領収書PDFなどを添付してください。
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+              キャンセル
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? '処理中...' : '支払を登録'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+
+      <AlertDialog open={showDifferenceDialog} onOpenChange={setShowDifferenceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>差額確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              申請額と支払額に5%を超える差額があります。
+              <br />
+              <br />
+              <strong>申請額:</strong> {expenseAmount.toLocaleString()}円
+              <br />
+              <strong>支払額:</strong> {pendingValues?.amount.toLocaleString()}円
+              <br />
+              <strong>差額:</strong> {pendingValues ? 
+                (pendingValues.amount > expenseAmount ? '+' : '') + 
+                (pendingValues.amount - expenseAmount).toLocaleString() : ''}円
+              <br />
+              <strong>差額割合:</strong> {pendingValues ? 
+                calculateDifferencePercentage(pendingValues.amount, expenseAmount).toFixed(1) : ''}%
+              <br />
+              <br />
+              この差額についてstaffに確認しましたか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDifferenceDialog(false);
+              setPendingValues(null);
+            }}>
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDifference}>
+              確認済み - 登録を続行
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 } 
