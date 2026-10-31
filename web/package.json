@@ -42,7 +42,7 @@
     "react-hot-toast": "^2.5.2",
     "tailwind-merge": "^3.3.0",
     "urql": "^4.2.2",
-    "zod": "^3.25.17"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
